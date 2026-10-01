@@ -56,6 +56,7 @@ const SPECIES = [
   {
     key: 'boletus', lat: 'Boletus edulis', es: 'Boleto / Hongo',
     guild: 'ectomicorricico',
+    prioridad: 10,
     habitat: ['pinar', 'hayedo', 'robledal', 'castaneral', 'bosque_mixto'],
     avoidDrySW: true,           // no coloniza sotobosques secos de SO
     temporada: [6, 7, 8, 9, 10, 11],
@@ -73,6 +74,7 @@ const SPECIES = [
   {
     key: 'niscalos', lat: 'Lactarius deliciosus', es: 'Níscalo / Rovelló',
     guild: 'ectomicorricico',
+    prioridad: 20,
     habitat: ['pinar'],          // casi exclusivamente Pinus
     avoidDrySW: false,
     temporada: [9, 10, 11],
@@ -84,8 +86,10 @@ const SPECIES = [
     gddNeed: 200, L: 12, Ro: 40, diasMax: 50,
   },
   {
-    key: 'amanita', lat: 'Amanita caesarea', es: 'Oronja / Reig',
+    key: 'amanita', lat: 'Amanita caesarea', es: 'Amanita caesarea',
+    alias: 'Oronja · Reig',
     guild: 'ectomicorricico',
+    prioridad: 50,
     habitat: ['robledal', 'castaneral', 'encinar', 'bosque_mixto'],
     avoidDrySW: false,
     temporada: [6, 7, 8, 9, 10],
@@ -97,8 +101,10 @@ const SPECIES = [
     gddNeed: 150, L: 8, Ro: 30, diasMax: 35,
   },
   {
-    key: 'rebozuelo', lat: 'Cantharellus cibarius', es: 'Rebozuelo / Galán',
+    key: 'rebozuelo', lat: 'Cantharellus cibarius', es: 'Rebozuelo / Chantarela',
+    alias: 'Galán',
     guild: 'ectomicorricico',
+    prioridad: 30,
     habitat: ['hayedo', 'robledal', 'castaneral', 'bosque_mixto'],
     avoidDrySW: false,
     temporada: [6, 7, 8, 9, 10, 11],
@@ -112,6 +118,7 @@ const SPECIES = [
   {
     key: 'senderuela', lat: 'Marasmius oreades', es: 'Senderuela',
     guild: 'saprofita',
+    prioridad: 57,
     habitat: ['pradera', 'pastizal', 'cesped', 'claro'],
     avoidDrySW: false,
     temporada: [4, 5, 6, 7, 8, 9, 10],
@@ -125,6 +132,7 @@ const SPECIES = [
   {
     key: 'parasol', lat: 'Macrolepiota procera', es: 'Parasol',
     guild: 'saprofita',
+    prioridad: 58,
     habitat: ['claro', 'borde_bosque', 'pastizal', 'matorral'],
     avoidDrySW: false,
     temporada: [5, 6, 7, 8, 9, 10],
@@ -138,6 +146,7 @@ const SPECIES = [
   {
     key: 'champinon', lat: 'Agaricus campestris', es: 'Champiñón silvestre',
     guild: 'saprofita',
+    prioridad: 60,
     habitat: ['pradera', 'pastizal', 'majadal', 'ganado'],
     avoidDrySW: false,
     temporada: [4, 5, 6, 7, 8, 9, 10],
@@ -149,8 +158,10 @@ const SPECIES = [
     gddNeed: 120, L: 7, Ro: 20, diasMax: 25,
   },
   {
-    key: 'girola', lat: 'Pleurotus ostreatus', es: 'Gírgola',
+    key: 'girola', lat: 'Pleurotus ostreatus', es: 'Seta de ostra',
+    alias: 'Gírgola',
     guild: 'saprofita_lignum',
+    prioridad: 55,
     substrate: 'madera',         // requiere sustrato leñoso
     // No se puede saber desde coordenadas si hay tronco o tocón. Se listan
     // también los bosques, para que el factor no colapse en todos ellos.
@@ -166,8 +177,10 @@ const SPECIES = [
     gddNeed: 130, L: 8, Ro: 25, diasMax: 35,
   },
   {
-    key: 'seta_pino', lat: 'Tricholoma portentosum', es: 'Seta de pino',
+    key: 'seta_pino', lat: 'Tricholoma portentosum', es: 'Capuchina',
+    alias: 'Seta de los piñones',
     guild: 'ectomicorricico',
+    prioridad: 54,
     habitat: ['pinar'],
     avoidDrySW: false,
     temporada: [9, 10, 11],
@@ -181,6 +194,7 @@ const SPECIES = [
   {
     key: 'rovello', lat: 'Russula vesca', es: 'Rúsula comestible',
     guild: 'ectomicorricico',
+    prioridad: 53,
     habitat: ['hayedo', 'robledal', 'pinar', 'bosque_mixto'],
     avoidDrySW: false,
     temporada: [6, 7, 8, 9, 10],
@@ -194,6 +208,7 @@ const SPECIES = [
   {
     key: 'trompeta', lat: 'Craterellus cornucopioides', es: 'Trompeta de la muerte',
     guild: 'ectomicorricico',
+    prioridad: 51,
     habitat: ['hayedo', 'robledal', 'castaneral'],
     avoidDrySW: false,
     temporada: [7, 8, 9, 10, 11],
@@ -208,6 +223,7 @@ const SPECIES = [
     key: 'morena', lat: 'Morchella esculenta', es: 'Marzuelo / Seta de marzo',
     alias: 'Colmenilla · Morella',
     guild: 'saprofita',
+    prioridad: 56,
     // Hospedantes documentados en la península y el Mediterráneo (Morchella,
     // Wikipedia): Abies, Pinus, Populus, Ulmus, Quercus, Arbutus, Castanea,
     // Alnus, Olea, Malus, Fraxinus. También en suelos perturbados y tras incendios.
@@ -228,8 +244,9 @@ const SPECIES = [
     gddNeed: 120, L: 10, Ro: 20, diasMax: 30,
   },
   {
-    key: 'san_jorge', lat: 'Calocybe gambosa', es: 'Seta de San Jorge',
+    key: 'san_jorge', lat: 'Calocybe gambosa', es: 'Perrechico',
     guild: 'saprofita',
+    prioridad: 59,
     habitat: ['pradera', 'claro', 'borde_bosque'],
     temporada: [9, 10, 11],
     temporadaTxt: 'septiembre-noviembre',
@@ -248,6 +265,7 @@ const SPECIES = [
     key: 'boleto_pino', lat: 'Boletus pinophilus', es: 'Boleto de pino',
     alias: 'Boletus pinicola · Cep vermellós · Calabaza',
     guild: 'ectomicorricico',
+    prioridad: 40,
     // Hospedantes documentados: Pinus (muy detallado: P. sylvestris, pinea,
     // pinaster, radiata, nigra, uncinata), Abies alba, Picea abies y, de
     // forma secundaria, Castanea, Quercus, Fagus, Betula y Carpinus.
@@ -270,6 +288,7 @@ const SPECIES = [
     key: 'gula_monte', lat: 'Craterellus lutescens', es: 'Gula de monte / Trompeta amarilla',
     alias: 'Cantharellus lutescens · Camagroc',
     guild: 'ectomicorricico',
+    prioridad: 52,
     // Micorrízico, en pinares y abetales, sobre musgo y suelos húmedos;
     // en grandes colonias, a menudo cerca del mar.
     habitat: ['pinar', 'bosque_mixto'],
@@ -286,9 +305,10 @@ const SPECIES = [
     gddNeed: 150, L: 14, Ro: 45, diasMax: 60,
   },
   {
-    key: 'hongo_verano', lat: 'Boletus reticulatus', es: 'Hongo de verano',
+    key: 'hongo_verano', lat: 'Boletus reticulatus', es: 'Boleto Reticulado',
     alias: 'Boletus aestivalis · Cèpe d\'été · Sommerröhrling',
     guild: 'ectomicorricico',
+    prioridad: 41,
     // Micorrízico con Quercus, Fagus y Castanea en robledal caducifolio.
     habitat: ['robledal', 'hayedo', 'castaneral', 'bosque_mixto'],
     temporada: [5, 6, 7, 8],
@@ -310,6 +330,7 @@ const SPECIES = [
     key: 'boleto_bronce', lat: 'Boletus aereus', es: 'Boleto bronce / Hongo negro',
     alias: 'Boletus edulis f. aereus · B. mamorensis',
     guild: 'ectomicorricico',
+    prioridad: 42,
     // Micorrízico con frondosas y arbustos esclerófilos. Hospedante clave:
     // Quercus suber (alcorque). También Fagus, Castanea, Arbutus, Erica, Cistus.
     habitat: ['robledal', 'dehesa', 'encinar', 'castaneral', 'hayedo', 'matorral', 'bosque_mixto'],
@@ -331,6 +352,7 @@ const SPECIES = [
     key: 'gurmelo', lat: 'Gyromitra esculenta', es: 'Gurumelo',
     alias: 'Helvella esculenta · Morfalsa · Falsa colmenilla',
     guild: 'saprofita',
+    prioridad: 62,
     // Suelo arenoso, pinares y bosques caducifolios.
     habitat: ['pinar', 'hayedo', 'bosque_mixto'],
     temporada: [3, 4, 5],
@@ -356,6 +378,7 @@ const SPECIES = [
     key: 'seta_cardo', lat: 'Pleurotus eryngii', es: 'Seta de cardo',
     alias: 'Cardoncello · Gírgola de panical · Pleurote du panicaut',
     guild: 'saprofita_raices',
+    prioridad: 61,
     // NO crece sobre madera: es la única Pleurotus que fructifica sobre las
     // raíces y la base del tallo de plantas vivas de las Apiáceas
     // (umbeliferas). En España, sobre todo Eryngium campestre, en praderas
@@ -666,6 +689,24 @@ function ranking(ctx) {
     .sort((a, b) => b.I - a.I);
 }
 
+/**
+ * Las mismas especies ordenadas por el criterio de interés del usuario, no
+ * por puntuación. Cada ficha lleva `prioridad`: el boleto, el níscalo y el
+ * rebozuelo van primero, después el resto de boletos, y el resto detrás.
+ *
+ * Se usa para pintar las tarjetas del dashboard y la lista de la pestaña
+ * Especies. La tabla de Análisis sigue ordenada por índice, porque ahí lo
+ * que interesa es la puntuación.
+ */
+function porPrioridad(entradas) {
+  return [...entradas].sort((a, b) => {
+    const pa = a.sp?.prioridad ?? a.prioridad ?? 999;
+    const pb = b.sp?.prioridad ?? b.prioridad ?? 999;
+    if (pa !== pb) return pa - pb;
+    return (b.I ?? 0) - (a.I ?? 0);
+  });
+}
+
 // ------------------------------------------------------------
 // Obtención de datos
 // ------------------------------------------------------------
@@ -736,6 +777,8 @@ async function meteo(lat, lon, days = 30) {
   return {
     dia: diaDelAnio(new Date(d.time[idxHoy] + 'T00:00:00')),
     mes: new Date(d.time[idxHoy] + 'T00:00:00').getMonth() + 1,
+    lat,
+    lon,
     historial,
     lluvia30,
     tSuelo: sueloDiario[idxHoy],
