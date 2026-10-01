@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍄 MicoHunter — Potencial de Fructificación</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">🍄</span>
+      <div>
+        <h1>MicoHunter</h1>
+        <p class="tagline">Potencial de fructificación por especie, suelo y clima</p>
+      </div>
+    </div>
+    <div class="sources">
+      <span>Open-Meteo</span>
+      <span>SoilGrids</span>
+      <span>OpenStreetMap</span>
+    </div>
+  </div>
+</header>
+
+<nav class="nav">
+  <button class="nav-btn active" data-section="dashboard">🗺️ Dashboard</button>
+  <button class="nav-btn" data-section="analisis">🌧️ Análisis</button>
+  <button class="nav-btn" data-section="setas">🍄 Especies</button>
+  <button class="nav-btn" data-section="favoritos">⭐ Mis setales</button>
+  <button class="nav-btn" data-section="guia">📖 Metodología</button>
+  <button class="nav-btn" data-section="leyenda">🔍 Leyenda</button>
+</nav>
+
+<main class="main">
+
+  <!-- ═══════════════ DASHBOARD ═══════════════ -->
+  <section id="dashboard" class="section active">
+    <div class="dashboard-grid">
+
+      <!-- El mapa y la ficha de suelo y clima comparten fila (2fr 1fr) -->
+      <div class="card map-card">
+        <h2>🗺️ Zona de análisis</h2>
+        <div class="search-row">
+          <input type="text" id="searchInputDashboard" placeholder="Buscar localidad…">
+          <button class="btn" id="searchBtnDashboard">Buscar</button>
+        </div>
+        <select id="geoSelect" class="geo-select"></select>
+        <div id="dashboardMap" class="map"></div>
+        <div class="map-actions">
+          <button class="btn" id="saveFavoriteBtn">⭐ Guardar ubicación de setal</button>
+        </div>
+
+        <!-- Formulario de guardado. Se despliega al pulsar el botón, en vez
+             de usar window.prompt(), que algunos navegadores bloquean. -->
+        <div class="save-fav-panel" id="saveFavPanel" hidden>
+          <label class="save-fav-label" for="saveFavName">Nombre de la ubicación</label>
+          <div class="save-fav-row">
+            <input type="text" id="saveFavName" placeholder="Picos de Europa" maxlength="60">
+            <button class="btn" id="saveFavConfirm">Guardar</button>
+            <button class="btn btn-ghost" id="saveFavCancel" type="button">Cancelar</button>
+          </div>
+          <p class="save-fav-coords" id="saveFavCoords"></p>
+        </div>
+      </div>
+
+      <div class="card terrain-card">
+        <h3>🌍 Suelo y clima</h3>
+        <div class="terrain-list">
+          <div class="terrain-item"><span class="ti">📍</span><span class="tl">Lugar</span><span class="tv" id="locationName">—</span></div>
+          <div class="terrain-item"><span class="ti">📌</span><span class="tl">Coordenadas</span><span class="tv" id="coordinatesValue">—</span></div>
+          <div class="terrain-item"><span class="ti">⛰️</span><span class="tl">Altitud</span><span class="tv" id="altitudeValue">—</span></div>
+          <div class="terrain-item"><span class="ti">🌡️</span><span class="tl">T° suelo</span><span class="tv" id="soilTempValue">—</span></div>
+          <div class="terrain-item"><span class="ti">🌬️</span><span class="tl">T° aire</span><span class="tv" id="airTempValue">—</span></div>
+          <div class="terrain-item"><span class="ti">🥶</span><span class="tl">Mín. 7d</span><span class="tv" id="minTempValue">—</span></div>
+          <div class="terrain-item"><span class="ti">💧</span><span class="tl">Humedad 7d</span><span class="tv" id="humidityValue">—</span></div>
+          <div class="terrain-item"><span class="ti">🌧️</span><span class="tl">Lluvia 7d</span><span class="tv" id="rain7Value">—</span></div>
+          <div class="terrain-item"><span class="ti">📅</span><span class="tl">Día del año</span><span class="tv" id="dayOfYearValue">—</span></div>
+          <div class="terrain-item"><span class="ti">🪨</span><span class="tl">Textura</span><span class="tv" id="soilTypeValue">—</span></div>
+          <div class="terrain-item"><span class="ti">⚗️</span><span class="tl">pH</span><span class="tv" id="phValue">—</span></div>
+        </div>
+        <div class="soil-summary" id="soilSummary"></div>
+
+        <div class="status-block">
+          <div class="status-indicator" id="generalStatus">
+            <div class="status-icon">⏳</div>
+            <div class="status-text"><span class="status-label">Cargando…</span></div>
+          </div>
+          <div class="last-update" id="lastUpdate"></div>
+        </div>
+      </div>
+
+      <!-- tarjetas dinámicas -->
+      <div id="mushroomCardsContainer" class="mushroom-cards-grid"></div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════ ANÁLISIS ═══════════════ -->
+  <section id="analisis" class="section">
+    <div id="mushroomAnalysisContainer"></div>
+  </section>
+
+  <!-- ═══════════════ ESPECIES ═══════════════ -->
+  <section id="setas" class="section">
+    <div class="section-head">
+      <h2>🍄 Especies monitorizadas</h2>
+      <p>Selecciona cuáles mostrar en el dashboard. Cada ficha indica si sus umbrales
+      están publicados o son una derivación de la temporada documentada.</p>
+    </div>
+    <div class="card">
+      <h3>Selección</h3>
+      <div id="mushroomSelector" class="mushroom-selector"></div>
+    </div>
+    <div class="card">
+      <h3>Ficha por especie</h3>
+      <p class="hint">☠️ Marca las especies tóxicas: el gurumelo
+      (<em>Gyromitra esculenta</em>) figura sólo como referencia de fenología. Contiene
+      gyromitrin, la venta está prohibida en toda España y aparece como especie
+      peligrosa en las listas oficiales de la Generalitat de Cataluña. Cocinar o secar
+      no la vuelve segura.</p>
+      <div id="mushroomInfoGrid" class="mushroom-info-grid"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FAVORITOS ═══════════════ -->
+  <section id="favoritos" class="section">
+    <div class="section-head">
+      <h2>🍄 Mis setales</h2>
+    </div>
+    <div class="card">
+      <h3>Añadir manualmente</h3>
+      <div class="add-fav-row">
+        <input type="text" id="favoriteName" placeholder="Nombre">
+        <input type="number" id="favoriteLat" step="0.0001" placeholder="Latitud" min="-90" max="90">
+        <input type="number" id="favoriteLng" step="0.0001" placeholder="Longitud" min="-180" max="180">
+        <button class="btn" id="addFavoriteBtn">Añadir</button>
+      </div>
+      <p class="hint-text">La forma rápida es pulsar «⭐ Guardar ubicación de setal»
+      en el dashboard: usa la posición actual del mapa y ya propone el nombre del lugar.</p>
+    </div>
+    <div class="card">
+      <h3>Guardadas <span class="count-badge" id="favCount"></span></h3>
+      <div id="favoritesList"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ METODOLOGÍA ═══════════════ -->
+  <section id="guia" class="section">
+    <div class="section-head">
+      <h2>📖 Cómo se calcula</h2>
+      <p>Descripción completa del método: qué se mide, cómo se combinan los factores,
+      con qué datos reales y qué se puede y qué no se puede concluir.</p>
+    </div>
+
+    <!-- ───────────── 1. PLANTEAMIENTO ───────────── -->
+    <div class="card">
+      <h3>1 · Qué se intenta predecir</h3>
+      <p>La pregunta que se responde no es «¿habrá setas el sábado?», sino
+      <strong>«¿qué especie tiene ahora mismo las condiciones más favorables para
+      fructificar en este punto?»</strong></p>
+      <p>Es una diferencia importante. La producción de setas es discreta: aparecen
+      en <em>pulsos</em>, en una ventana de pocos días y luego nada durante semanas.
+      Un índice continuo no puede acertar el día exacto, y la literatura es explícita
+      en que la fenología de un punto concreto se aparta de la media. Lo que sí puede
+      hacer un índice es <strong>ordenar</strong>: decirte que en esta Ladera y con
+      este suelo, la seta de pino va treinta puntos por delante que el rebozuelo, y
+      que en noviembre lo es la trompetilla. Sirve para planificar la salida, no para
+      prometer el hallazgo.</p>
+    </div>
+
+    <!-- ───────────── 2. DATOS ───────────── -->
+    <div class="card">
+      <h3>2 · De dónde salen los números</h3>
+      <p>Todos los datos de entrada son medidas o mapas reales. Ninguno es inventado
+      ni de relleno.</p>
+      <ul class="method-list">
+        <li><strong>Open-Meteo</strong> — lluvia diária, temperatura del aire a 2 m,
+          mínima y máxima, humedad relativa, y temperatura del suelo a 18 cm. Se piden
+          30 días hacia atrás y el día en curso, así que la ventana histórica es
+          <em>observada</em>, no previsión. La profundidad de 18 cm es la más próxima a
+          la franja donde vive la micorriza fúngica.</li>
+        <li><strong>SoilGrids 2.0 (ISRIC)</strong> — textura, pH y carbono orgánico
+          del suelo en el horizonte de 5-15 cm, rejilla de 250 m. Es un mapa
+          interpolado, no una medición de campo: el valor es el estimado para el
+          píxel, no el del suelo que tienes delante de la bota.</li>
+        <li><strong>OpenStreetMap / Nominatim</strong> — toponimia y mapa. Si el
+          servicio no responde, la app sigue funcionando y muestra coordenadas en
+          lugar del nombre del pueblo.</li>
+        <li><strong>Bibliografía micológica</strong> — temporada de fructificación,
+          árboles hospedantes, sustrato y comestibilidad de cada especie.</li>
+      </ul>
+      <p class="hint">Open-Meteo ya corrige la temperatura por la elevación del punto
+      de la rejilla (gradiente de 0,0065 °C/m). Aplicar ese gradiente otra vez sería
+      contarlo dos veces y, en un punto de 2400 m, restar 12 °C de más, así que el
+      modelo <strong>no lo repite</strong>.</p>
+    </div>
+
+    <!-- ───────────── 3. FACTORES ───────────── -->
+    <div class="card">
+      <h3>3 · Los seis factores</h3>
+      <p>El índice es un producto de seis factores, todos entre 0 y 1. Se multiplican,
+      de modo que el peor de ellos domina el resultado: es intencionado, porque una
+      especie no fructifica con un factor a cero aunque los demás sean excelentes.</p>
+
+      <h4>🌡️ S · Potencial estacional (temperatura del suelo)</h4>
+      <p>Mide si la <em>temperatura del suelo</em> está en el rango que la especie
+      necesita. Cada especie tiene cuatro umbrales:</p>
+      <ul class="method-list">
+        <li><code>tBase</code> — por encima de esta temperatura el micelio puede
+          empezar a acumular calor.</li>
+        <li><code>tOpt</code> — el óptimo. Fuera de él el potencial baja.</li>
+        <li><code>tMax</code> — techo. Por encima hay estrés, y el potencial cae
+          hasta cero en 6 °C más.</li>
+        <li><code>tCrit</code> — mínima absoluta. Por debajo, o con helada, la
+          temporada se cierra.</li>
+      </ul>
+      <p>La curva interior es una parábola suavizada, con el máximo desplazado hacia
+      el óptimo y no hacia el punto medio del rango. Esto importa porque en
+      <em>Boletus edulis</em> el óptimo medido (13,2 °C) queda bastante por debajo del
+      punto medio de su rango.</p>
+      <p class="hint">Por qué el suelo y no el aire: los estudios de producción de
+      <em>B. edulis</em> encuentran que la temperatura del suelo impone una restricción
+      más fuerte que la precipitación a corto plazo. Es también por eso que el suelo
+      a 18 cm va por delante del aire: en una prueba con datos reales de cinco
+      puntos, el suelo estaba entre 1,2 °C y 4,1 °C por encima del aire, y esa
+      diferencia crece con el contraste térmico del día.</p>
+      <p class="hint">La curva interior del factor S no es simétrica: el máximo se
+      sitúa en <code>tOpt</code>, no en el punto medio del rango. Por eso el óptimo de
+      <em>B. edulis</em> medido en campo, 13,2 °C, queda claramente por debajo del
+      centro de su rango térmico.</p>
+
+      <h4>🔥 A · Acumulación térmica (grados-día)</h4>
+      <p>No basta con que la temperatura sea buena hoy: el micelio ha estado
+      acumulando calor. Se suman los <em>grados-día</em> diarios
+      <code>(temperatura del suelo − tBase)</code> desde el último día en que el suelo
+      estuvo por debajo de la base, y se dividen por <code>gddNeed</code>, los grados
+      que la especie necesita para fructificar.</p>
+      <p>El recorrido hacia atrás se detiene en cuanto encuentra un día por debajo de
+      la base, porque ahí empieza una temporada nueva: la acumulación anterior no
+      cuenta. Si encuentra un día por debajo de <code>tCrit</code>, marca
+      <strong>helada</strong> y anula el índice entero.</p>
+      <p class="hint">Los días por encima de <code>tMax</code> cuentan 2 en lugar de
+      sumar la diferencia, porque el estrés térmico no produce acumulación útil.</p>
+
+      <h4>🌧️ H · Factor hídrico (lluvia efectiva)</h4>
+      <p>No cuenta la lluvia de hoy, sino la <em>reserva</em> de humedad que ha dejado
+      en el suelo. Se aplica un decaimiento exponencial sobre una ventana de <code>L</code>
+      días, distinta por especie:</p>
+      <p class="formula small">reff = Σ<sub>d=0…L</sub> lluvia(d) · e<sup>−d/L</sup></p>
+      <p>La lluvia de hace 0 días pesa el 100 %, la de hace <em>L</em> días pesa el
+      37 %, y la de hace 3·<em>L</em> días, el 5 %. Luego <code>H = reff / Ro</code>,
+      donde <code>Ro</code> es la lluvia que satura el factor para esa especie.</p>
+      <p class="hint">El decaimiento, y no una suma simple, es lo que separa un setal
+      de otro: con la misma lluvia total repartida de forma distinta, el
+      resultado cambia por completo.</p>
+
+      <h4>📅 T · Temporada documentada</h4>
+      <p>La ventana de meses en la que cada especie fructifica, tomada de las fichas
+      micológicas. Es, junto con el hospedante, el dato más sólido de que se dispone
+      en micología, así que entra como <em>peso</em> y no como veto:</p>
+      <ul class="method-list">
+        <li>dentro de la ventana → 100 %</li>
+        <li>hasta 2 meses fuera → 45 %</li>
+        <li>más lejos → 15 %</li>
+      </ul>
+      <p>No es un corte duro porque en España la ventana se desplaza con la latitud
+      y la altitud: un corte estricto en el Pirineo borraría al hongo de verano de los
+      robledales de León, donde sí sale hasta febrero.</p>
+
+      <h4>🌲 F<sub>hábitat</sub> · Compatibilidad de hábitat</h4>
+      <p>Compara la cobertura vegetal estimada del punto con los hábitats de la
+      especie. Los hábitats están ordenados por frecuencia, así que los dos primeros
+      son los principales.</p>
+      <ul class="method-list">
+        <li>coincide con un hábitat principal → 100 %</li>
+        <li>coincide con uno secundario → 60 %</li>
+        <li>no coincide y la especie no está confinada → 25 %</li>
+        <li>no coincide y está confinada (níscalo a pino, hongo de verano al roble) → 5 %</li>
+      </ul>
+      <p>Encima se aplican ajustes: las especies acidófilas ganan un 15 % de bonificación
+      en pH < 5,5; las alcalinófilas, igual por encima de 7,2; las no acidófilas pierden
+      un 30 % en suelos calizos; y se penaliza a los grupos equivocados (los saprofitas
+      en hayedo, los ectomicorrícicos en pradera abierta).</p>
+      <p class="hint">Deliberadamente <strong>degrada</strong> en vez de vetar. La
+      vegetación se infiere por tablas de coordenadas, así que un 0 duro produciría
+      «gírgola: requiere tronco» en cualquier punto que no caiga en la tabla.</p>
+
+      <h4>⛰️ F<sub>altitud</sub> · Factor altitudinal</h4>
+      <p>Banda óptima entre 1450 y 1650 m, con caída suave por debajo y por encima,
+      según lo observado por Martínez-Peña et al. (2012) sobre masa basal en
+      <em>B. edulis</em>. Por debajo de 800 m el factor es 0,5.</p>
+    </div>
+
+    <!-- ───────────── 4. FÓRMULA ───────────── -->
+    <div class="card">
+      <h3>4 · La fórmula</h3>
+      <p class="formula">I = 100 · S · H<sup>0.5</sup> · A · T · F<sub>hábitat</sub> · F<sub>altitud</sub></p>
+      <p>El índice va de 0 a 100 y se traduce a cuatro niveles cualitativos:</p>
+      <div class="level-table">
+        <div><span class="indice-badge nivel-alto">70-100</span> Muy favorable</div>
+        <div><span class="indice-badge nivel-medio">45-69</span> Favorable</div>
+        <div><span class="indice-badge nivel-bajo">22-44</span> Posible</div>
+        <div><span class="indice-badge nivel-nulo">0-21</span> Desfavorable</div>
+      </div>
+      <p>El exponente 0,5 sobre el factor hídrico es deliberado: en la práctica la
+      respuesta a la lluvia se amortigua, porque un suelo ya saturado no sigue
+      admitiendo más. Sin esa raíz, las zonas con lluvia abundante dominarían la
+      clasificación.</p>
+      <p class="hint">El único <em>anular</em> del modelo es la helada reciente en el
+      suelo. Todo lo demás pondera.</p>
+    </div>
+
+    <!-- ───────────── 5. PROCEDENCIA ───────────── -->
+    <div class="card">
+      <h3>5 · Cómo se ejecuta</h3>
+      <ol class="method-list">
+        <li>Se piden 31 días a Open-Meteo con <code>past_days=30</code> y
+          <code>forecast_days=1</code>, de modo que la ventana es observación y no
+          predicción.</li>
+        <li>La temperatura del suelo se resume a un valor diario por el promedio de sus
+          24 horas. La lluvia se invierte para que el índice 0 sea hoy.</li>
+        <li>Se consulta SoilGrids en el horizonte de 5-15 cm. Los resultados se
+          cachean 180 días en <code>localStorage</code>, porque ISRIC limita a 5
+          consultas por minuto.</li>
+        <li>Se calculan los seis factores para las 19 especies y se ordenan de mayor a
+          menor índice.</li>
+        <li>Las especies marcadas como seleccionadas se pinta como tarjetas; todas
+          aparecen en la tabla de Análisis.</li>
+      </ol>
+    </div>
+
+    <!-- ───────────── 6. PROCEDENCIA DE DATOS ───────────── -->
+    <div class="card warn-card">
+      <h3>6 · Qué está medido y qué no</h3>
+      <p>Es el punto más importante del modelo, así que va explícito. Cada ficha de
+      especie lleva una etiqueta de procedencia:</p>
+      <ul class="method-list">
+        <li><span class="evidencia-badge ev-publicado">Parámetros publicados</span>
+          — umbrales térmicos medidos en campo. Sólo <em>Boletus edulis</em> lo tiene:
+          óptimo de 13,2 °C (Lamartiniere &amp; Hoffman, 2025).</li>
+        <li><span class="evidencia-badge ev-derivado">Derivados de la temporada</span>
+          — la <em>temporada</em>, el <em>hospedante</em> y el <em>sustrato</em> están
+          documentados; los umbrales numéricos se deducen de esa ventana. No existe
+          medición publicada de ellos.</li>
+        <li><span class="evidencia-badge ev-estimado">Estimados</span>
+          — sin temporada verificada en la fuente usada; los valores son un punto de
+          partida razonado.</li>
+      </ul>
+      <p>En resumen: los <strong>datos de entrada</strong> son reales y proceden de
+      Open-Meteo, SoilGrids y bibliografía. Los <strong>umbrales del modelo</strong> no
+      están medidos para ninguna de las 19 especies salvo una, y no deben leerse como
+      resultados científicos.</p>
+    </div>
+
+    <!-- ───────────── 7. LIMITACIONES ───────────── -->
+    <div class="card warn-card">
+      <h3>7 · Limitaciones</h3>
+      <ul class="method-list">
+        <li>La producción real ocurre en <strong>pulsos</strong>, no de forma continua.
+          Un índice no puede situar el pulso.</li>
+        <li>La vegetación y la exposición se infieren por heurística de coordenadas,
+          no por un mapa de uso del suelo. Es la fuente de error más probable.</li>
+        <li>No se modela la fotosíntesis del hospedante, que en ectomicorrícicos explica
+          parte importante de la respuesta a la precipitación.</li>
+        <li>No se modela la competencia con otros hongos ni el daño porenangiosperma.</li>
+        <li>SoilGrids es un mapa interpolado a 250 m: puede describir un suelo
+          distinto del que hay bajo tus pies.</li>
+        <li>Sin observaciones propias el índice no está validado. Úsalo como
+          orientación, nunca como garantía.</li>
+      </ul>
+      <p class="hint">Ninguna app puede sustituir el conocimiento micológico de campo.
+      En particular, este modelo dice <em>cuándo y dónde</em> las condiciones son
+      buenas; no dice si el hongo que ves es comestible, y en ningún caso debe usarse
+      para decidir qué se come.</p>
+    </div>
+
+    <!-- ───────────── 8. REFERENCIAS ───────────── -->
+    <div class="card">
+      <h3>8 · Referencias</h3>
+      <ul class="method-list refs">
+        <li>Lamartiniere &amp; Hoffman (2025) — GLMM sobre <em>Boletus edulis</em>,
+          óptimo térmico del suelo 13,2 °C. bioRxiv 10.64898/2025.12.12.693895</li>
+        <li>Martínez-Peña et al. (2012) — masa basal y altitud en <em>B. edulis</em>;
+          óptimo 1450-1650 m.</li>
+        <li>Kauserud et al. (2012) PNAS — cambio de fenología fúngica por el
+          calentamiento.</li>
+        <li>Hall et al. (2012) PLoS ONE — 30 años de censo en bosque de roble;
+          contraste ectomicorrícicos y saprofitas.</li>
+        <li>Egli et al. (2010) — agua y suelo como factores limitantes del crecimiento
+          fúngico.</li>
+        <li>Beugelsdijk et al. (2008) Mycol. Res. — filogenia de <em>Boletus</em> sect.
+          <em>Boletus</em>: <em>B. aereus</em> y <em>B. reticulatus</em> son especies
+          distintas de <em>B. edulis</em>.</li>
+        <li>Carlavilla &amp; Manjón (2023) Ital. Mycol. — <em>Pleurotus eryngii</em> como
+          patógeno necrotrófico de <em>Eryngium campestre</em>.</li>
+        <li>Michelot &amp; Toth (1991) J. Appl. Toxicol. 11(4):235-43 — intoxicación por
+          <em>Gyromitra esculenta</em>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════════ LEYENDA ═══════════════ -->
+  <section id="leyenda" class="section">
+    <div class="section-head">
+      <h2>🔍 Leyenda</h2>
+      <p>Qué significa cada dato que aparece en las tarjetas de setas y en el panel
+      de suelo y clima.</p>
+    </div>
+
+    <!-- ───────── Tarjetas ───────── -->
+    <div class="card">
+      <h3>Tarjeta de seta</h3>
+
+      <h4>El anillo y el potencial</h4>
+      <dl class="glossary">
+        <dt>Potencial (índice I)</dt>
+        <dd>Número de 0 a 100 que resume las seis condiciones. No es un porcentaje de
+          probabilidad de que salga el hongo: es una posición relativa en una escala
+          común para las 19 especies.</dd>
+
+        <dt>Muy favorable / Favorable / Posible / Desfavorable</dt>
+        <dd>Traducción del índice en cuatro tramos: 70-100, 45-69, 22-44 y 0-21.</dd>
+      </dl>
+
+      <h4>Las cuatro barras de factores</h4>
+      <dl class="glossary">
+        <dt>🌡️ Estacional (S)</dt>
+        <dd>Si la temperatura del suelo está en el rango que necesita la especie,
+          entre su base y su techo. Si sale 0 %, el suelo está demasiado frío o
+          demasiado caliente.</dd>
+
+        <dt>🌧️ Hídrico (H)</dt>
+        <dd>Reserva de humedad del suelo, calculada con la lluvia de los últimos días
+          vista con decaimiento exponencial. 100 % significa que la lluvia acumulada
+          ya ha superado lo que la especie aprovecha.</dd>
+
+        <dt>🔥 Acumulación (A)</dt>
+        <dd>Grados-día acumulados desde que el suelo superó la temperatura base,
+          sobre los que la especie necesita. Si está bajo, la seta todavía no ha
+          tenido tiempo de acumular calor suficiente.</dd>
+
+        <dt>📅 Temporada (T)</dt>
+        <dd>Si el mes actual cae dentro de la temporada documentada de la especie.
+          100 % dentro, 45 % hasta dos meses fuera, 15 % más lejos.</dd>
+      </dl>
+
+      <h4>Condiciones de la zona</h4>
+      <dl class="glossary">
+        <dt>T° suelo</dt>
+        <dd>Temperatura del suelo a 18 cm en el punto elegido. Es la variable con más
+          peso en todo el modelo.</dd>
+
+        <dt>T° óptima</dt>
+        <dd>Temperatura de suelo a la que la especie rinde mejor. La tiene
+          <em>Boletus edulis</em> medida en campo (13,2 °C); en el resto es una
+          derivación de la temporada documentada.</dd>
+
+        <dt>Hábitat estimado</dt>
+        <dd>Vegetación que el modelo cree que hay en el punto, deducida de las
+          coordenadas. Es la variable menos fiable de todas.</dd>
+
+        <dt>GDD acum.</dt>
+        <dd>Grados-día ya acumulados sobre los que la especie necesita para
+          fructificar.</dd>
+
+        <dt>Lluvia eff.</dt>
+        <dd>Lluvia efectiva en milímetros: la lluvia real de los últimos días después
+          de aplicar el decaimiento. Siempre es menor que la lluvia total medida.</dd>
+      </dl>
+
+      <h4>Ficha de la especie</h4>
+      <dl class="glossary">
+        <dt>Base / Techo</dt>
+        <dd>Rango de temperatura de suelo en el que la especie puede fructificar.
+          <code>tBase</code> es el umbral inferior y <code>tMax</code> el superior.</dd>
+
+        <dt>Helada crítica</dt>
+        <dd>Temperatura de suelo por debajo de la cual se da por perdida la
+          temporada. Es el único fator que pone el índice a cero.</dd>
+
+        <dt>Ventana hídrica</dt>
+        <dd>Cuántos días hacia atrás mira el modelo la lluvia, y con qué decaimiento.
+          Especies con ventana larga notan una lluvia vieja; con ventana corta,
+          casi nada.</dd>
+
+        <dt>Lluvia óptima</dt>
+        <dd>Lluvia efectiva a partir de la cual el factor hídrico llega al 100 %.</dd>
+
+        <dt>Grupo</dt>
+        <dd>Modo de vida: <strong>ectomicorrícico</strong> (vive asociado a las raíces
+          de un árbol, con el que comparte la seta), <strong>saprofita</strong>
+          (descompone materia orgánica muerta), <strong>saprofita de madera</strong>
+          (sólo crece sobre leño) o <strong>saprofita de raíces</strong> (como la seta
+          de cardo, que parasita umbelíferas).</dd>
+
+        <dt>Factor hábitat</dt>
+        <dd>Penalización por la cobertura vegetal estimada. Aparece la marca «bajo»
+          cuando la especie no tiene aquí el hábitat que necesita.</dd>
+
+        <dt>Factor altitud</dt>
+        <dd>Penalización por cota, con óptimo entre 1450 y 1650 m.</dd>
+
+        <dt>Temporada documentada</dt>
+        <dd>Meses del año en que esa especie fructifica, según las fichas
+          micológicas.</dd>
+
+        <dt>Comestibilidad</dt>
+        <dd>Valoración de aptitud, tal como aparece en las fuentes. La marca
+          <span class="tox-inline">☠️ TÓXICO</span> significa que la seta no debe
+          consumirse en ninguna circunstancia.</dd>
+      </dl>
+    </div>
+
+    <!-- ───────── Suelo y clima ───────── -->
+    <div class="card">
+      <h3>Panel de suelo y clima</h3>
+
+      <h4>Identificación del punto</h4>
+      <dl class="glossary">
+        <dt>Lugar</dt>
+        <dd>Topónimo del punto, resuelto por Nominatim. Si el servicio no responde,
+          muestra las coordenadas en su lugar.</dd>
+
+        <dt>Coordenadas</dt>
+        <dd>Latitud y longitud exactas del punto elegido, con el hemisferio marcado.</dd>
+
+        <dt>Altitud</dt>
+        <dd>Cota del punto de la rejilla meteorológica. Open-Meteo ya corrige la
+          temperatura por esta altitud.</dd>
+      </dl>
+
+      <h4>Temperaturas</h4>
+      <dl class="glossary">
+        <dt>T° suelo</dt>
+        <dd>Media de las 24 horas del suelo a 18 cm. Es la variable que más pesa en
+          el cálculo.</dd>
+
+        <dt>T° aire</dt>
+        <dd>Media de la temperatura del aire a 2 m. Se muestra para poder compararla
+          con la del suelo: normalmente el suelo va de 1 a 4 °C por encima.</dd>
+
+        <dt>Mín. 7d</dt>
+        <dd>La temperatura mínima del aire más baja de los últimos siete días. Un
+          valor cercano a 0 °C avisa de riesgo de helada.</dd>
+      </dl>
+
+      <h4>Agua</h4>
+      <dl class="glossary">
+        <dt>Humedad 7d</dt>
+        <dd>Media de la humedad relativa del aire de los últimos siete días.</dd>
+
+        <dt>Lluvia 7d</dt>
+        <dd>Precipitación acumulada de los últimos siete días. Es lluvia real
+          medida, no la efectiva del modelo.</dd>
+      </dl>
+
+      <h4>Calendario y suelo</h4>
+      <dl class="glossary">
+        <dt>Día del año</dt>
+        <dd>Día juliano, de 1 a 365. Sirve para contrastar con la temporada de cada
+          especie.</dd>
+
+        <dt>Textura</dt>
+        <dd>Clasificación textural del suelo a partir del porcentaje de arena, arcilla
+          y limo, según el triángulo textural de USDA simplificado: arcilloso
+          (&gt; 35 % arcilla), arenoso (&gt; 70 % arena), franco-arenoso, franco-arcilloso
+          o franco.</dd>
+
+        <dt>pH</dt>
+        <dd>Acidez del suelo en el horizonte de 5-15 cm. Bajo 5,5 ácido, entre 5,5 y 7,0
+          subácido, entre 7,0 y 7,8 neutro, por encima de 7,8 calizo. Afecta al factor
+          de hábitat de las especies acidófilas y alcalinófilas.</dd>
+
+        <dt>Resumen del suelo</dt>
+        <dd>Repite la textura desglosada en sus tres componentes, más el carbono
+          orgánico en gramos por kilo. Procede de SoilGrids 2.0, horizonte de 5-15 cm,
+          rejilla de 250 m.</dd>
+      </dl>
+
+      <h4>Estado general</h4>
+      <dl class="glossary">
+        <dt>Condiciones muy favorables / favorables / posibles / desfavorables</dt>
+        <dd>Valoración del conjunto de las especies seleccionadas, por media de sus
+          índices.</dd>
+
+        <dt>Mejor especie</dt>
+        <dd>La que encabeza el ranking en ese punto, con su temperatura óptima.</dd>
+
+        <dt>Fuente de datos</dt>
+        <dd>Open-Meteo para la meteorología, SoilGrids para el suelo y OpenStreetMap
+          para la toponimia y el mapa.</dd>
+      </dl>
+    </div>
+
+    <!-- ───────── Otras pantallas ───────── -->
+    <div class="card">
+      <h3>Otras pantallas</h3>
+      <dl class="glossary">
+        <dt>Acumulados 3 / 7 / 15 / 30 días</dt>
+        <dd>Lluvia real sumada en cada ventana. Suelen diferir del «Lluvia eff.» de
+          las tarjetas, que es la misma lluvia vista con decaimiento.</dd>
+
+        <dt>Amplitud suelo-aire</dt>
+        <dd>Diferencia entre la temperatura del suelo y la del aire. Un valor alto
+          significa suelo cálido respecto al ambiente, típico de días de fuerte
+          contraste térmico.</dd>
+
+        <dt>Vegetación (est.)</dt>
+        <dd>Lista de hábitats que el modelo asigna al punto por sus coordenadas. Es
+          una estimación por zona amplia, no una lectura del mapa de usos.</dd>
+
+        <dt>Zonas de setas</dt>
+        <dd>Desplegable del mapa. Contiene primero los setales que has guardado y
+          después diez zonas micológicas de referencia de toda España.</dd>
+      </dl>
+    </div>
+  </section>
+
+</main>
+
+<div id="loading" class="loading" style="display:none">
+  <div class="spinner"></div>
+  <span>Consultando Open-Meteo y SoilGrids…</span>
+</div>
+
+<footer class="footer">
+  <p>MicoHunter · Modelo experimental. No sustituye el conocimiento micológico de campo.</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="algoritmo.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

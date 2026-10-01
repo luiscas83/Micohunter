@@ -1,0 +1,2726 @@
+/* ===== RESET & BASE ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #2d5016;
+    --primary-light: #4a7c23;
+    --secondary: #8b4513;
+    --accent: #d4a574;
+    --bg: #f5f5f0;
+    --bg-subtle: #f0f2e9;
+    --card-bg: #ffffff;
+    --text: #2c2c2c;
+    --text-light: #666666;
+    --border: #e0e0d8;
+    --success: #4caf50;
+    --warning: #ff9800;
+    --danger: #f44336;
+    --info: #2196f3;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-hover: 0 4px 16px rgba(0,0,0,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* ===== APP CONTAINER ===== */
+.app {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ===== HEADER ===== */
+.header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: white;
+    padding: 30px 0;
+    margin: 0 -20px 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.logo-icon {
+    font-size: 2.5rem;
+}
+
+.logo h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.tagline {
+    opacity: 0.9;
+    font-size: 1rem;
+    font-weight: 300;
+}
+
+/* ===== NAVIGATION ===== */
+.nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    background: var(--card-bg);
+    padding: 8px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.nav-btn {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-light);
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+    background: var(--bg);
+    color: var(--text);
+}
+
+.nav-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
+/* ===== SECTIONS ===== */
+.section {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.section-header {
+    margin-bottom: 24px;
+}
+
+.section-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.section-desc {
+    color: var(--text-light);
+    font-size: 1rem;
+}
+
+/* ===== CARDS ===== */
+.card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+    transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-hover);
+}
+
+.card h2 {
+    font-size: 1.25rem;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: var(--primary);
+}
+
+/* ===== DASHBOARD GRID =====
+   El mapa y la tarjeta de suelo y clima van uno al lado del otro: el mapa
+   toma 2 fracciones y la ficha de valores 1. Debajo, en fila completa, van
+   las tarjetas de especies (3 columnas) y el resumen. */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.dashboard-grid .map-card {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.dashboard-grid .terrain-card {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: stretch;
+}
+
+.dashboard-grid .mushroom-cards-grid {
+    grid-column: 1 / -1;
+    grid-row: 2;
+}
+
+.dashboard-top-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+.dashboard-map-card {
+    grid-column: auto;
+}
+
+#dashboardMap {
+    height: 500px;
+    border-radius: var(--radius-sm);
+    z-index: 1;
+}
+
+.dashboard-map-info {
+    padding: 12px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+}
+
+.dashboard-map-info .placeholder-text {
+    color: var(--text-light);
+    font-style: italic;
+}
+
+/* ===== STATUS CARD ===== */
+.status-card {
+    grid-column: 1 / -1;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+}
+
+.status-icon {
+    font-size: 2.5rem;
+}
+
+.status-text {
+    flex: 1;
+}
+
+.status-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.location-info {
+    margin-top: 12px;
+    padding: 12px;
+    background: #e8f5e9;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+}
+
+.location-info strong {
+    color: var(--primary);
+}
+
+.last-update {
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    text-align: right;
+}
+
+/* ===== MUSHROOM CARDS ===== */
+.mushroom-card {
+    text-align: center;
+}
+
+.mushroom-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.mushroom-icon {
+    font-size: 2rem;
+}
+
+.mushroom-header h2 {
+    margin-bottom: 0;
+    font-size: 1.2rem;
+}
+
+/* Probability Ring */
+.probability-ring {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 20px;
+}
+
+.probability-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.ring-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 8;
+}
+
+.ring-fill {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dasharray 1s ease;
+}
+
+.boletus-card .ring-fill {
+    stroke: var(--secondary);
+}
+
+.niscalos-card .ring-fill {
+    stroke: #e65100;
+}
+
+.ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.ring-text .percentage {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.ring-text .label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+/* Conditions List */
+.conditions-list {
+    text-align: left;
+}
+
+.condition-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.condition-item:last-child {
+    border-bottom: none;
+}
+
+.condition-status {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.condition-status.ok {
+    background: #e8f5e9;
+    color: var(--success);
+}
+
+.condition-status.warning {
+    background: #fff3e0;
+    color: var(--warning);
+}
+
+.condition-status.danger {
+    background: #ffebee;
+    color: var(--danger);
+}
+
+/* ===== SUMMARY CARD ===== */
+.summary-card {
+    grid-column: 1 / -1;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.summary-item {
+    text-align: center;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+}
+
+.summary-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.summary-label {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-top: 4px;
+}
+
+/* ===== MAP SECTION ===== */
+.map-wrapper {
+    position: relative;
+}
+
+#dashboardMap {
+    height: 500px;
+    border-radius: var(--radius-sm);
+    z-index: 1;
+}
+
+/* ===== SEARCH CONTAINER ===== */
+.search-container {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    max-width: 600px;
+}
+
+.search-container input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.search-container input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.btn-search {
+    padding: 12px 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-search:hover {
+    background: var(--primary-light);
+}
+
+/* ===== MUSHROOM SELECTOR ===== */
+.mushroom-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.mushroom-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mushroom-option:hover {
+    border-color: var(--primary);
+    background: #e8f5e9;
+}
+
+.mushroom-option.selected {
+    border-color: var(--primary);
+    background: #e8f5e9;
+}
+
+.mushroom-option input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.mushroom-option-icon {
+    font-size: 1.5rem;
+}
+
+.mushroom-option-info {
+    flex: 1;
+}
+
+.mushroom-option-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+}
+
+.mushroom-option-scientific {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+/* ===== MUSHROOM INFO GRID ===== */
+.mushroom-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.mushroom-info-card {
+    padding: 16px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    border-left: 4px solid var(--primary);
+}
+
+.mushroom-info-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.mushroom-info-icon {
+    font-size: 2rem;
+}
+
+.mushroom-info-title {
+    flex: 1;
+}
+
+.mushroom-info-name {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.mushroom-info-scientific {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.mushroom-info-details {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.mushroom-info-details p {
+    margin-bottom: 4px;
+}
+
+.mushroom-info-details strong {
+    color: var(--text);
+}
+
+/* ===== MUSHROOM CARDS GRID ===== */
+.mushroom-cards-grid {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+/* ===== DASHBOARD ACTIONS ===== */
+.dashboard-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+}
+
+/* ===== TERRAIN CARD ===== */
+.terrain-card {
+    grid-column: span 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    /* La ficha de valores queda a la altura del mapa, no encogida */
+    height: 100%;
+}
+
+.terrain-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.terrain-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.terrain-item:last-child {
+    border-bottom: none;
+}
+
+.terrain-icon {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+}
+
+.terrain-label {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    flex: 1;
+}
+
+.terrain-value {
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 0.95rem;
+}
+
+.status-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 2px solid var(--border);
+}
+
+.status-section h4 {
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+    color: var(--primary);
+}
+
+.status-section .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+}
+
+.status-section .status-icon {
+    font-size: 1.5rem;
+}
+
+.status-section .status-text {
+    flex: 1;
+}
+
+.status-section .status-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.status-section .last-update {
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: var(--text-light);
+    text-align: right;
+}
+
+.terrain-actions {
+    margin-top: auto;
+    padding-top: 16px;
+}
+
+.terrain-actions .btn-primary {
+    width: 100%;
+}
+
+.mushroom-cards-grid .mushroom-card {
+    text-align: center;
+}
+
+.mushroom-cards-grid .mushroom-title-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.mushroom-cards-grid .mushroom-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mushroom-cards-grid .mushroom-icon-large {
+    font-size: 3rem;
+    flex-shrink: 0;
+}
+
+.mushroom-cards-grid .mushroom-name {
+    display: block;
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.3;
+}
+
+.mushroom-cards-grid .mushroom-scientific {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    font-style: italic;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.mushroom-cards-grid .prediction-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.mushroom-cards-grid .prediction-open {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+.mushroom-cards-grid .prediction-approaching {
+    background: #fff3e0;
+    color: #ef6c00;
+    border: 1px solid #ffcc80;
+}
+
+.mushroom-cards-grid .prediction-closed {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+
+.mushroom-cards-grid .prediction-icon {
+    font-size: 1.2rem;
+}
+
+.mushroom-cards-grid .prediction-text {
+    flex: 1;
+}
+
+.mushroom-cards-grid .mushroom-details {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    text-align: left;
+}
+
+.mushroom-cards-grid .mushroom-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.mushroom-cards-grid .mushroom-detail-item:last-child {
+    border-bottom: none;
+}
+
+.mushroom-cards-grid .mushroom-detail-label {
+    color: var(--text-light);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.mushroom-cards-grid .mushroom-detail-value {
+    color: var(--text);
+    text-align: right;
+    flex: 1;
+}
+
+.mushroom-cards-grid .mushroom-header h2 {
+    margin-bottom: 0;
+    font-size: 1.1rem;
+}
+
+.mushroom-cards-grid .probability-ring {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 16px;
+}
+
+.mushroom-cards-grid .probability-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.mushroom-cards-grid .ring-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 8;
+}
+
+.mushroom-cards-grid .ring-fill {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dasharray 1s ease;
+}
+
+.mushroom-cards-grid .ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.mushroom-cards-grid .ring-text .percentage {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.mushroom-cards-grid .ring-text .label {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+.mushroom-cards-grid .conditions-list {
+    text-align: left;
+}
+
+.mushroom-cards-grid .condition-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+}
+
+.mushroom-cards-grid .condition-item:last-child {
+    border-bottom: none;
+}
+
+.mushroom-cards-grid .condition-status {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.mushroom-cards-grid .condition-status.ok {
+    background: #e8f5e9;
+    color: var(--success);
+}
+
+.mushroom-cards-grid .condition-status.warning {
+    background: #fff3e0;
+    color: var(--warning);
+}
+
+.mushroom-cards-grid .condition-status.danger {
+    background: #ffebee;
+    color: var(--danger);
+}
+
+.map-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.map-sidebar .card {
+    padding: 16px;
+}
+
+.map-sidebar .card h3 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+}
+
+.location-details {
+    font-size: 0.9rem;
+}
+
+.location-details .placeholder-text {
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.location-coords {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.terrain-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.terrain-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.terrain-item:last-child {
+    border-bottom: none;
+}
+
+.terrain-label {
+    color: var(--text-light);
+}
+
+.terrain-value {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.mushroom-probabilities {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.probability-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+}
+
+.probability-icon {
+    font-size: 1.5rem;
+}
+
+.probability-info {
+    flex: 1;
+}
+
+.probability-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.probability-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.probability-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    margin-top: 4px;
+    overflow: hidden;
+}
+
+.probability-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.probability-fill.boletus {
+    background: var(--secondary);
+}
+
+.probability-fill.niscalos {
+    background: #e65100;
+}
+
+/* Map Legend */
+.map-legend {
+    margin-top: 20px;
+}
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+
+/* ===== FAVORITOS SECTION ===== */
+.favorites-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.add-favorite-form {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 12px;
+}
+
+.add-favorite-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.add-favorite-form label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.add-favorite-form input {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+}
+
+.add-favorite-form input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.hint-text {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.favorites-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.favorite-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    border-left: 4px solid var(--primary);
+}
+
+.favorite-icon {
+    font-size: 1.5rem;
+}
+
+.favorite-info {
+    flex: 1;
+}
+
+.favorite-name {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.favorite-coords {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.favorite-probabilities {
+    display: flex;
+    gap: 12px;
+}
+
+.favorite-prob {
+    text-align: center;
+}
+
+.favorite-prob-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.favorite-prob-label {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+.favorite-prob.boletus .favorite-prob-value {
+    color: var(--secondary);
+}
+
+.favorite-prob.niscalos .favorite-prob-value {
+    color: #e65100;
+}
+
+.favorite-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.favorite-btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.favorite-btn.load {
+    background: var(--primary);
+    color: white;
+}
+
+.favorite-btn.load:hover {
+    background: var(--primary-light);
+}
+
+.favorite-btn.delete {
+    background: #ffebee;
+    color: var(--danger);
+}
+
+.favorite-btn.delete:hover {
+    background: #ffcdd2;
+}
+
+/* ===== COMPARAR SECTION ===== */
+.compare-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.compare-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 16px;
+    align-items: end;
+}
+
+.compare-selector .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.compare-selector label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.compare-selector select {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    background: var(--card-bg);
+}
+
+.compare-selector select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.compare-results {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.compare-location {
+    padding: 20px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    text-align: center;
+}
+
+.compare-location h4 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    color: var(--primary);
+}
+
+.compare-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.compare-metric:last-child {
+    border-bottom: none;
+}
+
+.compare-metric-label {
+    color: var(--text-light);
+}
+
+.compare-metric-value {
+    font-weight: 600;
+}
+
+.compare-winner {
+    background: #e8f5e9;
+    border: 2px solid var(--success);
+}
+
+.compare-winner::after {
+    content: "🏆 Mejor zona";
+    display: block;
+    margin-top: 12px;
+    padding: 8px;
+    background: var(--success);
+    color: white;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.compare-chart-container {
+    height: 300px;
+    position: relative;
+}
+
+/* ===== DETAIL GRID ===== */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+/* ===== ANALYSIS ITEMS ===== */
+.analysis-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.analysis-item:last-child {
+    border-bottom: none;
+}
+
+.analysis-label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.analysis-value {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.analysis-value.good {
+    color: var(--success);
+}
+
+.analysis-value.warning {
+    color: var(--warning);
+}
+
+.analysis-value.bad {
+    color: var(--danger);
+}
+
+/* Progress bars */
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.progress-fill.good {
+    background: var(--success);
+}
+
+.progress-fill.warning {
+    background: var(--warning);
+}
+
+.progress-fill.bad {
+    background: var(--danger);
+}
+
+/* ===== TIMELINE ===== */
+.timeline-card {
+    margin-top: 20px;
+}
+
+.timeline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0;
+    position: relative;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    transform: translateY(-50%);
+}
+
+.timeline-item {
+    position: relative;
+    text-align: center;
+    flex: 1;
+    z-index: 1;
+}
+
+.timeline-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--border);
+    margin: 0 auto 8px;
+    border: 3px solid var(--card-bg);
+    transition: all 0.3s ease;
+}
+
+.timeline-item.active .timeline-dot {
+    background: var(--success);
+    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.2);
+}
+
+.timeline-item.current .timeline-dot {
+    background: var(--info);
+    box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.2);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.2); }
+    50% { box-shadow: 0 0 0 8px rgba(33, 150, 243, 0.1); }
+}
+
+.timeline-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.timeline-date {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-top: 2px;
+}
+
+/* ===== CONFIG FORM ===== */
+.config-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    align-items: end;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.form-group select,
+.form-group input {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    background: var(--card-bg);
+}
+
+.form-group select:focus,
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.btn-primary {
+    padding: 12px 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: var(--primary-light);
+}
+
+/* ===== CHARTS ===== */
+.analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.chart-container {
+    height: 250px;
+    position: relative;
+}
+
+/* ===== FACTORS GRID ===== */
+.factors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.factor-item {
+    padding: 16px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    border-left: 4px solid var(--primary);
+}
+
+.factor-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+}
+
+.factor-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.factor-desc {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 4px;
+}
+
+/* ===== GUIDE ===== */
+.guide-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.guide-card h3 {
+    color: var(--primary);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 12px;
+}
+
+.guide-content {
+    padding-top: 16px;
+}
+
+.guide-item {
+    margin-bottom: 20px;
+}
+
+.guide-item h4 {
+    font-size: 1rem;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.guide-item p {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 4px;
+}
+
+.guide-item ul {
+    margin: 8px 0 8px 20px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.guide-item.highlight {
+    background: #e8f5e9;
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    border-left: 4px solid var(--success);
+}
+
+.guide-item.highlight h4 {
+    color: var(--success);
+}
+
+/* ===== MODEL EXPLANATION ===== */
+.model-explanation p {
+    margin-bottom: 16px;
+    color: var(--text-light);
+}
+
+.model-params {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+}
+
+.param {
+    padding: 12px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+}
+
+.param-name {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.param-formula {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    font-family: 'Courier New', monospace;
+}
+
+/* ===== FACTORES COMPACTOS (nuevo modelo) ===== */
+.factors-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.factor-item-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 6px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+}
+
+.factor-item-compact .factor-label {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    text-align: center;
+    line-height: 1.2;
+}
+
+.factor-item-compact .factor-value {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* ===== NIVELES (nuevo modelo) ===== */
+.prediction-banner.nivel-alto {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+.prediction-banner.nivel-medio {
+    background: #f1f8e9;
+    color: #558b2f;
+    border: 1px solid #c5e1a5;
+}
+
+.prediction-banner.nivel-bajo {
+    background: #fff3e0;
+    color: #ef6c00;
+    border: 1px solid #ffcc80;
+}
+
+.prediction-banner.nivel-nulo {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+
+.status-top {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-top: 4px;
+}
+
+.status-top strong {
+    color: var(--primary);
+}
+
+/* ===== TABLA RANKING ===== */
+.model-note {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+}
+
+.model-note code {
+    background: var(--primary);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 12px;
+}
+
+.ranking-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    min-width: 700px;
+}
+
+.ranking-table thead th {
+    background: var(--primary);
+    color: white;
+    padding: 10px 8px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.ranking-table thead th:not(:nth-child(2)):not(:nth-child(10)) {
+    text-align: center;
+}
+
+.ranking-table tbody td {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+}
+
+.ranking-table tbody tr:hover {
+    background: var(--bg);
+}
+
+.ranking-table tbody tr.row-alta {
+    background: #f4fbf4;
+}
+
+.col-especie {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left !important;
+}
+
+.sp-icon {
+    font-size: 1.4rem;
+}
+
+.sp-latin {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.col-indice {
+    text-align: center !important;
+}
+
+.col-nivel {
+    text-align: left !important;
+    font-size: 0.8rem;
+}
+
+.indice-badge {
+    display: inline-block;
+    min-width: 42px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.indice-badge.nivel-alto {
+    background: #4caf50;
+    color: white;
+}
+
+.indice-badge.nivel-medio {
+    background: #8bc34a;
+    color: white;
+}
+
+.indice-badge.nivel-bajo {
+    background: #ff9800;
+    color: white;
+}
+
+.indice-badge.nivel-nulo {
+    background: #e0e0e0;
+    color: #666;
+}
+
+/* ===== AEMET ===== */
+.aemet-intro {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 16px;
+    line-height: 1.6;
+}
+
+.aemet-intro strong {
+    color: var(--primary);
+}
+
+.aemet-intro a {
+    color: var(--info);
+    text-decoration: none;
+}
+
+.aemet-intro a:hover {
+    text-decoration: underline;
+}
+
+.aemet-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+}
+
+.aemet-status-icon {
+    font-size: 1.2rem;
+}
+
+.aemet-status.active {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.aemet-status.error {
+    background: #ffebee;
+    color: #c62828;
+}
+
+/* ===== SUELO / SOILGRIDS ===== */
+.soil-summary {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--text-light);
+}
+
+.soil-summary strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.soil-note {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.72rem;
+    opacity: 0.75;
+}
+
+.soil-unavailable {
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.model-note {
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    background: var(--bg-subtle);
+    border-left: 3px solid var(--primary);
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: var(--text-light);
+}
+
+.model-note strong,
+.model-note code {
+    color: var(--text);
+}
+
+.hint-text {
+    margin: 14px 0 0;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--text-light);
+}
+
+/* ===== FOOTER ===== */
+.footer {
+    text-align: center;
+    padding: 30px 0;
+    margin-top: 40px;
+    border-top: 1px solid var(--border);
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.disclaimer {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+    /* El mapa y la ficha de valores aún caben en dos columnas, pero con
+       menos peso para el mapa. */
+    .dashboard-grid {
+        grid-template-columns: 1.6fr 1fr;
+    }
+
+    .mushroom-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .dashboard-top-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .map-container {
+        grid-template-columns: 1fr;
+    }
+    
+    #map {
+        height: 400px;
+    }
+    
+    .map-sidebar {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .map-sidebar .card {
+        flex: 1;
+        min-width: 280px;
+    }
+    
+    .compare-results {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 20px 0;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    .logo h1 {
+        font-size: 1.5rem;
+    }
+    
+    .nav {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .nav-btn {
+        white-space: nowrap;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+    
+    /* Por debajo de 768 px el mapa y la ficha se apilan: en un móvil
+       una columna de 360 px para el mapa es más útil que media. */
+    .dashboard-grid,
+    .detail-grid,
+    .analysis-grid,
+    .guide-grid,
+    .favorites-container {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-grid .map-card,
+    .dashboard-grid .terrain-card,
+    .dashboard-grid .mushroom-cards-grid {
+        grid-column: 1;
+        grid-row: auto;
+    }
+
+    .mushroom-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .terrain-card {
+        height: auto;
+    }
+    
+    .config-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .timeline {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .timeline::before {
+        display: none;
+    }
+    
+    #map {
+        height: 300px;
+    }
+    
+    .map-sidebar {
+        flex-direction: column;
+    }
+    
+    .add-favorite-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .compare-selector {
+        grid-template-columns: 1fr;
+    }
+    
+    .favorite-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .favorite-probabilities {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.card {
+    animation: slideIn 0.4s ease forwards;
+}
+
+.card:nth-child(1) { animation-delay: 0.05s; }
+.card:nth-child(2) { animation-delay: 0.1s; }
+.card:nth-child(3) { animation-delay: 0.15s; }
+.card:nth-child(4) { animation-delay: 0.2s; }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-light);
+}
+
+/* ===== LEAFLET CUSTOMIZATION ===== */
+.leaflet-popup-content-wrapper {
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+}
+
+.leaflet-popup-content {
+    margin: 12px 16px;
+    font-family: 'Inter', sans-serif;
+}
+
+.popup-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 4px;
+    color: var(--primary);
+}
+
+.popup-info {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.custom-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--primary);
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    font-size: 1.25rem;
+}
+
+/* Zone polygons */
+.zone-polygon {
+    fill-opacity: 0.2;
+    stroke-width: 2;
+    stroke-opacity: 0.8;
+}
+
+.zone-polygon.boletus-zone {
+    fill: #8b4513;
+    stroke: #8b4513;
+}
+
+.zone-polygon.niscalos-zone {
+    fill: #e65100;
+    stroke: #e65100;
+}
+
+.zone-polygon.mixed-zone {
+    fill: #4a7c23;
+    stroke: #4a7c23;
+}
+
+.zone-polygon.low-zone {
+    fill: #9e9e9e;
+    stroke: #9e9e9e;
+}
+
+/* ══════════════════════════════════════════════════════════
+   ESTRUCTURA ACTUAL
+   El HTML de la versión actual usa nombres de clase distintos a los
+   de la versión congelada (header-inner, section-head, ti/tl/tv, btn…).
+   Estas reglas cubren los que faltaban; el resto ya existía más arriba.
+   ══════════════════════════════════════════════════════════ */
+
+.main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.header-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.header-inner .logo {
+    margin-bottom: 0;
+}
+
+.sources {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.sources span {
+    padding: 5px 12px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.section-head {
+    margin-bottom: 24px;
+}
+
+.section-head h2 {
+    font-size: 1.5rem;
+    margin-bottom: 6px;
+}
+
+.section-head p {
+    color: var(--text-light);
+    font-size: 0.92rem;
+    max-width: 70ch;
+}
+
+/* --- Botón genérico --- */
+.btn {
+    display: inline-block;
+    padding: 11px 20px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn:hover {
+    background: var(--primary-light);
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+/* --- Buscador y selector de zonas --- */
+.search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.search-row input,
+.geo-select {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.search-row input:focus,
+.geo-select:focus {
+    outline: 2px solid var(--primary-light);
+    outline-offset: -1px;
+}
+
+.geo-select {
+    width: 100%;
+    margin-bottom: 12px;
+    cursor: pointer;
+}
+
+.map-card .map {
+    width: 100%;
+    height: 460px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.map-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+}
+
+.map-actions .btn {
+    width: 100%;
+}
+
+/* --- Formulario de guardado de ubicación --- */
+.save-fav-panel {
+    margin-top: 12px;
+    padding: 14px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--primary);
+}
+
+.save-fav-panel[hidden] {
+    display: none;
+}
+
+.save-fav-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.save-fav-row {
+    display: flex;
+    gap: 8px;
+}
+
+.save-fav-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.save-fav-row input:focus {
+    outline: 2px solid var(--primary-light);
+    outline-offset: -1px;
+}
+
+.save-fav-row .btn {
+    padding: 10px 16px;
+    flex: 0 0 auto;
+}
+
+.save-fav-coords {
+    margin: 8px 0 0;
+    font-size: 0.78rem;
+    color: var(--text-light);
+    font-variant-numeric: tabular-nums;
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-light);
+    border: 1px solid var(--border);
+}
+
+.btn-ghost:hover {
+    background: var(--border);
+    color: var(--text);
+}
+
+/* Contador junto al título de la tarjeta de guardadas */
+.count-badge {
+    display: inline-block;
+    min-width: 22px;
+    padding: 2px 8px;
+    background: var(--primary);
+    color: white;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+/* ══════════════════════════════════════════════════════════
+   ESPECIES NUEVAS: avisos de toxicidad, alias y procedencia
+   ══════════════════════════════════════════════════════════ */
+
+.toxic-banner {
+    margin: 0 0 14px;
+    padding: 12px 14px;
+    background: #b71c1c;
+    color: #fff;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    line-height: 1.6;
+}
+
+.toxic-banner strong {
+    display: block;
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+}
+
+.toxic-banner span {
+    display: block;
+    font-weight: 300;
+    opacity: 0.95;
+}
+
+.toxic-banner.small {
+    font-size: 0.78rem;
+    padding: 10px 12px;
+    margin: 0 0 12px;
+}
+
+.mushroom-card.inviable .toxic-banner {
+    background: #7f0000;
+}
+
+.mushroom-info-card.toxica {
+    background: #fff5f5;
+}
+
+.mushroom-info-card.toxica .mushroom-info-name {
+    color: #b71c1c;
+}
+
+.mushroom-option.toxica {
+    border-color: #b71c1c;
+}
+
+.mushroom-option.toxica .mushroom-option-name {
+    color: #b71c1c;
+}
+
+.mushroom-option-tox {
+    margin-top: 2px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #b71c1c;
+}
+
+.mushroom-alias,
+.mushroom-info-alias {
+    margin: 3px 0 0;
+    font-size: 0.74rem;
+    font-style: italic;
+    color: var(--text-light);
+}
+
+.mushroom-detail-item.full {
+    grid-column: 1 / -1;
+    align-items: flex-start;
+}
+
+.mushroom-detail-value.toxica {
+    color: #b71c1c;
+    font-weight: 700;
+}
+
+.card-evidencia {
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.evidencia-badge {
+    align-self: flex-start;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.ev-publicado {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.ev-derivado {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.ev-estimado {
+    background: #f5f5f5;
+    color: var(--text-light);
+}
+
+.card-evidencia .fuente {
+    font-size: 0.72rem;
+    line-height: 1.6;
+    color: var(--text-light);
+}
+
+/* ══════════════════════════════════════════════════════════
+   METODOLOGÍA Y LEYENDA
+   ══════════════════════════════════════════════════════════ */
+
+#guia .card > h4,
+#leyenda .card > h4 {
+    margin: 22px 0 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+#guia .card > h4:first-of-type,
+#leyenda .card > h4:first-of-type {
+    margin-top: 16px;
+}
+
+#guia .card > p,
+#leyenda .card > p {
+    margin: 0 0 12px;
+    font-size: 0.92rem;
+    line-height: 1.75;
+}
+
+#guia code,
+#leyenda code {
+    padding: 1px 5px;
+    background: var(--bg-subtle);
+    border-radius: 4px;
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 0.85em;
+    color: var(--primary);
+}
+
+.formula.small {
+    font-size: 0.88rem;
+    padding: 10px;
+    margin: 10px 0 12px;
+}
+
+.level-table {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 14px 0 16px;
+}
+
+.level-table > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    font-weight: 500;
+}
+
+.level-table .indice-badge {
+    flex: 0 0 auto;
+    min-width: 62px;
+    text-align: center;
+}
+
+/* --- Glosario de la pestaña Leyenda --- */
+.glossary {
+    margin: 0;
+}
+
+.glossary dt {
+    margin-top: 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.glossary dt:first-child {
+    margin-top: 8px;
+}
+
+.glossary dd {
+    margin: 4px 0 0;
+    padding-left: 14px;
+    border-left: 2px solid var(--border);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: var(--text-light);
+}
+
+.glossary dd strong {
+    color: var(--text);
+}
+
+.tox-inline {
+    color: #b71c1c;
+    font-weight: 700;
+}
+
+/* --- Suelo y clima: lista de valores --- */
+.terrain-card h3 {
+    margin-bottom: 16px;
+}
+
+.terrain-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.terrain-item {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+}
+
+.terrain-item:last-child {
+    border-bottom: none;
+}
+
+.terrain-item .ti {
+    flex: 0 0 20px;
+    text-align: center;
+}
+
+.terrain-item .tl {
+    flex: 1 1 auto;
+    color: var(--text-light);
+}
+
+.terrain-item .tv {
+    flex: 0 0 auto;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.status-block {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+/* --- Metodología --- */
+.method-list {
+    margin: 0 0 16px;
+    padding-left: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 0.92rem;
+    line-height: 1.65;
+}
+
+ol.method-list {
+    list-style: decimal;
+}
+
+ul.method-list {
+    list-style: disc;
+}
+
+.method-list.refs {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.formula {
+    margin: 16px 0 0;
+    padding: 14px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-family: 'SF Mono', ui-monospace, monospace;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.warn-card {
+    border-left: 4px solid var(--warning);
+    background: #fffbf0;
+}
+
+.hint {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--text-light);
+}
+
+/* --- Valor dentro de las condiciones de la tarjeta --- */
+.mushroom-cards-grid .condition-value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+/* --- Favoritos: formulario --- */
+.add-fav-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 10px;
+}
+
+.add-fav-row input {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.9rem;
+    min-width: 0;
+}
+
+/* --- Aviso de carga --- */
+.loading {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(2px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 9000;
+    font-size: 0.95rem;
+    color: var(--text-light);
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.placeholder-text {
+    color: var(--text-light);
+    font-style: italic;
+    padding: 12px 0;
+}
+
+/* --- Aviso de tarjeta no apta --- */
+.mushroom-card.inviable {
+    opacity: 0.75;
+}
+
+.mushroom-card.inviable .probability-ring {
+    filter: grayscale(0.7);
+}
+
+.alert-box {
+    margin: 10px 0;
+    padding: 9px 12px;
+    background: #ffebee;
+    color: #b71c1c;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.mushroom-title-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.mushroom-titles {
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .add-fav-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .add-fav-row .btn {
+        grid-column: 1 / -1;
+    }
+}
