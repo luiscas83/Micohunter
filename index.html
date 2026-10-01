@@ -650,5 +650,104 @@
     });
   }
 </script>
+
+<script>
+  /*
+   * Detecta que se ha publicado una versión nueva y limpia lo que el móvil
+   * tiene guardado. Es el paso que le faltaba al service worker.
+   *
+   * EL PORQUÉ DEL PROBLEMA
+   * El service worker guarda copia de los ficheros, pero sólo vuelve a
+   * evaluarse si cambia SU propio contenido. Como publicar no lo cambia, el
+   * móvil seguía viendo la versión anterior. Meter una fecha dentro de
+   * sw.js no lo arregla: el navegador recibe un "304 Not Modified", ni
+   * siquiera lo relee, y la fecha sería siempre la misma. Por eso se
+   * comprueba desde la página, que sí se ejecuta en cada visita.
+   *
+   * CÓMO FUNCIONA
+   *   1. Se pide index.html a la red, saltando cualquier caché.
+   *   2. Se guarda la fecha que devuelve el servidor (o su huella, por si
+   *      algún día no la manda).
+   *   3. En la siguiente visita se compara. Si no coincide, se ha publicado
+   *      algo: se borran las cachés, se da de baja el service worker y se
+   *      recarga la página.
+   *
+   * Publicar no requiere tocar ningún número, en ningún fichero.
+   */
+  (async function comprobarDespliegue() {
+    const CLAVE = 'micohunter_despliegue';
+
+    // En local no hay nada que publicar y no se quiere tocar el service
+    // worker del navegador del usuario.
+    if (location.protocol === 'file:') return;
+
+    /** Huella por si el servidor no manda fecha ni ETag. */
+    function huella(txt) {
+      let h = 5381;
+      for (let i = 0; i < txt.length; i++) {
+        h = ((h * 33) ^ txt.charCodeAt(i)) >>> 0;
+      }
+      return 'huella-' + txt.length + '-' + h.toString(36);
+    }
+
+    // El parámetro ?f= se limpia después de la recarga (abajo), para que la
+    // dirección que se ve siga siendo la normal.
+    if (/[?&]f=/.test(location.search)) {
+      try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    }
+
+    let marca;
+    try {
+      // cache:'no-store' salta la caché HTTP; y si ya hay un service
+      // worker, su estrategia es red primero, así que esto siempre es la
+      // versión de verdad.
+      const r = await fetch('index.html', { cache: 'no-store' });
+      if (!r.ok) return;
+      marca = r.headers.get('last-modified') || r.headers.get('etag') || '';
+      if (!marca) marca = huella(await r.text());
+    } catch (e) {
+      return; // Sin red no hay nada que comprobar; se deja la página como está.
+    }
+    if (!marca) return;
+
+    let guardada = null;
+    try { guardada = localStorage.getItem(CLAVE); } catch (e) {}
+
+    async function limpiarYRecargar() {
+      if ('caches' in window) {
+        try {
+          const claves = await caches.keys();
+          await Promise.all(claves.map(k => caches.delete(k)));
+        } catch (e) {}
+      }
+
+      if (navigator.serviceWorker) {
+        try {
+          const rs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(rs.map(r => r.unregister()));
+        } catch (e) {}
+      }
+
+      // Se pide index.html con parámetro (y no la raíz) para que la recarga
+      // no pueda salir de ninguna caché, ni del móvil ni del service worker.
+      location.replace('index.html?f=' + Date.now());
+    }
+
+    if (guardada === null) {
+      // Primera vez que se ejecuta esta comprobación en este navegador. Se
+      // apunta la versión actual y se limpia una sola vez, para que quien
+      // tenga una copia anterior no se quede con ella. Como la marca queda
+      // guardada antes de recargar, esto no se repite.
+      try { localStorage.setItem(CLAVE, marca); } catch (e) { return; }
+      await limpiarYRecargar();
+      return;
+    }
+
+    // Ha cambiado la versión: limpiar y recargar.
+    if (guardada === marca) return;
+    try { localStorage.setItem(CLAVE, marca); } catch (e) {}
+    await limpiarYRecargar();
+  })();
+</script>
 </body>
 </html>
