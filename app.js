@@ -2,10 +2,27 @@
 // MicoHunter — Lógica de aplicación
 // ============================================================
 
-let selectedLat = 42.8;
-let selectedLng = -7.8;
+/**
+ * Punto inicial: pinares de Soria, en torno a Vinuesa (sierra de Pina).
+ * Elegido porque es pinar de *Pinus* puro sobre suelo ácido, con ~1050 m, que
+ * es donde el modelo da valores representativos: a 711 m y con el suelo a
+ * 22 °C en octubre, casi todas las especies salen a cero y el arranque no
+ * dice nada útil.
+ */
+const INICIO = { lat: 41.76, lng: -2.53 };
+
+/**
+ * Vista inicial del mapa: toda la España peninsular, sin zoom.
+ * El marcador se sitúa aparte, en el punto de análisis, así que se ve dónde
+ * está el setal dentro del país. Al pulsar en el mapa o elegir un setal, la
+ * vista salta al detalle.
+ */
+const VISTA_ESPANA = { lat: 39.9, lng: -3.4, zoom: 5 };
+
+let selectedLat = INICIO.lat;
+let selectedLng = INICIO.lng;
 let favorites = [];
-let selectedMushrooms = ['boletus', 'niscalos', 'boleto_bronce'];
+let selectedMushrooms = SPECIES.map(sp => sp.key);   // todas, por orden de prioridad
 let currentCtx = null;      // lo que consume el modelo: historial, lluvia, altitud, suelo
 let currentMeteo = null;    // meteorología completa: aire, humedad, fechas
 let lugarActual = null;     // topónimo resuelto, para nombrar al guardar
@@ -49,7 +66,7 @@ function initNavigation() {
 // ------------------------------------------------------------
 
 function initMap() {
-  map = L.map('dashboardMap').setView([selectedLat, selectedLng], 7);
+  map = L.map('dashboardMap').setView([VISTA_ESPANA.lat, VISTA_ESPANA.lng], VISTA_ESPANA.zoom);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap',
@@ -72,7 +89,7 @@ function moveMarker(lat, lng, recentrar = true) {
     iconAnchor: [20, 20],
   });
   marker = L.marker([lat, lng], { icon }).addTo(map);
-  if (recentrar) map.setView([lat, lng], 9);
+  if (recentrar) map.setView([lat, lng], 11);
 }
 
 // ------------------------------------------------------------
@@ -87,25 +104,144 @@ async function setLocation(lat, lng) {
 }
 
 /**
- * Carga meteorología primero y pinta; el suelo llega después.
+ * Carga los datos del punto elegido y repinta, en dos fases.
  *
- * SoilGrids es lento (0.3-1 s, hasta 30 s con reintentos por su límite de
- * 5/min) y a veces no responde. Bloquear el dashboard por él sería una mala
- * experiencia, así que se pinta con lo que hay y se actualiza al llegar.
+ * La meteorología de Open-Meteo tarda unos 40 ms, así que se pinta de
+ * inmediato. SoilGrids (ISRIC) es otra cosa: se han medido respuestas de más
+ * de 40 segundos para un solo píxel, además de su límite de 5 consultas por
+ * minuto. Por eso el suelo NO bloquea: la primera pasada usa el suelo vacío,
+ * y cuando llega se vuelve a pintar todo.
  */
 async function refresh() {
   showLoading(true);
+  let m;
   try {
-    const m = await meteo(selectedLat, selectedLng, 30);
-    const s = await suelo(selectedLat, selectedLng);
-    aplicarDatos(m, s);
-    if (!s.ok) setSoilHint(s.error || 'SoilGrids no respondió');
+    m = await conTiempoLimite(
+      meteo(selectedLat, selectedLng, 30),
+      20000,
+      'Open-Meteo no respondió en 20 s'
+    );
   } catch (e) {
     console.error(e);
-    notify('Error al obtener datos meteorológicos', 'error');
-  } finally {
+    notify(String(e.message || e), 'error');
     showLoading(false);
+    return;
   }
+
+  // Primera pasada: meteorología sí, suelo todavía no.
+  aplicarDatos(m, SIN_SUELO);
+  showLoading(false);
+
+  // Segunda pasada: el suelo, cuando llegue. No bloquea nada.
+  try {
+    const s = await conTiempoLimite(
+      suelo(selectedLat, selectedLng),
+      90000,
+      'SoilGrids no respondió en 90 s'
+    );
+    // Si el usuario ha movido el mapa mientras tanto, esta respuesta ya no
+    // corresponde al punto actual: se descarta.
+    if (m.lat !== selectedLat || m.lng !== selectedLng) return;
+
+    if (s.ok) {
+      // Repintado quirúrgico: sólo cambia lo que depende del suelo. La
+      // textura y el pH se escriben en sus campos y los factores de hábitat
+      // se recalculan, sin tocar el mapa ni reconstruir las 19 tarjetas.
+      actualizarSoloSuelo(s);
+    } else {
+      setSoilHint(s.error || 'SoilGrids no disponible');
+    }
+  } catch (e) {
+    console.warn(e);
+    setSoilHint(String(e.message || e));
+  }
+}
+
+/**
+ * Segunda fase: llega el suelo y sólo se actualiza lo que depende de él.
+ *
+ * Antes esto llamaba a aplicarDatos(), que rehacía las 19 tarjetas con
+ * innerHTML. Eso destruía el nodo que tenía el foco y, con ello, la posición
+ * del scroll: si habías bajado a mirar las tarjetas, la página te volvía
+ * arriba de golpe. Como ISRIC puede tardar 30-50 s, el salto era muy visible.
+ */
+function actualizarSoloSuelo(s) {
+  const m = currentMeteo;
+  if (!m) return;
+
+  currentCtx.suelo = s;
+  currentCtx.terreno.ph = s.ok ? s.ph : null;
+  currentCtx.terreno.humedad = s.phGrupo === 'calizo' ? 'seco' : s.ok ? 'normal' : null;
+  currentRanking = ranking(currentCtx);
+
+  set('soilTypeValue', capitalize(s.textura));
+  set('phValue', s.ph != null ? s.ph.toFixed(1) : '—');
+  renderTerreno(m, s);
+  renderAnalisis();
+  refrescarFactoresHabitat();
+}
+
+/** Reescribe sólo el factor de hábitat de las tarjetas ya pintadas. */
+function refrescarFactoresHabitat() {
+  document.querySelectorAll('.mushroom-cards-grid .mushroom-card').forEach(card => {
+    const nombre = card.querySelector('.mushroom-name');
+    if (!nombre) return;
+    const sp = SPECIES.find(x => x.es === nombre.textContent);
+    if (!sp) return;
+    const r = currentRanking.find(x => x.sp.key === sp.key);
+    if (!r) return;
+
+    // Factor de hábitat dentro de la rejilla de detalles
+    const items = [...card.querySelectorAll('.mushroom-detail-item')];
+    const itemHab = items.find(el => el.querySelector('.mushroom-detail-label')
+      ?.textContent.startsWith('Factor hábitat'));
+    if (itemHab) {
+      itemHab.querySelector('.mushroom-detail-value').textContent =
+        `${Math.round(r.detalle.habFactor * 100)}%${r.detalle.habConfuso ? ' (bajo)' : ''}`;
+    }
+
+    // Etiqueta de hábitat estimado
+    const cond = [...card.querySelectorAll('.condition-item')]
+      .find(el => el.textContent.includes('Hábitat estimado'));
+    if (cond) {
+      const v = cond.querySelector('.condition-value');
+      if (v) v.textContent = r.detalle.habEtiqueta || '—';
+    }
+
+    // El índice y el anillo cambian con el pH, así que también se actualizan
+    const pctEl = card.querySelector('.percentage');
+    if (pctEl) pctEl.textContent = Math.round(r.I);
+    const anillo = card.querySelector('.ring-fill');
+    if (anillo) {
+      const C = 2 * Math.PI * 45;
+      anillo.style.strokeDashoffset = C - (r.I / 100) * C;
+    }
+    const nivel = nivelTexto(r.I);
+    const banner = card.querySelector('.prediction-banner');
+    if (banner) {
+      banner.className = `prediction-banner ${nivel.clase}`;
+      const t = banner.querySelector('.prediction-text');
+      if (t) t.textContent = nivel.texto;
+    }
+  });
+}
+
+/** Placeholder de suelo mientras ISRIC responde. */
+const SIN_SUELO = {
+  textura: null, ph: null, phGrupo: null,
+  arena: null, arcilla: null, limo: null, costero: null,
+  ok: false, pendiente: true, error: 'consultando SoilGrids…',
+};
+
+/** Rechaza la promesa si tarda más de `ms` milisegundos. */
+function conTiempoLimite(promesa, ms, mensaje) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(mensaje)), ms);
+    promesa.then(
+      v => { clearTimeout(t); resolve(v); },
+      e => { clearTimeout(t); reject(e); }
+    );
+  });
 }
 
 function setSoilHint(msg) {
@@ -151,15 +287,18 @@ function aplicarDatos(m, s) {
 // Ubicación / terreno
 // ------------------------------------------------------------
 
-async function updateLocationInfo(m, s) {
-  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+/** Escribe texto en un elemento por id, si existe. */
+function set(id, v) {
+  const e = document.getElementById(id);
+  if (e) e.textContent = v;
+}
 
+async function updateLocationInfo(m, s) {
   // Placeholder inmediato. El topónimo real tarda en volver de Nominatim, y
   // sin esto habría una ventana en la que `lugarActual` es null y el nombre
   // propuesto al guardar sería "Ubicación N" en vez del pueblo real.
-  const coords = `${selectedLat.toFixed(4)}° N, ${Math.abs(selectedLng).toFixed(4)}° ${selectedLng < 0 ? 'O' : 'E'}`;
   lugarActual = null;
-  set('locationName', coords);
+  set('locationName', coordsTexto(selectedLat, selectedLng));
 
   try {
     const r = await fetch(
@@ -177,7 +316,7 @@ async function updateLocationInfo(m, s) {
   } catch {
     // Nominatim caído o bloqueado: se queda con las coordenadas.
   }
-  set('coordinatesValue', `${selectedLat.toFixed(4)}°N, ${selectedLng.toFixed(4)}°W`);
+  set('coordinatesValue', coordsTexto(selectedLat, selectedLng));
   set('altitudeValue', `${m.altitud} m`);
   set('soilTempValue', `${m.tSuelo.toFixed(2)} °C`);
   set('airTempValue', `${m.tAire.toFixed(2)} °C`);
@@ -185,14 +324,18 @@ async function updateLocationInfo(m, s) {
   set('humidityValue', `${Math.round(m.hr7)}%`);
   set('dayOfYearValue', `${m.dia} / 365`);
   set('rain7Value', `${m.lluvia30.slice(0, 7).reduce((a, b) => a + b, 0).toFixed(1)} mm`);
-  set('soilTypeValue', s.ok ? capitalize(s.textura) : 'no disponible');
+  set('soilTypeValue', s.ok ? capitalize(s.textura)
+    : s.pendiente ? 'consultando…' : 'no disponible');
   set('phValue', s.ok && s.ph != null ? s.ph.toFixed(1) : '—');
 }
 
 function renderTerreno(m, s) {
-  if (!s.ok) return;   // deja el aviso de setSoilHint()
   const e = document.getElementById('soilSummary');
   if (!e) return;
+  if (!s.ok) {
+    if (s.pendiente) e.innerHTML = '<span class="soil-unavailable">Consultando SoilGrids…</span>';
+    return;   // si ya falló, deja el aviso de setSoilHint()
+  }
   const n0 = v => (v == null ? '—' : v.toFixed(0));
   e.innerHTML = `Textura <strong>${capitalize(s.textura)}</strong>`
     + ` · arena <strong>${n0(s.arena)}%</strong>`
@@ -228,30 +371,15 @@ function inferirVegetacion(lat, lng) {
 }
 
 // ------------------------------------------------------------
-// Estado general
+// Marca de tiempo
 // ------------------------------------------------------------
 
+/**
+ * Sólo la línea de "actualizado" y la fuente. La valoración global de
+ * condiciones que antes estaba aquí se eliminó de la tarjeta de suelo y clima:
+ * repetía lo que ya dicen los 19 anillos y ocupaba más sitio que la ficha.
+ */
 function renderEstado() {
-  const sel = currentRanking.filter(r => selectedMushrooms.includes(r.sp.key));
-  const avg = sel.length ? sel.reduce((a, r) => a + r.I, 0) / sel.length : 0;
-  const top = currentRanking[0];
-
-  let icono, texto, color;
-  if (avg >= 60) { icono = '🔥'; texto = 'Condiciones muy favorables'; color = '#4caf50'; }
-  else if (avg >= 40) { icono = '✅'; texto = 'Condiciones favorables'; color = '#8bc34a'; }
-  else if (avg >= 20) { icono = '⚠️'; texto = 'Condiciones posibles'; color = '#ff9800'; }
-  else { icono = '❌'; texto = 'Condiciones desfavorables'; color = '#f44336'; }
-
-  const el = document.getElementById('generalStatus');
-  if (el) {
-    el.innerHTML = `
-      <div class="status-icon">${icono}</div>
-      <div class="status-text">
-        <span class="status-label" style="color:${color}">${texto}</span>
-        ${top && top.I > 0 ? `<div class="status-top">Mejor: <strong>${top.sp.es}</strong> · T°${top.sp.tOpt}°C</div>` : ''}
-      </div>`;
-  }
-
   const u = document.getElementById('lastUpdate');
   if (u) {
     u.textContent = `Actualizado: ${new Date().toLocaleString('es-ES')} · Fuente: Open-Meteo + SoilGrids`;
@@ -275,9 +403,14 @@ function renderTarjetas() {
     cont.appendChild(box);
   }
 
-  const vis = currentRanking.filter(r => selectedMushrooms.includes(r.sp.key));
+  // Se filtra por selección y se ordena por prioridad de especie, no por
+  // puntuación: el orden en el que salen las tarjetas es fijo, para que no
+  // se muevan de sitio cada vez que cambia el tiempo.
+  const vis = porPrioridad(
+    currentRanking.filter(r => selectedMushrooms.includes(r.sp.key))
+  );
   if (!vis.length) {
-    box.innerHTML = '<p class="placeholder-text">Selecciona setas en la pestaña 🍄 Setas</p>';
+    box.innerHTML = '<p class="placeholder-text">Selecciona setas en la pestaña 🍄 Especies</p>';
     return;
   }
 
@@ -742,11 +875,26 @@ window.delFav = id => {
 // Selector de setas
 // ------------------------------------------------------------
 
+/**
+ * Recupera la selección guardada. Si no hay ninguna, se quedan todas las
+ * especies, que es el estado por defecto.
+ *
+ * Se descartan las claves que ya no corresponden a ninguna especie: si algún
+ * día se cambia el catálogo, una lista vieja no debe dejar huecos.
+ */
 function loadSelectedMushrooms() {
+  // Se parte siempre del valor por defecto (todas las especies) y sólo se
+  // sobrescribe si hay una lista guardada utilizable. Así la función es
+  // idempotente: llamarla sin nada guardado devuelve las 19, no lo que
+  // hubiera quedado de una llamada anterior.
+  selectedMushrooms = SPECIES.map(sp => sp.key);
   try {
     const s = JSON.parse(localStorage.getItem(MUSH_KEY));
-    if (Array.isArray(s)) selectedMushrooms = s;
-  } catch { /* valor por defecto */ }
+    if (Array.isArray(s)) {
+      const validas = new Set(SPECIES.map(sp => sp.key));
+      selectedMushrooms = s.filter(k => validas.has(k));
+    }
+  } catch { /* se mantiene el valor por defecto */ }
 }
 
 function saveSelectedMushrooms() {
@@ -758,7 +906,7 @@ function initMushroomSelector() {
   const info = document.getElementById('mushroomInfoGrid');
   if (!sel) return;
 
-  sel.innerHTML = SPECIES.map(sp => {
+  sel.innerHTML = porPrioridad(SPECIES.map(sp => ({ sp }))).map(({ sp }) => {
     const m = MUSHROOM_META[sp.key] || {};
     const on = selectedMushrooms.includes(sp.key);
     return `
@@ -774,7 +922,7 @@ function initMushroomSelector() {
   }).join('');
 
   if (info) {
-    info.innerHTML = SPECIES.map(sp => {
+    info.innerHTML = porPrioridad(SPECIES.map(sp => ({ sp }))).map(({ sp }) => {
       const m = MUSHROOM_META[sp.key] || {};
       return `
       <div class="mushroom-info-card ${sp.toxica ? 'toxica' : ''}" style="border-left-color:${m.color || '#666'}">
@@ -919,16 +1067,24 @@ function showLoading(v) {
 function notify(msg, type = 'info') {
   const bg = { info: '#2196f3', success: '#4caf50', error: '#f44336' }[type];
   const n = document.createElement('div');
+  n.className = 'toast';
+  n.setAttribute('role', 'status');
   n.textContent = msg;
-  n.style.cssText = `position:fixed;top:16px;right:16px;padding:14px 20px;background:${bg};
-    color:#fff;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.2);
-    animation:slideIn .25s ease`;
+  n.style.background = bg;
   document.body.appendChild(n);
   setTimeout(() => n.remove(), 3200);
 }
 
 const style = document.createElement('style');
-style.textContent = `@keyframes slideIn{from{transform:translateX(110%)}to{transform:translateX(0)}}`;
+style.textContent = `
+.toast{
+  position:fixed;top:16px;left:16px;right:16px;max-width:min(420px,calc(100% - 32px));
+  padding:14px 20px;color:#fff;border-radius:8px;z-index:9999;font-size:14px;
+  box-shadow:0 4px 12px rgba(0,0,0,.2);
+  animation:toastIn .25s ease;
+}
+@keyframes toastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+`;
 document.head.appendChild(style);
 
 // Metadatos visuales (icono, color) por especie

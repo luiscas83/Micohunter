@@ -19,11 +19,6 @@
         <p class="tagline">Potencial de fructificación por especie, suelo y clima</p>
       </div>
     </div>
-    <div class="sources">
-      <span>Open-Meteo</span>
-      <span>SoilGrids</span>
-      <span>OpenStreetMap</span>
-    </div>
   </div>
 </header>
 
@@ -85,13 +80,10 @@
         </div>
         <div class="soil-summary" id="soilSummary"></div>
 
-        <div class="status-block">
-          <div class="status-indicator" id="generalStatus">
-            <div class="status-icon">⏳</div>
-            <div class="status-text"><span class="status-label">Cargando…</span></div>
-          </div>
-          <div class="last-update" id="lastUpdate"></div>
-        </div>
+        <!-- La valoración de condiciones se quitó de aquí: competía en
+             pantalla con el anillo de cada tarjeta y repetía lo que ya
+             dicen los 19 índices. -->
+        <div class="last-update" id="lastUpdate"></div>
       </div>
 
       <!-- tarjetas dinámicas -->

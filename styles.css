@@ -1939,13 +1939,24 @@ body {
     }
     
     /* Por debajo de 768 px el mapa y la ficha se apilan: en un móvil
-       una columna de 360 px para el mapa es más útil que media. */
+       una columna de 360 px para el mapa es más útil que media.
+       minmax(0, 1fr) y no 1fr: por defecto una pista de grid no baja del
+       ancho mínimo de su contenido, así que un texto largo (un nombre de
+       suelo, un nombre de setal) ensanchaba la columna y empujaba todo lo
+       demás fuera de la pantalla. */
     .dashboard-grid,
     .detail-grid,
     .analysis-grid,
     .guide-grid,
     .favorites-container {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* Los hijos de una rejilla también necesitan poder encogerse */
+    .dashboard-grid > *,
+    .mushroom-cards-grid > *,
+    .detail-grid > * {
+        min-width: 0;
     }
 
     .dashboard-grid .map-card,
@@ -2001,6 +2012,37 @@ body {
         width: 100%;
         justify-content: center;
     }
+}
+
+/* El texto muy largo (nombres de setal, fuentes) no debe romper la caja */
+.card,
+.glossary dd,
+.mushroom-cards-grid .mushroom-detail-value,
+.mushroom-info-details {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* Elementos de flex que deben poder encogerse por debajo de su contenido.
+   Sin esto, un valor largo ensancha la fila y luego la tarjeta. */
+.mushroom-cards-grid .condition-item > *,
+.mushroom-cards-grid .mushroom-detail-item > *,
+.favorite-info,
+.favorite-item > *,
+.factors-grid-compact > *,
+.factor-item-compact > *,
+.analysis-item > *,
+.summary-item > * {
+    min-width: 0;
+}
+
+.mushroom-cards-grid .condition-value,
+.mushroom-cards-grid .mushroom-detail-value,
+.factors-grid-compact .factor-value,
+.factor-item-compact .factor-label,
+.analysis-item .analysis-label,
+.summary-item .summary-label {
+    overflow-wrap: break-word;
 }
 
 /* ===== ANIMATIONS ===== */
@@ -2557,18 +2599,25 @@ body {
 .terrain-item .ti {
     flex: 0 0 20px;
     text-align: center;
+    min-width: 0;
 }
 
 .terrain-item .tl {
     flex: 1 1 auto;
     color: var(--text-light);
+    min-width: 0;
 }
 
+/* El valor ("Franco-arenoso", "40.5600° N, 3.8800° O") es la parte larga de
+   la fila. Sin min-width:0 un elemento flex no baja de su ancho mínimo y
+   ensancha la tarjeta entera. */
 .terrain-item .tv {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
+    min-width: 0;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     text-align: right;
+    overflow-wrap: break-word;
 }
 
 .status-block {
@@ -2724,3 +2773,226 @@ ul.method-list {
         grid-column: 1 / -1;
     }
 }
+
+/* El bloque móvil va al final a propósito: con el mismo peso
+   específico, en CSS gana la última regla, y aquí hay reglas de
+   ".main", ".map-card .map" y ".search-row" declaradas más abajo que
+   pisarían los ajustes de móvil si este bloque fuera antes. */
+/* ============================================================
+   MÓVIL
+   Los bloques anteriores cubren 1024 y 768, pero a 390 px el
+   contenido se queda sin sitio: con 20 px de margen de página y
+   24 px de relleno de tarjeta dentro de una pantalla de 390, sólo
+   quedan ~300 px útiles. Este bloque aprieta todo.
+   ============================================================ */
+@media (max-width: 480px) {
+
+    body {
+        font-size: 15px;
+    }
+
+    /* Los avisos flotantes entran desde fuera de la pantalla
+       (translateX(110%)) y, aun siendo position:fixed, ensanchan el
+       documento y crean una barra de scroll horizontal. `clip` los recorta
+       sin crear un contenedor de scroll, a diferencia de `hidden`. */
+    html, body {
+        overflow-x: clip;
+    }
+
+    /* La cabecera usaba márgenes negativos de 20 px para compensar el
+       relleno del body; en móvil estorban. */
+    .header {
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .header-inner {
+        gap: 10px;
+    }
+
+    .logo-icon {
+        font-size: 2rem;
+    }
+
+    .logo h1 {
+        font-size: 1.4rem;
+    }
+
+    .tagline {
+        font-size: 0.82rem;
+    }
+
+    .main {
+        padding: 0 12px;
+    }
+
+    .card {
+        padding: 14px;
+        border-radius: 10px;
+    }
+
+    .card h2 {
+        font-size: 1.15rem;
+    }
+
+    .card h3 {
+        font-size: 1rem;
+    }
+
+    .section-head h2 {
+        font-size: 1.25rem;
+    }
+
+    .dashboard-grid {
+        gap: 14px;
+    }
+
+    /* Mapa algo más bajo: en vertical deja ver la ficha de suelo.
+       Se usa el id, no la clase, porque la regla general #dashboardMap
+       (500 px) tiene más especificidad que .map-card .map y ganaba. */
+    #dashboardMap,
+    .map-card .map {
+        height: 320px;
+    }
+
+    /* El buscador y el botón en dos líneas en vez de uno al lado del otro */
+    .search-row {
+        flex-wrap: wrap;
+    }
+
+    .search-row input {
+        flex: 1 1 100%;
+    }
+
+    .search-row .btn {
+        flex: 1 1 100%;
+    }
+
+    /* Formulario de guardado de setal apilado */
+    .save-fav-row {
+        flex-wrap: wrap;
+    }
+
+    .save-fav-row input {
+        flex: 1 1 100%;
+    }
+
+    .save-fav-row .btn {
+        flex: 1 1 auto;
+    }
+
+    /* Barras de factores a una columna: con dos, cada celda queda
+       ilegible a 390 px. */
+    .factors-grid-compact {
+        grid-template-columns: 1fr;
+    }
+
+    /* Anillo más pequeño */
+    .mushroom-cards-grid .probability-ring {
+        width: 96px;
+        height: 96px;
+    }
+
+    .mushroom-cards-grid .ring-text .percentage {
+        font-size: 1.6rem;
+    }
+
+    .mushroom-cards-grid .mushroom-name {
+        font-size: 1.05rem;
+    }
+
+    /* Etiqueta y valor en columna, para que la etiqueta no se recorte */
+    .mushroom-cards-grid .condition-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    /* La fila de la ficha de suelo tampoco aguanta en horizontal: el valor
+       "40.7600° N, 2.5300° O" es más ancho que la mitad de la pantalla. */
+    .terrain-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1px;
+    }
+
+    .terrain-item .tv {
+        text-align: left;
+    }
+
+    .mushroom-cards-grid .condition-value {
+        text-align: left;
+    }
+
+    .mushroom-cards-grid .mushroom-detail-item {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    /* La tabla de 11 columnas no cabe ni con scroll interno cómodo */
+    .ranking-table {
+        min-width: 560px;
+        font-size: 0.78rem;
+    }
+
+    .table-wrapper {
+        margin-left: -14px;
+        margin-right: -14px;
+        padding: 0 14px;
+    }
+
+    /* Formulario manual de setales */
+    .add-fav-row {
+        grid-template-columns: 1fr;
+    }
+
+    .add-fav-row .btn {
+        grid-column: auto;
+    }
+
+    /* Botones de la lista de setales guardados, a lo ancho */
+    .favorite-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .favorite-btn {
+        flex: 1;
+    }
+
+    .glossary dd {
+        padding-left: 10px;
+    }
+
+    /* La etiqueta de procedencia es larga y no debe forzar scroll */
+    .evidencia-badge {
+        white-space: normal;
+        text-align: center;
+    }
+
+    .mushroom-info-grid,
+    .mushroom-selector {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .level-table {
+        grid-template-columns: 1fr;
+    }
+
+    .method-list {
+        padding-left: 18px;
+        gap: 8px;
+    }
+
+    .formula {
+        font-size: 0.8rem;
+        padding: 10px;
+    }
+
+    .footer p {
+        padding: 0 12px;
+    }
+}
+
