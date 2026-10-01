@@ -841,8 +841,13 @@ body {
 }
 
 .mushroom-cards-grid .ring-text .label {
+    display: block;
     font-size: 0.75rem;
     color: var(--text-light);
+    /* Sin esto, con el anillo reducido a 96 px en móvil, "Potencial" se
+       partía en dos líneas dentro del círculo. */
+    white-space: nowrap;
+    line-height: 1.2;
 }
 
 .mushroom-cards-grid .conditions-list {
@@ -2891,12 +2896,16 @@ ul.method-list {
 
     /* Anillo más pequeño */
     .mushroom-cards-grid .probability-ring {
-        width: 96px;
-        height: 96px;
+        width: 104px;
+        height: 104px;
     }
 
     .mushroom-cards-grid .ring-text .percentage {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
+    }
+
+    .mushroom-cards-grid .ring-text .label {
+        font-size: 0.68rem;
     }
 
     .mushroom-cards-grid .mushroom-name {
@@ -2931,16 +2940,47 @@ ul.method-list {
         gap: 2px;
     }
 
-    /* La tabla de 11 columnas no cabe ni con scroll interno cómodo */
+    /* La tabla del Análisis tiene 11 columnas. A 390 px eso no es una tabla
+       con scroll: es una tabla ilegible con cada celda de 30 px. En móvil se
+       quedan sólo las seis que resumen (especie, índice, S, H, T y estado) y
+       las de detalle se ocultan. El detalle completo sigue en la ficha de
+       cada especie y en la pestaña Especies. */
     .ranking-table {
-        min-width: 560px;
-        font-size: 0.78rem;
+        min-width: 0;
+        font-size: 0.8rem;
+    }
+
+    .ranking-table thead th:nth-child(5),
+    .ranking-table tbody td:nth-child(5),     /* A      */
+    .ranking-table thead th:nth-child(7),
+    .ranking-table tbody td:nth-child(7),     /* GDD    */
+    .ranking-table thead th:nth-child(8),
+    .ranking-table tbody td:nth-child(8),     /* Lluvia */
+    .ranking-table thead th:nth-child(9),
+    .ranking-table tbody td:nth-child(9),     /* T° opt */
+    .ranking-table thead th:nth-child(10),
+    .ranking-table tbody td:nth-child(10) {   /* F. hábitat */
+        display: none;
+    }
+
+    .ranking-table thead th,
+    .ranking-table tbody td {
+        padding: 8px 5px;
+    }
+
+    .ranking-table .col-especie {
+        width: auto;
+    }
+
+    .ranking-table .sp-icon {
+        display: none;
     }
 
     .table-wrapper {
         margin-left: -14px;
         margin-right: -14px;
         padding: 0 14px;
+        overflow-x: visible;
     }
 
     /* Formulario manual de setales */

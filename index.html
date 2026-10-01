@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🍄 MicoHunter — Potencial de Fructificación</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<!-- Los recursos van sin parámetro de versión: el service worker (sw.js) los
+     pide siempre por red, así que no hace falta subir un número a mano en
+     cada publicación. Si lo cambias, sube también sw.js. -->
 <link rel="stylesheet" href="styles.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -71,7 +74,7 @@
           <div class="terrain-item"><span class="ti">⛰️</span><span class="tl">Altitud</span><span class="tv" id="altitudeValue">—</span></div>
           <div class="terrain-item"><span class="ti">🌡️</span><span class="tl">T° suelo</span><span class="tv" id="soilTempValue">—</span></div>
           <div class="terrain-item"><span class="ti">🌬️</span><span class="tl">T° aire</span><span class="tv" id="airTempValue">—</span></div>
-          <div class="terrain-item"><span class="ti">🥶</span><span class="tl">Mín. 7d</span><span class="tv" id="minTempValue">—</span></div>
+          <div class="terrain-item"><span class="ti">🥶</span><span class="tl">T° Mín. 7d</span><span class="tv" id="minTempValue">—</span></div>
           <div class="terrain-item"><span class="ti">💧</span><span class="tl">Humedad 7d</span><span class="tv" id="humidityValue">—</span></div>
           <div class="terrain-item"><span class="ti">🌧️</span><span class="tl">Lluvia 7d</span><span class="tv" id="rain7Value">—</span></div>
           <div class="terrain-item"><span class="ti">📅</span><span class="tl">Día del año</span><span class="tv" id="dayOfYearValue">—</span></div>
@@ -226,12 +229,13 @@
       <em>B. edulis</em> medido en campo, 13,2 °C, queda claramente por debajo del
       centro de su rango térmico.</p>
 
-      <h4>🔥 A · Acumulación térmica (grados-día)</h4>
+      <h4>🔥 A · Acumulación térmica (grados día)</h4>
       <p>No basta con que la temperatura sea buena hoy: el micelio ha estado
-      acumulando calor. Se suman los <em>grados-día</em> diarios
-      <code>(temperatura del suelo − tBase)</code> desde el último día en que el suelo
-      estuvo por debajo de la base, y se dividen por <code>gddNeed</code>, los grados
-      que la especie necesita para fructificar.</p>
+      acumulando calor. Cada día aporta unos <em>grados día</em>
+      <code>(temperatura del suelo − tBase)</code>, y se suman desde el último día
+      en que el suelo estuvo por debajo de la base. El total se divide por
+      <code>gddNeed</code>, los grados día que la especie necesita para
+      fructificar.</p>
       <p>El recorrido hacia atrás se detiene en cuanto encuentra un día por debajo de
       la base, porque ahí empieza una temporada nueva: la acumulación anterior no
       cuenta. Si encuentra un día por debajo de <code>tCrit</code>, marca
@@ -239,7 +243,7 @@
       <p class="hint">Los días por encima de <code>tMax</code> cuentan 2 en lugar de
       sumar la diferencia, porque el estrés térmico no produce acumulación útil.</p>
 
-      <h4>🌧️ H · Factor hídrico (lluvia efectiva)</h4>
+      <h4>🌧️ H · Reserva de humedad del suelo (lluvia efectiva)</h4>
       <p>No cuenta la lluvia de hoy, sino la <em>reserva</em> de humedad que ha dejado
       en el suelo. Se aplica un decaimiento exponencial sobre una ventana de <code>L</code>
       días, distinta por especie:</p>
@@ -299,7 +303,7 @@
         <div><span class="indice-badge nivel-bajo">22-44</span> Posible</div>
         <div><span class="indice-badge nivel-nulo">0-21</span> Desfavorable</div>
       </div>
-      <p>El exponente 0,5 sobre el factor hídrico es deliberado: en la práctica la
+      <p>El exponente 0,5 sobre la reserva de humedad es deliberado: en la práctica la
       respuesta a la lluvia se amortigua, porque un suelo ya saturado no sigue
       admitiendo más. Sin esa raíz, las zonas con lluvia abundante dominarían la
       clasificación.</p>
@@ -426,13 +430,14 @@
           entre su base y su techo. Si sale 0 %, el suelo está demasiado frío o
           demasiado caliente.</dd>
 
-        <dt>🌧️ Hídrico (H)</dt>
-        <dd>Reserva de humedad del suelo, calculada con la lluvia de los últimos días
-          vista con decaimiento exponencial. 100 % significa que la lluvia acumulada
-          ya ha superado lo que la especie aprovecha.</dd>
+        <dt>🌧️ Reserva de humedad del suelo (H)</dt>
+        <dd>Cuánta agua le queda al suelo. Se calcula con la lluvia de los últimos
+          días vista con decaimiento exponencial: la de hoy pesa el 100 % y la
+          de hace una semana, mucho menos. 100 % significa que la lluvia ya ha
+          superado lo que la especie es capaz de aprovechar.</dd>
 
         <dt>🔥 Acumulación (A)</dt>
-        <dd>Grados-día acumulados desde que el suelo superó la temperatura base,
+        <dd>Grados día acumulados desde que el suelo superó la temperatura base,
           sobre los que la especie necesita. Si está bajo, la seta todavía no ha
           tenido tiempo de acumular calor suficiente.</dd>
 
@@ -456,18 +461,22 @@
         <dd>Vegetación que el modelo cree que hay en el punto, deducida de las
           coordenadas. Es la variable menos fiable de todas.</dd>
 
-        <dt>GDD acum.</dt>
-        <dd>Grados-día ya acumulados sobre los que la especie necesita para
-          fructificar.</dd>
+        <dt>Calor acumulado</dt>
+        <dd>Columna <em>GDD</em> de la tabla de Análisis: si el micelio ha
+          juntado suficiente calor desde que la temperatura del suelo superó la
+          base de la especie. Un <em>grado día</em> es esa diferencia sumada
+          día a día. Aparece como estado —<em>apenas iniciado</em>,
+          <em>acumulando</em>, <em>casi</em>, <em>suficiente</em>— porque la
+          cifra en crudo es muy grande y sin contexto.</dd>
 
-        <dt>Lluvia eff.</dt>
+        <dt>Lluvia efectiva</dt>
         <dd>Lluvia efectiva en milímetros: la lluvia real de los últimos días después
           de aplicar el decaimiento. Siempre es menor que la lluvia total medida.</dd>
       </dl>
 
       <h4>Ficha de la especie</h4>
       <dl class="glossary">
-        <dt>Base / Techo</dt>
+        <dt>Rango de temperatura de suelo para fructificar</dt>
         <dd>Rango de temperatura de suelo en el que la especie puede fructificar.
           <code>tBase</code> es el umbral inferior y <code>tMax</code> el superior.</dd>
 
@@ -536,7 +545,7 @@
         <dd>Media de la temperatura del aire a 2 m. Se muestra para poder compararla
           con la del suelo: normalmente el suelo va de 1 a 4 °C por encima.</dd>
 
-        <dt>Mín. 7d</dt>
+        <dt>T° Mín. 7d</dt>
         <dd>La temperatura mínima del aire más baja de los últimos siete días. Un
           valor cercano a 0 °C avisa de riesgo de helada.</dd>
       </dl>
@@ -594,8 +603,9 @@
       <h3>Otras pantallas</h3>
       <dl class="glossary">
         <dt>Acumulados 3 / 7 / 15 / 30 días</dt>
-        <dd>Lluvia real sumada en cada ventana. Suelen diferir del «Lluvia eff.» de
-          las tarjetas, que es la misma lluvia vista con decaimiento.</dd>
+        <dd>Lluvia real sumada en cada ventana. Suelen diferir de la «Lluvia
+          efectiva» de las tarjetas, que es la misma lluvia vista con
+          decaimiento.</dd>
 
         <dt>Amplitud suelo-aire</dt>
         <dd>Diferencia entre la temperatura del suelo y la del aire. Un valor alto
@@ -627,5 +637,18 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="algoritmo.js"></script>
 <script src="app.js"></script>
+<script>
+  // El service worker es lo que evita que el móvil combine el HTML nuevo con
+  // un CSS o un JS viejos. Sólo se registra en https (GitHub Pages lo es) y
+  // sobre file:// no hace nada, así que trabajar en local sigue funcionando.
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {
+        // Sin service worker la web sigue funcionando; sólo puede pasar que
+        // tarde hasta diez minutos en refrescar del todo.
+      });
+    });
+  }
+</script>
 </body>
 </html>

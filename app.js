@@ -26,6 +26,7 @@ let selectedMushrooms = SPECIES.map(sp => sp.key);   // todas, por orden de prio
 let currentCtx = null;      // lo que consume el modelo: historial, lluvia, altitud, suelo
 let currentMeteo = null;    // meteorología completa: aire, humedad, fechas
 let lugarActual = null;     // topónimo resuelto, para nombrar al guardar
+let peticionActual = 0;     // testigo: descarta respuestas de puntos viejos
 let currentRanking = [];
 let map = null;
 let marker = null;
@@ -113,6 +114,13 @@ async function setLocation(lat, lng) {
  * y cuando llega se vuelve a pintar todo.
  */
 async function refresh() {
+  // Testigo de petición. Antes se comparaban las coordenadas de la respuesta
+  // con las actuales, pero la comprobación usaba m.lng cuando meteo() devuelve
+  // la propiedad llamada "lon": m.lng era siempre undefined, la comparación
+  // fallaba siempre y el suelo se descartaba el 100 % de las veces. Un
+  // testigo no depende de nombres de propiedades.
+  const testigo = ++peticionActual;
+
   showLoading(true);
   let m;
   try {
@@ -123,10 +131,14 @@ async function refresh() {
     );
   } catch (e) {
     console.error(e);
-    notify(String(e.message || e), 'error');
-    showLoading(false);
+    if (testigo === peticionActual) {
+      notify(String(e.message || e), 'error');
+      showLoading(false);
+    }
     return;
   }
+
+  if (testigo !== peticionActual) return;   // el usuario ya se movió
 
   // Primera pasada: meteorología sí, suelo todavía no.
   aplicarDatos(m, SIN_SUELO);
@@ -139,21 +151,22 @@ async function refresh() {
       90000,
       'SoilGrids no respondió en 90 s'
     );
-    // Si el usuario ha movido el mapa mientras tanto, esta respuesta ya no
-    // corresponde al punto actual: se descarta.
-    if (m.lat !== selectedLat || m.lng !== selectedLng) return;
+    if (testigo !== peticionActual) return;   // punto cambiado: se descarta
 
     if (s.ok) {
       // Repintado quirúrgico: sólo cambia lo que depende del suelo. La
       // textura y el pH se escriben en sus campos y los factores de hábitat
       // se recalculan, sin tocar el mapa ni reconstruir las 19 tarjetas.
       actualizarSoloSuelo(s);
+      if (s.parcial) {
+        setSoilHint('Faltan propiedades de SoilGrids: se muestran las disponibles');
+      }
     } else {
-      setSoilHint(s.error || 'SoilGrids no disponible');
+      marcarSueloFallido(s.error || 'SoilGrids no disponible');
     }
   } catch (e) {
     console.warn(e);
-    setSoilHint(String(e.message || e));
+    if (testigo === peticionActual) marcarSueloFallido(String(e.message || e));
   }
 }
 
@@ -174,7 +187,7 @@ function actualizarSoloSuelo(s) {
   currentCtx.terreno.humedad = s.phGrupo === 'calizo' ? 'seco' : s.ok ? 'normal' : null;
   currentRanking = ranking(currentCtx);
 
-  set('soilTypeValue', capitalize(s.textura));
+  set('soilTypeValue', s.textura ? capitalize(s.textura) : 'no disponible');
   set('phValue', s.ph != null ? s.ph.toFixed(1) : '—');
   renderTerreno(m, s);
   renderAnalisis();
@@ -205,7 +218,7 @@ function refrescarFactoresHabitat() {
       .find(el => el.textContent.includes('Hábitat estimado'));
     if (cond) {
       const v = cond.querySelector('.condition-value');
-      if (v) v.textContent = r.detalle.habEtiqueta || '—';
+      if (v) v.textContent = cap(r.detalle.habEtiqueta) || '—';
     }
 
     // El índice y el anillo cambian con el pH, así que también se actualizan
@@ -246,7 +259,20 @@ function conTiempoLimite(promesa, ms, mensaje) {
 
 function setSoilHint(msg) {
   const e = document.getElementById('soilSummary');
-  if (e) e.innerHTML = `<span class="soil-unavailable">${msg}</span>`;
+  if (e) e.innerHTML = `<span class="soil-unavailable">${escaparHtml(msg)}</span>`;
+}
+
+/**
+ * Estado terminal del suelo: no se pudo consultar.
+ *
+ * Antes, si SoilGrids fallaba o se agotaba el tiempo, sólo se escribía el
+ * aviso en el resumen y los campos Textura y pH se quedaban frozen en
+ * "consultando…" para siempre, que es peor que un fallo honesto.
+ */
+function marcarSueloFallido(msg) {
+  set('soilTypeValue', 'no disponible');
+  set('phValue', '—');
+  setSoilHint(msg + ' · el resto de los datos sí son válidos');
 }
 
 /** Calcula el ranking y repinta todo con la meteorología y el suelo dados. */
@@ -337,16 +363,38 @@ function renderTerreno(m, s) {
     return;   // si ya falló, deja el aviso de setSoilHint()
   }
   const n0 = v => (v == null ? '—' : v.toFixed(0));
-  e.innerHTML = `Textura <strong>${capitalize(s.textura)}</strong>`
-    + ` · arena <strong>${n0(s.arena)}%</strong>`
-    + ` / arcilla <strong>${n0(s.arcilla)}%</strong>`
-    + ` / limo <strong>${n0(s.limo)}%</strong>`
-    + ` · pH <strong>${n0(s.ph * 10) / 10}</strong>`
-    + ` · carbono <strong>${n0(s.costero)} g/kg</strong>`
+  // Cada componente se muestra sólo si llegó: SoilGrids puede devolver unos
+  // sí y otros no, y un "— 35% —" es más claro que inventar el que falta.
+  const partes = [];
+  if (s.textura) partes.push(`Textura <strong>${capitalize(s.textura)}</strong>`);
+  if (s.arena != null) partes.push(`arena <strong>${n0(s.arena)}%</strong>`);
+  if (s.arcilla != null) partes.push(`arcilla <strong>${n0(s.arcilla)}%</strong>`);
+  if (s.limo != null) partes.push(`limo <strong>${n0(s.limo)}%</strong>`);
+  if (s.ph != null) partes.push(`pH <strong>${s.ph.toFixed(1)}</strong>`);
+  if (s.costero != null) partes.push(`carbono <strong>${n0(s.costero)} g/kg</strong>`);
+
+  e.innerHTML = (partes.length ? partes.join(' · ') : 'sin datos de suelo')
     + `<br><span class="soil-note">ISRIC SoilGrids 2.0, horizonte 5-15 cm, rejilla 250 m</span>`;
 }
 
 const capitalize = s => s ? s[0].toUpperCase() + s.slice(1) : s;
+
+/**
+ * Mayúscula en la primera letra, para los hábitats.
+ *
+ * El modelo los guarda en minúsculas porque son claves internas con las que
+ * se comparan ("pinar", "hayedo", "fresnedal"), pero mostrarlos así en la
+ * interfaz queda feo: "Hábitat estimado: pinar" parece un descuido. Se
+ * capitaliza sólo al pintar; el valor interno no se toca, porque forma parte
+ * de la comparación de compatibilidad.
+ */
+function cap(s) {
+  if (!s) return s;
+  // Los hábitats son claves internas con guion bajo ("bosque_mixto",
+  // "madera_muerta"); al pintarlos se cambian por espacios.
+  const t = String(s).replace(/_/g, ' ');
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
 
 /**
  * Heurística de vegetación por coordenadas.
@@ -417,6 +465,21 @@ function renderTarjetas() {
   box.innerHTML = vis.map(r => tarjeta(r)).join('');
 }
 
+/**
+ * Estado de la acumulación de calor, en palabras. Sólo se usa en la tabla de
+ * Análisis, no en las tarjetas del dashboard: allí la cifra en grados-día
+ * ("292 de 180") se quitó por pedido del usuario, porque un número grande sin
+ * contexto asusta y no ayuda a decidir nada.
+ */
+function textoGDD(gdd, need) {
+  if (need <= 0) return '—';
+  const pct = Math.round((gdd / need) * 100);
+  if (pct >= 100) return 'suficiente';
+  if (pct >= 60) return `casi, ${pct} %`;
+  if (pct >= 25) return `acumulando, ${pct} %`;
+  return `apenas iniciado, ${pct} %`;
+}
+
 function tarjeta(r) {
   const sp = r.sp;
   const nivel = nivelTexto(r.I);
@@ -482,21 +545,17 @@ function tarjeta(r) {
       </div>
       <div class="condition-item">
         <span>🌲 Hábitat estimado:</span>
-        <span class="condition-value">${r.detalle.habEtiqueta || '—'}</span>
+        <span class="condition-value">${cap(r.detalle.habEtiqueta) || '—'}</span>
       </div>
       <div class="condition-item">
-        <span>🔥 GDD acum.:</span>
-        <span class="condition-value">${Math.round(r.G)} / ${sp.gddNeed}</span>
-      </div>
-      <div class="condition-item">
-        <span>💧 Lluvia eff.:</span>
+        <span>💧 Lluvia efectiva:</span>
         <span class="condition-value">${r.reff.toFixed(1)} mm</span>
       </div>
     </div>
 
     <div class="mushroom-details">
       <div class="mushroom-detail-item">
-        <span class="mushroom-detail-label">Base / Techo:</span>
+        <span class="mushroom-detail-label">Rango de temperatura de suelo para fructificar:</span>
         <span class="mushroom-detail-value">${sp.tBase} / ${sp.tMax} °C</span>
       </div>
       <div class="mushroom-detail-item">
@@ -558,10 +617,10 @@ function renderAnalisis() {
       </td>
       <td class="col-indice"><span class="indice-badge ${n.clase}">${Math.round(r.I)}</span></td>
       <td title="Estacional (T suelo)">${pct(r.S)}%</td>
-      <td title="Hídrico">${pct(r.H)}%</td>
-      <td title="Acumulación GDD">${pct(r.A)}%</td>
+      <td title="Reserva de humedad del suelo">${pct(r.H)}%</td>
+      <td title="Acumulación de grados día">${pct(r.A)}%</td>
       <td title="Temporada documentada">${pct(r.T)}%</td>
-      <td title="GDD acumulado">${Math.round(r.G)}</td>
+      <td title="Grados día acumulados: ${Math.round(r.G)} de ${sp.gddNeed}">${textoGDD(r.G, sp.gddNeed)}</td>
       <td title="Lluvia efectiva">${r.reff.toFixed(0)}</td>
       <td title="Temp. óptima">${sp.tOpt}°C</td>
       <td title="Compatibilidad de hábitat (estimada)">${pct(r.detalle.habFactor)}%</td>
@@ -580,7 +639,7 @@ function renderAnalisis() {
       <p class="model-note">
         Modelo por ventanas: <code>I = 100 · S · H<sup>0.5</sup> · A · T · F<sub>hábitat</sub> · F<sub>altitud</sub></code><br>
         <strong>S</strong> potencial térmico del suelo ·
-        <strong>H</strong> factor hídrico ·
+        <strong>H</strong> reserva de humedad del suelo ·
         <strong>A</strong> acumulación de grados-día ·
         <strong>T</strong> temporada documentada ·
         <strong>G</strong> grados-día acumulados ·
@@ -590,7 +649,7 @@ function renderAnalisis() {
         <table class="ranking-table">
           <thead><tr>
             <th>Especie</th><th>Índice</th><th>S</th><th>H</th><th>A</th><th>T</th>
-            <th>GDD</th><th>Lluvia eff.</th><th>T° opt</th><th>F. hábitat</th><th>Estado</th>
+            <th>GDD</th><th>Lluvia efectiva</th><th>T° opt</th><th>F. hábitat</th><th>Estado</th>
           </tr></thead>
           <tbody>${filas}</tbody>
         </table>
@@ -622,7 +681,7 @@ function renderAnalisis() {
           <h4>Contexto</h4>
           <div class="analysis-item"><span class="analysis-label">Altitud</span><span class="analysis-value">${m.altitude} m</span></div>
           <div class="analysis-item"><span class="analysis-label">Humedad 7d</span><span class="analysis-value">${w.hr7 == null ? '—' : Math.round(w.hr7) + '%'}</span></div>
-          <div class="analysis-item"><span class="analysis-label">Vegetación (est.)</span><span class="analysis-value">${m.terreno.vegetacion.join(', ')}</span></div>
+          <div class="analysis-item"><span class="analysis-label">Vegetación (est.)</span><span class="analysis-value">${escaparHtml(m.terreno.vegetacion.map(cap).join(', '))}</span></div>
           <div class="analysis-item"><span class="analysis-label">Textura suelo</span><span class="analysis-value">${m.suelo.ok ? m.suelo.textura : 'no disponible'}</span></div>
         </div>
       </div>
@@ -942,11 +1001,11 @@ function initMushroomSelector() {
           <p><strong>Grupo:</strong> ${GUILD_LABELS[sp.guild]}</p>
           <p><strong>Temporada documentada:</strong> ${escaparHtml(temporadaTexto(sp))}</p>
           <p><strong>Comestibilidad:</strong> ${escaparHtml(sp.comestible || 'no documentada')}</p>
-          <p><strong>Base / óptimo / techo:</strong> ${sp.tBase} / ${sp.tOpt} / ${sp.tMax} °C</p>
+          <p><strong>Rango de temperatura de suelo para fructificar:</strong> ${sp.tBase} a ${sp.tMax} °C, óptimo ${sp.tOpt} °C</p></p>
           <p><strong>Mínima crítica:</strong> ${sp.tCrit} °C</p>
-          <p><strong>GDD necesarios:</strong> ${sp.gddNeed}</p>
+          <p><strong>Grados día necesarios:</strong> ${sp.gddNeed}</p>
           <p><strong>Ventana hídrica:</strong> ${sp.L} días · óptima ${sp.Ro} mm</p>
-          <p><strong>Hábitat:</strong> ${escaparHtml(sp.habitat.join(', '))}</p>
+          <p><strong>Hábitat:</strong> ${escaparHtml(sp.habitat.map(cap).join(', '))}</p>
         </div>
         <p class="card-evidencia">
           <span class="evidencia-badge ev-${sp.evidencia || 'estimado'}">${EVIDENCIA_LABELS[sp.evidencia] || EVIDENCIA_LABELS.estimado}</span>

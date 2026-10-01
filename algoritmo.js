@@ -844,16 +844,22 @@ async function sgPropiedad(prop, lat, lon, profundidad) {
   const url = `${SG_URL}?property=${prop}&depth=${profundidad}`
     + `&value=mean&lon=${lon}&lat=${lat}`;
 
-  // Reintenta ante el límite de 5/min con espera creciente.
+  // Tope por petición. Se ha visto a ISRIC dejar una consulta colgada: la de
+  // arcilla llegó a tardar 55 s mientras las otras tres respondían en menos de
+  // uno. Como las cuatro van en paralelo y el conjunto espera a la más lenta,
+  // una sola consulta colgada bloqueaba la ficha de suelo entera durante un
+  // minuto. Con el tope, se pierde ese dato y se conserva el resto.
+  const TOPE_MS = 15000;
+
   let ultimoError;
-  for (let intento = 0; intento < 3; intento++) {
-    if (intento) await new Promise(r => setTimeout(r, 12000 * intento));
+  for (let intento = 0; intento < 2; intento++) {
+    if (intento) await new Promise(r => setTimeout(r, 900));
 
     let r;
     try {
-      r = await fetch(url);
+      r = await sgConTope(url, TOPE_MS);
     } catch (e) {
-      ultimoError = `red: ${e.message}`;
+      ultimoError = e.name === 'TimeoutError' ? 'sin respuesta' : `red: ${e.message}`;
       continue;
     }
 
@@ -883,15 +889,29 @@ async function sgPropiedad(prop, lat, lon, profundidad) {
   throw new Error(`SoilGrids ${prop}: ${ultimoError}`);
 }
 
+/** fetch con tiempo máximo, con cancelación real de la petición. */
+function sgConTope(url, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { signal: ctrl.signal })
+    .finally(() => clearTimeout(t));
+}
+
 /**
  * Textura, pH y carbono orgánico del suelo.
- * Nunca lanza: si SoilGrids falla devuelve { ok:false } y la app sigue
- * funcionando con el resto de variables.
+ *
+ * Nunca lanza. Cada propiedad va por separado y con su propio tiempo máximo,
+ * así que un fallo o un cuelgue de una no impide mostrar las otras: el pH es
+ * el que más pesa en el modelo (ajusta el factor de hábitat), y no tiene
+ * sentido perderlo porque la consulta de arcilla se quedara colgada.
+ *
+ * `ok` significa "ha llegado algo utilizable", no "han llegado las cuatro".
  */
 async function suelo(lat, lon) {
   const out = {
     textura: null, ph: null, phGrupo: null,
     arena: null, arcilla: null, limo: null, costero: null,
+    parcial: false,
     ok: false, error: null,
   };
 
@@ -902,11 +922,21 @@ async function suelo(lat, lon) {
     // Pedir dos horizontes o varias propiedades en una llamada devuelve
     // 200 con la lista de capas vacía, o HTTP 500.
     const P = '5-15cm';
+    // Se lanzan escalonadas y no a la vez. Cuatro peticiones simultáneas a un
+    // servicio que se autolimita a 5 por minuto garantizan que alguna se
+    // quede esperando: medido con las cuatro en paralelo, la arena agotaba
+    // los 12 s dos veces seguidas mientras la arcilla tardaba 5 s.
+    // Con 300 ms de separación todas caben holgadamente.
+    const espera = ms => new Promise(r => setTimeout(r, ms));
+    const pedir = (prop, retardo) => espera(retardo)
+      .then(() => sgPropiedad(prop, lat, lon, P))
+      .catch(() => null);
+
     const [arena, arcilla, ph, costero] = await Promise.all([
-      sgPropiedad('sand', lat, lon, P).catch(() => null),
-      sgPropiedad('clay', lat, lon, P).catch(() => null),
-      sgPropiedad('phh2o', lat, lon, P).catch(() => null),
-      sgPropiedad('soc', lat, lon, P).catch(() => null),
+      pedir('sand', 0),      // el más importante: sin él no hay textura
+      pedir('clay', 300),    // el más lento en la práctica
+      pedir('phh2o', 600),   // el que más pesa en el modelo
+      pedir('soc', 900),
     ]);
 
     out.arena = arena;
@@ -922,6 +952,10 @@ async function suelo(lat, lon) {
       else if (arena >= 45 && arcilla < 20) out.textura = 'franco-arenoso';
       else if (arcilla >= 18) out.textura = 'franco-arcilloso';
       else out.textura = 'franco';
+    } else if (arena != null) {
+      // Sin arcilla no se puede usar el triángulo, pero el contenido en
+      // arena por sí solo ya acota bastante la clase.
+      out.textura = arena >= 70 ? 'arenoso' : arena >= 55 ? 'franco-arenoso' : 'franco';
     }
 
     if (ph != null) {
@@ -931,7 +965,9 @@ async function suelo(lat, lon) {
       else out.phGrupo = 'calizo';
     }
 
-    out.ok = out.textura != null;
+    out.parcial = (arena == null || arcilla == null);
+    out.ok = out.textura != null || out.ph != null;
+    if (out.parcial) out.error = 'SoilGrids no devolvió todas las propiedades';
     return out;
   } catch (e) {
     out.error = e.message;
@@ -958,7 +994,7 @@ async function buscarLugar(nombre) {
 
 const FACTOR_LABELS = {
   S: { nombre: 'Estacional', icono: '🌡️' },
-  H: { nombre: 'Hídrico', icono: '🌧️' },
+  H: { nombre: 'Reserva de humedad del suelo', icono: '🌧️' },
   A: { nombre: 'Acumulación', icono: '🔥' },
   T: { nombre: 'Temporada', icono: '📅' },
 };
