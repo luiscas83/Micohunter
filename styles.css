@@ -6,20 +6,20 @@
 }
 
 :root {
-    --primary: #2d5016;
-    --primary-light: #4a7c23;
-    --secondary: #8b4513;
-    --accent: #d4a574;
-    --bg: #f5f5f0;
-    --bg-subtle: #f0f2e9;
-    --card-bg: #ffffff;
-    --text: #2c2c2c;
-    --text-light: #666666;
-    --border: #e0e0d8;
-    --success: #4caf50;
-    --warning: #ff9800;
-    --danger: #f44336;
-    --info: #2196f3;
+    --primary: #9c5f2b;
+    --primary-light: #cf9340;
+    --secondary: #8b5a2b;
+    --accent: #e0b054;
+    --bg: #fdf9f2;
+    --bg-subtle: #f8f0e2;
+    --card-bg: #fffdf9;
+    --text: #3b2f22;
+    --text-light: #746450;
+    --border: #eaddc8;
+    --success: #7b8a3d;
+    --warning: #cf8413;
+    --danger: #b23c1b;
+    --info: #8a6a2f;
     --shadow: 0 2px 8px rgba(0,0,0,0.08);
     --shadow-hover: 0 4px 16px rgba(0,0,0,0.12);
     --radius: 12px;
@@ -42,13 +42,17 @@ body {
 }
 
 /* ===== HEADER ===== */
+/* El header es hijo directo de <body>, no de un contenedor con padding, así
+   que no necesita márgenes negativos. Los tenía (-20px a cada lado) y eso lo
+   hacía 40 px más ancho que la ventana, con la consiguiente barra de
+   desplazamiento horizontal entre 1400 y 1440 px de ancho. Los 20 px de los
+   lados los dan los paddings de abajo; el contenido centrado lo limita
+   .header-inner a 1400 px. */
 .header {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
     color: white;
-    padding: 30px 0;
-    margin: 0 -20px 20px;
-    padding-left: 20px;
-    padding-right: 20px;
+    padding: 30px 20px;
+    margin: 0 0 20px;
 }
 
 .header-content {
@@ -177,7 +181,9 @@ body {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 20px;
-    align-items: start;
+    /* stretch, no start: así la tarjeta del mapa se estira hasta la altura
+       que marca la ficha de suelo y clima, que es la más alta de las dos. */
+    align-items: stretch;
 }
 
 .dashboard-grid .map-card {
@@ -206,8 +212,22 @@ body {
     grid-column: auto;
 }
 
+/* El mapa tiene la misma altura que la ficha de suelo y clima, que es la
+   que manda en la fila. Para poderarlo se necesita que la tarjeta sea una
+   columna flexible: el mapa ocupa el hueco que dejan el buscador y el botón
+   de guardar. height:auto es lo que permite que crezca; el min-height evita
+   que en una ventana muy baja el mapa quede ilegible. */
+.dashboard-grid .map-card {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+}
+
 #dashboardMap {
-    height: 500px;
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 420px;
     border-radius: var(--radius-sm);
     z-index: 1;
 }
@@ -254,7 +274,7 @@ body {
 .location-info {
     margin-top: 12px;
     padding: 12px;
-    background: #e8f5e9;
+    background: #f6ecd7;
     border-radius: var(--radius-sm);
     font-size: 0.9rem;
 }
@@ -372,7 +392,7 @@ body {
 }
 
 .condition-status.ok {
-    background: #e8f5e9;
+    background: #f6ecd7;
     color: var(--success);
 }
 
@@ -421,8 +441,9 @@ body {
     position: relative;
 }
 
+/* Segundo bloque de #dashboardMap. La altura ya no se fija aquí: la fija el
+   flex de más arriba, para que el mapa accompanye a la ficha de suelo. */
 #dashboardMap {
-    height: 500px;
     border-radius: var(--radius-sm);
     z-index: 1;
 }
@@ -487,12 +508,12 @@ body {
 
 .mushroom-option:hover {
     border-color: var(--primary);
-    background: #e8f5e9;
+    background: #f6ecd7;
 }
 
 .mushroom-option.selected {
     border-color: var(--primary);
-    background: #e8f5e9;
+    background: #f6ecd7;
 }
 
 .mushroom-option input[type="checkbox"] {
@@ -606,11 +627,25 @@ body {
     flex: 1;
 }
 
-.terrain-item {
+/* ===== FICHA DE SUELO Y CLIMA =====
+   Sigue siendo la lista de filas de siempre, con el icono a la izquierda y
+   un filete entre filas. Lo único que cambia es que el rótulo va ARRIBA y el
+   dato DEBAJO, en vez de en la misma línea: el dato es lo que se viene a
+   mirar y con el rótulo al lado quedaba perdido en un extremo. */
+
+.terrain-list {
     display: flex;
+    flex-direction: column;
+}
+
+/* Rejilla de dos columnas: el icono ocupa la primera y salta las dos filas
+   de texto, así se queda centrado al lado del rótulo y del dato. */
+.terrain-item {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    column-gap: 10px;
     align-items: center;
-    gap: 12px;
-    padding: 10px 0;
+    padding: 9px 0;
     border-bottom: 1px solid var(--border);
 }
 
@@ -618,22 +653,50 @@ body {
     border-bottom: none;
 }
 
-.terrain-icon {
-    font-size: 1.2rem;
-    width: 24px;
-    text-align: center;
+/* El icono va en su propia red y salta las dos filas de texto, así se
+   queda centrado. Con círculo de fondo para que se vea de un vistazo, que
+   a tamaño de emoji pelado pasaba desapercibido. */
+.terrain-item .ti {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    align-self: center;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    font-size: 1.05rem;
+    line-height: 1;
+    border-radius: 50%;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
 }
 
-.terrain-label {
-    color: var(--text-light);
-    font-size: 0.9rem;
-    flex: 1;
-}
-
-.terrain-value {
-    font-weight: 600;
+/* El rótulo: arriba, en negrita y más grande que el dato. Es el título de la
+   fila, así que es lo que tiene que fijar la vista. El dato va debajo, más
+   pequeño, con el tamaño de una cifra etiqueta. */
+.terrain-item .tl {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
     color: var(--primary);
-    font-size: 0.95rem;
+    overflow-wrap: break-word;
+}
+
+/* El dato: debajo y más pequeño que el rótulo. */
+.terrain-item .tv {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    /* Sin min-width:0 un nombre de pueblo o un valor largo ensancharía la
+       tarjeta entera. */
+    min-width: 0;
+    overflow-wrap: break-word;
 }
 
 .status-section {
@@ -737,9 +800,9 @@ body {
 }
 
 .mushroom-cards-grid .prediction-open {
-    background: #e8f5e9;
-    color: #2e7d32;
-    border: 1px solid #a5d6a7;
+    background: #f6ecd7;
+    color: #7a4f14;
+    border: 1px solid #e0c58a;
 }
 
 .mushroom-cards-grid .prediction-approaching {
@@ -875,7 +938,7 @@ body {
 }
 
 .mushroom-cards-grid .condition-status.ok {
-    background: #e8f5e9;
+    background: #f6ecd7;
     color: var(--success);
 }
 
@@ -925,28 +988,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
-}
-
-.terrain-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.9rem;
-}
-
-.terrain-item:last-child {
-    border-bottom: none;
-}
-
-.terrain-label {
-    color: var(--text-light);
-}
-
-.terrain-value {
-    font-weight: 600;
-    color: var(--primary);
 }
 
 .mushroom-probabilities {
@@ -1250,7 +1291,7 @@ body {
 }
 
 .compare-winner {
-    background: #e8f5e9;
+    background: #f6ecd7;
     border: 2px solid var(--success);
 }
 
@@ -1548,7 +1589,7 @@ body {
 }
 
 .guide-item.highlight {
-    background: #e8f5e9;
+    background: #f6ecd7;
     padding: 16px;
     border-radius: var(--radius-sm);
     border-left: 4px solid var(--success);
@@ -1622,15 +1663,15 @@ body {
 
 /* ===== NIVELES (nuevo modelo) ===== */
 .prediction-banner.nivel-alto {
-    background: #e8f5e9;
-    color: #2e7d32;
-    border: 1px solid #a5d6a7;
+    background: #f6ecd7;
+    color: #7a4f14;
+    border: 1px solid #e0c58a;
 }
 
 .prediction-banner.nivel-medio {
-    background: #f1f8e9;
-    color: #558b2f;
-    border: 1px solid #c5e1a5;
+    background: #f7efdc;
+    color: #8a6a2a;
+    border: 1px solid #ddc999;
 }
 
 .prediction-banner.nivel-bajo {
@@ -1665,11 +1706,11 @@ body {
     border-radius: var(--radius-sm);
 }
 
+/* El fondo y el color de este "code" se definen más abajo, junto al resto
+   de .model-note. Aquí no se tocan para que no queden dos reglas que se
+   pisen: antes una ponía el fondo marrón y la siguiente el texto negro, y
+   la segunda ganaba, dejando marrón sobre negro, ilegible. */
 .model-note code {
-    background: var(--primary);
-    color: white;
-    padding: 2px 6px;
-    border-radius: 4px;
     font-size: 0.85rem;
 }
 
@@ -1710,7 +1751,7 @@ body {
 }
 
 .ranking-table tbody tr.row-alta {
-    background: #f4fbf4;
+    background: #fbf6ec;
 }
 
 .col-especie {
@@ -1748,24 +1789,27 @@ body {
     font-size: 0.9rem;
 }
 
+/* Escala de niveles como una progresión de dorados, de más intenso a más
+   pálido. El más bajo lleva texto oscuro porque sobre oro claro el blanco
+   no se lee. */
 .indice-badge.nivel-alto {
-    background: #4caf50;
-    color: white;
+    background: #8a5a1b;
+    color: #fffaf2;
 }
 
 .indice-badge.nivel-medio {
-    background: #8bc34a;
-    color: white;
+    background: #b8862b;
+    color: #fffaf2;
 }
 
 .indice-badge.nivel-bajo {
-    background: #ff9800;
-    color: white;
+    background: #d9a441;
+    color: #3d2b0f;
 }
 
 .indice-badge.nivel-nulo {
-    background: #e0e0e0;
-    color: #666;
+    background: #e3dbcc;
+    color: #6f6252;
 }
 
 /* ===== AEMET ===== */
@@ -1805,8 +1849,8 @@ body {
 }
 
 .aemet-status.active {
-    background: #e8f5e9;
-    color: #2e7d32;
+    background: #f6ecd7;
+    color: #7a4f14;
 }
 
 .aemet-status.error {
@@ -1853,9 +1897,21 @@ body {
     color: var(--text-light);
 }
 
-.model-note strong,
-.model-note code {
+.model-note strong {
     color: var(--text);
+}
+
+/* La fórmula del modelo va aquí dentro, como código. Con fondo marrón
+   oscuro y texto negro era ilegible; ahora es una etiqueta clara con la
+   fórmula en el color de marca, que sí se distingue. */
+.model-note code {
+    background: var(--card-bg);
+    color: var(--primary);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    font-weight: 600;
 }
 
 .hint-text {
@@ -2144,13 +2200,13 @@ body {
 }
 
 .zone-polygon.mixed-zone {
-    fill: #4a7c23;
-    stroke: #4a7c23;
+    fill: #9a6f28;
+    stroke: #9a6f28;
 }
 
 .zone-polygon.low-zone {
-    fill: #9e9e9e;
-    stroke: #9e9e9e;
+    fill: #9a9086;
+    stroke: #9a9086;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -2242,7 +2298,7 @@ body {
 
 .search-row input,
 .geo-select {
-    flex: 1;
+    flex: 0 0 auto;
     min-width: 0;
     padding: 10px 14px;
     border: 1px solid var(--border);
@@ -2460,8 +2516,8 @@ body {
 }
 
 .ev-publicado {
-    background: #e8f5e9;
-    color: #2e7d32;
+    background: #f6ecd7;
+    color: #7a4f14;
 }
 
 .ev-derivado {
@@ -2470,7 +2526,7 @@ body {
 }
 
 .ev-estimado {
-    background: #f5f5f5;
+    background: #f7f3ea;
     color: var(--text-light);
 }
 
@@ -2583,47 +2639,8 @@ body {
     margin-bottom: 16px;
 }
 
-.terrain-list {
-    display: flex;
-    flex-direction: column;
-}
-
-.terrain-item {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    padding: 7px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.88rem;
-}
-
-.terrain-item:last-child {
-    border-bottom: none;
-}
-
-.terrain-item .ti {
-    flex: 0 0 20px;
-    text-align: center;
-    min-width: 0;
-}
-
-.terrain-item .tl {
-    flex: 1 1 auto;
-    color: var(--text-light);
-    min-width: 0;
-}
-
-/* El valor ("Franco-arenoso", "40.5600° N, 3.8800° O") es la parte larga de
-   la fila. Sin min-width:0 un elemento flex no baja de su ancho mínimo y
-   ensancha la tarjeta entera. */
-.terrain-item .tv {
-    flex: 0 1 auto;
-    min-width: 0;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    text-align: right;
-    overflow-wrap: break-word;
-}
+/* La lista de valores de la ficha de suelo y clima se define arriba, junto
+   al bloque .terrain-item. Aquí sólo queda el margen del título. */
 
 .status-block {
     margin-top: 18px;
@@ -2804,11 +2821,10 @@ ul.method-list {
         overflow-x: clip;
     }
 
-    /* La cabecera usaba márgenes negativos de 20 px para compensar el
-       relleno del body; en móvil estorban. */
+    /* La cabecera ya no lleva márgenes negativos (ver la regla .header de
+       arriba), así que aquí sólo se ajusta el relleno lateral para ganar
+       unos píxeles en pantallas estrechas. */
     .header {
-        margin-left: 0;
-        margin-right: 0;
         padding-left: 16px;
         padding-right: 16px;
     }
@@ -2919,17 +2935,9 @@ ul.method-list {
         gap: 2px;
     }
 
-    /* La fila de la ficha de suelo tampoco aguanta en horizontal: el valor
-       "40.7600° N, 2.5300° O" es más ancho que la mitad de la pantalla. */
-    .terrain-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1px;
-    }
-
-    .terrain-item .tv {
-        text-align: left;
-    }
+    /* La ficha de suelo no necesita nada especial en móvil: el rótulo ya va
+       encima y el dato debajo en todos los tamaños, así que las once filas
+       se leen igual que en escritorio. Sólo se agranda un poco el dato. */
 
     .mushroom-cards-grid .condition-value {
         text-align: left;
@@ -3015,6 +3023,25 @@ ul.method-list {
     .mushroom-info-grid,
     .mushroom-selector {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* El mapa tiene aquí su altura propia: la ficha de suelo ya no la manda,
+       porque en móvil las dos tarjetas van apiladas y no comparten fila. */
+    #dashboardMap {
+        flex: 0 0 auto;
+        min-height: 320px;
+    }
+
+    /* Los rótulos largos ("Temperatura media del suelo en 24h") se partían en
+       dos líneas a 360 px y dejaban esas dos filas más altas que las demás.
+       Bajando un punto el rótulo y otro el dato, cada fila cabe en una línea
+       y el rótulo sigue siendo mayor que el dato, que es lo pedido. */
+    .terrain-item .tl {
+        font-size: 0.95rem;
+    }
+
+    .terrain-item .tv {
+        font-size: 0.85rem;
     }
 
     .level-table {

@@ -27,6 +27,7 @@ let currentCtx = null;      // lo que consume el modelo: historial, lluvia, alti
 let currentMeteo = null;    // meteorología completa: aire, humedad, fechas
 let lugarActual = null;     // topónimo resuelto, para nombrar al guardar
 let peticionActual = 0;     // testigo: descarta respuestas de puntos viejos
+let puntoCargado = null;    // {lat, lng} de lo que hay ahora en pantalla
 let currentRanking = [];
 let map = null;
 let marker = null;
@@ -79,6 +80,38 @@ function initMap() {
   map.on('click', async e => {
     await setLocation(e.latlng.lat, e.latlng.lng);
   });
+
+  /*
+   * Leaflet se guarda el tamaño del contenedor en el momento de crearse y no
+   * lo vuelve a mirar: sólo escucha el redimensionado de la VENTANA. Como aquí
+   * el mapa crece cuando la ficha de suelo y clima marca la altura, se quedaba
+   * con la medida antigua y pasaba algo muy gordo: al convertir la posición del
+   * ratón en coordenadas usaba una altura equivocada, así que un clic en el
+   * centro del mapa caía a kilómetros del sitio que se veía, y además quedaban
+   * 100 px de mapa sin teselas.
+   *
+   * Por eso se le avisa a mano en los puntos donde la ficha cambia de alto
+   * (ajustarMapa) y al redimensionar la ventana. No se usa ResizeObserver ni
+   * requestAnimationFrame a propósito: el primero no llega a dispararse y el
+   * segundo se congela en las pestañas que están en segundo plano, que es
+   * justo cuando el mapa se queda con la medida equivocada.
+   */
+  let temporizador = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(temporizador);
+    temporizador = setTimeout(ajustarMapa, 150);
+  });
+}
+
+/**
+ * Le dice a Leaflet que mida otra vez el contenedor del mapa.
+ *
+ * Es barato (una medición) y hay que llamarla después de cualquier cambio que
+ * altere el alto de la ficha de suelo y clima, porque de él depende el alto
+ * del mapa.
+ */
+function ajustarMapa() {
+  if (map) map.invalidateSize({ animate: false });
 }
 
 function moveMarker(lat, lng, recentrar = true) {
@@ -97,10 +130,49 @@ function moveMarker(lat, lng, recentrar = true) {
 // Cambio de ubicación
 // ------------------------------------------------------------
 
+/**
+ * Separación aproximada entre dos puntos, en metros.
+ *
+ * No hace falta precisión geodésica: sólo se usa para decidir si dos clics
+ * están en el mismo sitio. La longitud de un grado se estrecha con la
+ * latitud (en el centro de España, un grado de longitud son unos 78 km,
+ * no 111), y por eso va multiplicada por el coseno.
+ */
+function metrosEntre(lat1, lon1, lat2, lon2) {
+  const mPorGrado = 111320;
+  const dLat = (lat2 - lat1) * mPorGrado;
+  const dLon = (lon2 - lon1) * mPorGrado * Math.cos(lat1 * Math.PI / 180);
+  return Math.hypot(dLat, dLon);
+}
+
+/**
+ * Margen a partir del cual dos clics se consideran el mismo punto.
+ *
+ * No es un capricho: es la resolución de las propias fuentes. SoilGrids
+ * de 250 m y la rejilla de Open-Meteo es de unos 11 km, así que dentro de
+ * medio kilómetro los números devueltos serían los mismos con total
+ * seguridad. Con 500 m, además, un clic que se equivoca por unos píxeles no
+ * gasta una consulta.
+ */
+const MISMO_PUNTO_M = 500;
+
 async function setLocation(lat, lng) {
+  const yaCargado = puntoCargado !== null
+    && metrosEntre(puntoCargado.lat, puntoCargado.lng, lat, lng) < MISMO_PUNTO_M;
+
   selectedLat = lat;
   selectedLng = lng;
   moveMarker(lat, lng);
+
+  // Segundo clic sobre el mismo sitio: los datos que ya están en pantalla
+  // son los de este punto, así que no hay nada que pedir. Saltarse esto
+  // importa, porque SoilGrids admite 5 consultas por minuto y Open-Meteo
+  // es un servicio compartido.
+  if (yaCargado) {
+    notify('Ya tienes los datos de este punto');
+    return;
+  }
+
   await refresh();
 }
 
@@ -139,6 +211,10 @@ async function refresh() {
   }
 
   if (testigo !== peticionActual) return;   // el usuario ya se movió
+
+  // A partir de aquí hay datos de este punto en pantalla, así que un clic
+  // sobre el mismo sitio ya no tiene que volver a pedir nada.
+  puntoCargado = { lat: selectedLat, lng: selectedLng };
 
   // Primera pasada: meteorología sí, suelo todavía no.
   aplicarDatos(m, SIN_SUELO);
@@ -192,6 +268,7 @@ function actualizarSoloSuelo(s) {
   renderTerreno(m, s);
   renderAnalisis();
   refrescarFactoresHabitat();
+  ajustarMapa();
 }
 
 /** Reescribe sólo el factor de hábitat de las tarjetas ya pintadas. */
@@ -260,6 +337,9 @@ function conTiempoLimite(promesa, ms, mensaje) {
 function setSoilHint(msg) {
   const e = document.getElementById('soilSummary');
   if (e) e.innerHTML = `<span class="soil-unavailable">${escaparHtml(msg)}</span>`;
+  // El resumen del suelo es lo que más crece o mengua de la ficha, y de su
+  // alto depende el del mapa.
+  ajustarMapa();
 }
 
 /**
@@ -307,6 +387,9 @@ function aplicarDatos(m, s) {
   renderTarjetas();
   renderAnalisis();
   renderGeoselector();
+
+  // La ficha de suelo ya tiene su alto definitivo: el mapa se mide otra vez.
+  ajustarMapa();
 }
 
 // ------------------------------------------------------------
@@ -680,7 +763,7 @@ function renderAnalisis() {
         <div>
           <h4>Contexto</h4>
           <div class="analysis-item"><span class="analysis-label">Altitud</span><span class="analysis-value">${m.altitude} m</span></div>
-          <div class="analysis-item"><span class="analysis-label">Humedad 7d</span><span class="analysis-value">${w.hr7 == null ? '—' : Math.round(w.hr7) + '%'}</span></div>
+          <div class="analysis-item"><span class="analysis-label">Humedad media relativa en 7 días</span><span class="analysis-value">${w.hr7 == null ? '—' : Math.round(w.hr7) + '%'}</span></div>
           <div class="analysis-item"><span class="analysis-label">Vegetación (est.)</span><span class="analysis-value">${escaparHtml(m.terreno.vegetacion.map(cap).join(', '))}</span></div>
           <div class="analysis-item"><span class="analysis-label">Textura suelo</span><span class="analysis-value">${m.suelo.ok ? m.suelo.textura : 'no disponible'}</span></div>
         </div>
@@ -1124,7 +1207,10 @@ function showLoading(v) {
 }
 
 function notify(msg, type = 'info') {
-  const bg = { info: '#2196f3', success: '#4caf50', error: '#f44336' }[type];
+  // Tonos de otoño: Information en oliva, aviso en musgo y error en
+  // tierra rojiza. Los tres se distinguen de un vistazo y ninguno es el
+  // azul ni el rojo brillante de las paletas por defecto.
+  const bg = { info: '#8a6a2f', success: '#6f7a33', error: '#b23c1b' }[type];
   const n = document.createElement('div');
   n.className = 'toast';
   n.setAttribute('role', 'status');

@@ -68,15 +68,19 @@
 
       <div class="card terrain-card">
         <h3>🌍 Suelo y clima</h3>
+        <!-- Lista de valores: rótulo arriba y dato debajo. La disposición que se
+             pidió, pero sobre la lista de filas original, no sobre una
+             cuadrícula de cajas. Los id no se han tocado, porque es el
+             JavaScript el que rellena cada uno. -->
         <div class="terrain-list">
           <div class="terrain-item"><span class="ti">📍</span><span class="tl">Lugar</span><span class="tv" id="locationName">—</span></div>
           <div class="terrain-item"><span class="ti">📌</span><span class="tl">Coordenadas</span><span class="tv" id="coordinatesValue">—</span></div>
           <div class="terrain-item"><span class="ti">⛰️</span><span class="tl">Altitud</span><span class="tv" id="altitudeValue">—</span></div>
-          <div class="terrain-item"><span class="ti">🌡️</span><span class="tl">T° suelo</span><span class="tv" id="soilTempValue">—</span></div>
-          <div class="terrain-item"><span class="ti">🌬️</span><span class="tl">T° aire</span><span class="tv" id="airTempValue">—</span></div>
-          <div class="terrain-item"><span class="ti">🥶</span><span class="tl">T° Mín. 7d</span><span class="tv" id="minTempValue">—</span></div>
-          <div class="terrain-item"><span class="ti">💧</span><span class="tl">Humedad 7d</span><span class="tv" id="humidityValue">—</span></div>
-          <div class="terrain-item"><span class="ti">🌧️</span><span class="tl">Lluvia 7d</span><span class="tv" id="rain7Value">—</span></div>
+          <div class="terrain-item"><span class="ti">🌡️</span><span class="tl">Temp. media del suelo en 24h</span><span class="tv" id="soilTempValue">—</span></div>
+          <div class="terrain-item"><span class="ti">🌬️</span><span class="tl">Temp. media del aire en 24h</span><span class="tv" id="airTempValue">—</span></div>
+          <div class="terrain-item"><span class="ti">🥶</span><span class="tl">Temp. más baja en 7 días</span><span class="tv" id="minTempValue">—</span></div>
+          <div class="terrain-item"><span class="ti">💧</span><span class="tl">Humedad media relativa en 7 días</span><span class="tv" id="humidityValue">—</span></div>
+          <div class="terrain-item"><span class="ti">🌧️</span><span class="tl">Lluvia acumulada en 7 días</span><span class="tv" id="rain7Value">—</span></div>
           <div class="terrain-item"><span class="ti">📅</span><span class="tl">Día del año</span><span class="tv" id="dayOfYearValue">—</span></div>
           <div class="terrain-item"><span class="ti">🪨</span><span class="tl">Textura</span><span class="tv" id="soilTypeValue">—</span></div>
           <div class="terrain-item"><span class="ti">⚗️</span><span class="tl">pH</span><span class="tv" id="phValue">—</span></div>
@@ -448,9 +452,9 @@
 
       <h4>Condiciones de la zona</h4>
       <dl class="glossary">
-        <dt>T° suelo</dt>
-        <dd>Temperatura del suelo a 18 cm en el punto elegido. Es la variable con más
-          peso en todo el modelo.</dd>
+        <dt>Temp. media del suelo en 24h</dt>
+        <dd>Media de las 24 horas de la temperatura del suelo a 18 cm en el punto
+          elegido. Es la variable con más peso en todo el modelo.</dd>
 
         <dt>T° óptima</dt>
         <dd>Temperatura de suelo a la que la especie rinde mejor. La tiene
@@ -537,25 +541,25 @@
 
       <h4>Temperaturas</h4>
       <dl class="glossary">
-        <dt>T° suelo</dt>
+        <dt>Temp. media del suelo en 24h</dt>
         <dd>Media de las 24 horas del suelo a 18 cm. Es la variable que más pesa en
           el cálculo.</dd>
 
-        <dt>T° aire</dt>
+        <dt>Temp. media del aire en 24h</dt>
         <dd>Media de la temperatura del aire a 2 m. Se muestra para poder compararla
           con la del suelo: normalmente el suelo va de 1 a 4 °C por encima.</dd>
 
-        <dt>T° Mín. 7d</dt>
+        <dt>Temp. más baja en 7 días</dt>
         <dd>La temperatura mínima del aire más baja de los últimos siete días. Un
           valor cercano a 0 °C avisa de riesgo de helada.</dd>
       </dl>
 
       <h4>Agua</h4>
       <dl class="glossary">
-        <dt>Humedad 7d</dt>
+        <dt>Humedad media relativa en 7 días</dt>
         <dd>Media de la humedad relativa del aire de los últimos siete días.</dd>
 
-        <dt>Lluvia 7d</dt>
+        <dt>Lluvia acumulada en 7 días</dt>
         <dd>Precipitación acumulada de los últimos siete días. Es lluvia real
           medida, no la efectiva del modelo.</dd>
       </dl>
