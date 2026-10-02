@@ -48,6 +48,7 @@
           <button class="btn" id="searchBtnDashboard">Buscar</button>
         </div>
         <select id="geoSelect" class="geo-select"></select>
+
         <div id="dashboardMap" class="map"></div>
         <div class="map-actions">
           <button class="btn" id="saveFavoriteBtn">⭐ Guardar ubicación de setal</button>
@@ -89,7 +90,7 @@
 
         <!-- La valoración de condiciones se quitó de aquí: competía en
              pantalla con el anillo de cada tarjeta y repetía lo que ya
-             dicen los 19 índices. -->
+             dicen los índices de todas las especies. -->
         <div class="last-update" id="lastUpdate"></div>
       </div>
 
@@ -117,11 +118,6 @@
     </div>
     <div class="card">
       <h3>Ficha por especie</h3>
-      <p class="hint">☠️ Marca las especies tóxicas: el gurumelo
-      (<em>Gyromitra esculenta</em>) figura sólo como referencia de fenología. Contiene
-      gyromitrin, la venta está prohibida en toda España y aparece como especie
-      peligrosa en las listas oficiales de la Generalitat de Cataluña. Cocinar o secar
-      no la vuelve segura.</p>
       <div id="mushroomInfoGrid" class="mushroom-info-grid"></div>
     </div>
   </section>
@@ -201,8 +197,8 @@
 
     <!-- ───────────── 3. FACTORES ───────────── -->
     <div class="card">
-      <h3>3 · Los seis factores</h3>
-      <p>El índice es un producto de seis factores, todos entre 0 y 1. Se multiplican,
+      <h3>3 · Los ocho factores</h3>
+      <p>El índice es un producto de ocho factores, todos entre 0 y 1. Se multiplican,
       de modo que el peor de ellos domina el resultado: es intencionado, porque una
       especie no fructifica con un factor a cero aunque los demás sean excelentes.</p>
 
@@ -228,10 +224,6 @@
       a 18 cm va por delante del aire: en una prueba con datos reales de cinco
       puntos, el suelo estaba entre 1,2 °C y 4,1 °C por encima del aire, y esa
       diferencia crece con el contraste térmico del día.</p>
-      <p class="hint">La curva interior del factor S no es simétrica: el máximo se
-      sitúa en <code>tOpt</code>, no en el punto medio del rango. Por eso el óptimo de
-      <em>B. edulis</em> medido en campo, 13,2 °C, queda claramente por debajo del
-      centro de su rango térmico.</p>
 
       <h4>🔥 A · Acumulación térmica (grados día)</h4>
       <p>No basta con que la temperatura sea buena hoy: el micelio ha estado
@@ -282,24 +274,674 @@
         <li>no coincide y la especie no está confinada → 25 %</li>
         <li>no coincide y está confinada (níscalo a pino, hongo de verano al roble) → 5 %</li>
       </ul>
-      <p>Encima se aplican ajustes: las especies acidófilas ganan un 15 % de bonificación
-      en pH < 5,5; las alcalinófilas, igual por encima de 7,2; las no acidófilas pierden
-      un 30 % en suelos calizos; y se penaliza a los grupos equivocados (los saprofitas
-      en hayedo, los ectomicorrícicos en pradera abierta).</p>
+      <p>Encima se aplican cuatro correcciones por grupo, todas multiplicativas:</p>
+      <ul class="method-list">
+        <li>Sin dato de cobertura → <strong>0,70</strong> fijo, y la tarjeta lo dice con
+          «sin datos de cobertura». No es un castigo: es la ausencia de información, y se
+          trata distinto del desacuerdo.</li>
+        <li>Especie pratense en bosque de montaña → ×0,45. La seta de pradera no sube al
+          hayedo, ni aunque el punto esté dentro de la banda de la seta de ostra.</li>
+        <li>Ectomicorrízico en pradera abierta → ×0,50. Un boleto necesita un árbol con el
+          que hacer la micorriza; en un descampado no hay hospedante aunque el suelo y la
+          temperatura sean clavados.</li>
+        <li>Sotobosque seco y soleado del sur, para las especies marcadas → ×0,15. Solo le
+          afecta al boleto.</li>
+        <li>Especie lignícola sin madera muerta en el punto → ×0,15. Solo le afecta a la
+          seta de ostra, la única con el distintivo <code>substrate: madera</code>.</li>
+      </ul>
+      <p>El pH no interviene aquí: se trata por separado, en
+      <a href="#">F<sub>suelo</sub></a>, porque es una variable continua y no un
+      condicionante de hábitat.</p>
       <p class="hint">Deliberadamente <strong>degrada</strong> en vez de vetar. La
       vegetación se infiere por tablas de coordenadas, así que un 0 duro produciría
       «gírgola: requiere tronco» en cualquier punto que no caiga en la tabla.</p>
 
+      <h4>🪨 F<sub>suelo</sub> · Factor de suelo por pH</h4>
+      <p>Compara el <em>pH</em> del SoilGrids con el que prefiere la especie. No es un
+      interruptor: la curva tiene meseta (el rango cómodo, con factor 100 %) y fuera
+      decae un punto por cada 2,2 de pH hasta un suelo, del 60 % en las especies muy
+      especializados y del 70 % en las indiferentes. Nunca llega a cero: un pH
+      equivocado penaliza, no anula.</p>
+      <ul class="method-list">
+        <li>Acidófilas — óptimo 5,2 con meseta de ±1,5.</li>
+        <li>Alcalinófilas — óptimo 7,6 con meseta de ±1,4. Solo hay una especie con
+          este distintivo: el marzuelo, que vive sobre fresnedal, olmedal y frutal, y en
+          España sobre las Marguerides y las riberas con suelo calizo.</li>
+        <li>Indiferentes — óptimo 6,8 con meseta de ±1,8. Son las once restantes: cinco
+          ectomicorrízicas y seis saprofitas de distintos tipos.</li>
+      </ul>
+      <p>Las seis acidófilas son las que la ficha marca con
+      <code>acidofilo</code>: boleto, níscalo, capuchina, rúsula comestible, boleto de
+      pino y boleto bronce. Las seis son ectomicorrízicas de pinar o de suelo silíceo, y
+      todas están citadas en la bibliografía sobre suelos ácidos.</p>
+      <p>Si SoilGrids no responde, el factor vale 1 y la tarjeta lo dice con
+      «sin dato de pH»: se pierde un dato, no se inventa.</p>
+
+      <h4>🥶 F<sub>helada</sub> · Estrés por helada, con memoria</h4>
+      <p>La helada <strong>no pone el índice a cero</strong>. Reduce el potencial y el
+      potencial vuelve conforme el episodio se aleja, que es como funciona de verdad: un
+      hongo no se muere por una noche de frío, se retrasa.</p>
+      <p>El factor usa dos señales, porque no son lo mismo:</p>
+      <ul class="method-list">
+        <li>El <strong>aire</strong>, por su mínima nocturna, que es donde se congela de
+          verdad.</li>
+        <li>El <strong>suelo</strong> a 18 cm, que va muy amortiguada. Un suelo a 5 °C no
+          es una helada física, pero sí es un estado profundo para una especie cuyo mínimo
+          crítico está en +10 °C. Cuando el suelo baja además del mínimo crítico de la
+          especie, se congeló el micelio y no solo el aire, y el daño pesa más.</li>
+      </ul>
+      <p>La <strong>memoria</strong> es lo que separa un episodio prolongado de uno aislado,
+      y es la diferencia que más cuenta:</p>
+      <div class="level-table">
+        <div><span class="indice-badge nivel-bajo">prolongado</span> −2, −3, +1 y hoy +7 °C.
+          Tres noches malas: el daño se acumula.</div>
+        <div><span class="indice-badge nivel-alto">aislado</span> +8, +7, −2 y hoy +7 °C.
+          Una noche mala y tres buenas: pesa mucho menos con el mismo desfase.</div>
+      </div>
+      <p>Medido con la serie real de dos species termófilas, con las mismas cuatro
+      noches y el mismo desfase:</p>
+      <div class="level-table">
+        <div><span class="indice-badge nivel-bajo">Boleto reticulado</span> 33 % con tres
+          noches, 66 % con una sola</div>
+        <div><span class="indice-badge nivel-bajo">Parasol</span> 25 % con tres noches,
+          52 % con una sola</div>
+      </div>
+      <p>Y la recuperación. La misma noche de −6 °C, puesta cada vez más lejos:</p>
+      <div class="level-table">
+        <div><span class="indice-badge nivel-bajo">anoche</span> índice 36</div>
+        <div><span class="indice-badge nivel-medio">hace 3 días</span> índice 64</div>
+        <div><span class="indice-badge nivel-alto">hace 7 días</span> índice 81</div>
+      </div>
+      <p>Las cuatro constantes por especie, y qué representa cada una:</p>
+      <ul class="method-list">
+        <li><code>frostTol</code> — °C de aire mínimo por debajo del cual la especie
+          sufre. Va de −6 °C en la seta de ostra, que fructifica con la helada y se
+          estimula con ella, a +3 °C en la seta de cardo, de estepa cálida.</li>
+        <li><code>frostPenalty</code> — el multiplicador del índice con el estrés al
+          máximo. De 0,75 en la ostra a 0,12 en la seta de cardo. Nunca es cero.</li>
+        <li><code>frostRecovery</code> — días, la constante con la que se olvida el
+          episodio. De 2 en la ostra a 7 en las dos especies más frágiles.</li>
+        <li><code>frostSoil</code> — grados extra de estrés cuando el suelo también se
+          congela, porque entonces se heló el micelio. De 0,4 en la ostra a 1,6 en la
+          seta de cardo.</li>
+      </ul>
+      <p class="method-note">El estrés se satura a los 4 grados por encima de la tolerancia
+      de la especie. Es decir: una noche 4 °C más fría de lo que la especie aguanta agota
+      el daño por sí sola, y las noches anteriores ya solo suman un poco. Para la seta de
+      ostra, con tolerancia de −6 °C, eso significa que hace falta bajar de −10 °C para
+      que la noche sola le haga daño.</p>
+      <p><strong>HEURÍSTICO.</strong> Los cuatro valores salen de la tolerancia al frío
+      documentada de cada especie, no de ensayos de daño por helada. Para eso no hay
+      datos: nadie ha medido cuánta producción pierde un boleto por una noche de −5 °C.
+      Lo que sí es sólido es la forma: gradual, con memoria, distinta por especie y con
+      recuperación.</p>
+      <p>La <em>temporada</em> no es un veto tampoco, por el mismo motivo: la ventana se
+      desplaza con la latitud y la altitud, y un corte estricto borraría al hongo de
+      verano de los robledales de León, donde sí sale hasta febrero.</p>
+
       <h4>⛰️ F<sub>altitud</sub> · Factor altitudinal</h4>
-      <p>Banda óptima entre 1450 y 1650 m, con caída suave por debajo y por encima,
-      según lo observado por Martínez-Peña et al. (2012) sobre masa basal en
-      <em>B. edulis</em>. Por debajo de 800 m el factor es 0,5.</p>
+      <p>Cada especie tiene su propia banda altitudinal, en metros, con la misma forma de
+      meseta que el factor de suelo:</p>
+      <ul class="method-list">
+        <li>Dentro de la banda <code>[alt0, alt1]</code> → factor <strong>1,00</strong>.</li>
+        <li>Por fuera, decae un punto por cada <code>margen</code> metros de distancia al
+          borde más cercano.</li>
+        <li>Se detiene en <code>altSuelo</code>, que va de 0,50 a 0,70 según la especie.</li>
+      </ul>
+      <p>El recorrido completo de cada banda está en
+      <a href="#">4 · De dónde sale cada parámetro</a>, con su fuente y su grado de
+      evidencia. La tarjeta muestra el valor con la banda, y añade «(estimada)» cuando el
+      rango procede del tipo de hábitat en lugar de una fuente con los metros.</p>
+
     </div>
 
-    <!-- ───────────── 4. FÓRMULA ───────────── -->
+    <!-- ───────────── 4. PROCEDENCIA ───────────── -->
     <div class="card">
-      <h3>4 · La fórmula</h3>
-      <p class="formula">I = 100 · S · H<sup>0.5</sup> · A · T · F<sub>hábitat</sub> · F<sub>altitud</sub></p>
+      <h3>4 · De dónde sale cada parámetro</h3>
+      <p>El modelo usa 18 especies y unas 220 constantes numéricas. Este apartado dice, una
+      por una, de dónde sale cada grupo y <strong>cuál está medido y cuál está deducido</strong>.
+      Es la parte menos atractiva del documento y la más importante: sin ella no se puede
+      juzgar cuánto vale el índice.</p>
+
+      <h4>4.1 · Umbrales térmicos · <code>tBase</code> <code>tOpt</code> <code>tMax</code> <code>tCrit</code></h4>
+      <p>Son los cuatro números que definen el rango en que una especie puede fructificar, y
+      están en cada ficha. De los 144 umbrales de las 18 especies, <strong>uno solo está
+      medido</strong>: el óptimo del boleto.</p>
+      <ul class="method-list">
+        <li><em>Boletus edulis</em> — <code>tOpt</code> = 13,2 °C. Medido en campo con un
+          modelo lineal generalizado sobre la temperatura del suelo, por Lamartiniere y
+          Hoffman (2025), preprint bioRxiv 10.64898/2025.12.12.693895. Es el único dato
+          del modelo que procede de una regresión sobre observaciones de producción.</li>
+        <li>Las otras 17 especies — deducidos de su ecología térmica documentada: la
+          ventana de fructificación, el comportamiento del hospedante durante esos meses y
+          la tolerancia al frío conocida para cada género.</li>
+      </ul>
+      <p>La deducción respeta tres relaciones, comprobadas por los tests del proyecto en
+      cada una de las 18 fichas: <code>tCrit</code> &lt; <code>tBase</code> &lt;
+      <code>tOpt</code> &lt; <code>tMax</code>. Es decir, la mínima absoluta está por debajo
+      del arranque, el arranque por debajo del óptimo y el óptimo por debajo del techo.</p>
+      <p>Los valores se reparten en tres bloques térmicos que se leen bien en la tabla:</p>
+      <ul class="method-list">
+        <li><strong>Especies de invierno</strong>, con <code>tBase</code> ≤ 7 y
+          <code>tCrit</code> ≤ 3: seta de ostra, perrechico, capuchina, gula de monte.
+          toleran el frío y la helada.</li>
+        <li><strong>Especies de otoño</strong>, la mayoría, con <code>tBase</code> entre 7 y
+          10 y <code>tCrit</code> entre 2 y 6.</li>
+        <li><strong>Especies termófilas de verano</strong>, con <code>tBase</code> ≥ 11:
+          amanita (12), boleto bronce (13) y parasol (11). Su <code>tCrit</code> es la más
+          alta de todas, entre 6 y 10 °C.</li>
+      </ul>
+      <p class="method-note">El óptimo del boleto medido, 13,2 °C, queda claramente por debajo
+      del centro de su propio rango térmico (8-22 °C), que estaría en 15 °C. No es un error
+      de redondeo: la curva de respuesta al calor de <em>B. edulis</em> está desplazada
+      hacia los valores bajos, y por eso el factor S usa una parábola con el máximo en
+      <code>tOpt</code> y no simétrica respecto al centro del rango.</p>
+      <p>Los valores completos, especie por especie:</p>
+      <div class="table-wrapper">
+        <table class="param-table">
+          <thead><tr>
+            <th>Especie</th><th>Nombre</th><th>tBase</th><th>tOpt</th><th>tMax</th>
+            <th>tCrit</th><th>gddNeed</th><th>L</th><th>Ro</th><th>diasMax</th>
+          </tr></thead>
+          <tbody>
+            <tr class="fila-medida">
+              <td><em>Boletus edulis</em></td>
+              <td>Boleto / Hongo</td>
+              <td class="num">8</td>
+              <td class="num"><strong>13,2</strong></td>
+              <td class="num">22</td>
+              <td class="num">3</td>
+              <td class="num">180</td>
+              <td class="num">11</td>
+              <td class="num">40</td>
+              <td class="num">45</td>
+            </tr>
+            <tr>
+              <td><em>Lactarius deliciosus</em></td>
+              <td>Níscalo / Rovelló</td>
+              <td class="num">7</td>
+              <td class="num">11,5</td>
+              <td class="num">20</td>
+              <td class="num">2</td>
+              <td class="num">200</td>
+              <td class="num">12</td>
+              <td class="num">40</td>
+              <td class="num">50</td>
+            </tr>
+            <tr>
+              <td><em>Amanita caesarea</em></td>
+              <td>Amanita caesarea</td>
+              <td class="num">12</td>
+              <td class="num">20</td>
+              <td class="num">28</td>
+              <td class="num">10</td>
+              <td class="num">150</td>
+              <td class="num">8</td>
+              <td class="num">30</td>
+              <td class="num">35</td>
+            </tr>
+            <tr>
+              <td><em>Cantharellus cibarius</em></td>
+              <td>Rebozuelo / Chantarela</td>
+              <td class="num">10</td>
+              <td class="num">16</td>
+              <td class="num">24</td>
+              <td class="num">6</td>
+              <td class="num">160</td>
+              <td class="num">10</td>
+              <td class="num">30</td>
+              <td class="num">40</td>
+            </tr>
+            <tr>
+              <td><em>Marasmius oreades</em></td>
+              <td>Senderuela</td>
+              <td class="num">9</td>
+              <td class="num">17</td>
+              <td class="num">28</td>
+              <td class="num">3</td>
+              <td class="num">110</td>
+              <td class="num">7</td>
+              <td class="num">20</td>
+              <td class="num">25</td>
+            </tr>
+            <tr>
+              <td><em>Macrolepiota procera</em></td>
+              <td>Parasol</td>
+              <td class="num">11</td>
+              <td class="num">18</td>
+              <td class="num">26</td>
+              <td class="num">6</td>
+              <td class="num">150</td>
+              <td class="num">7</td>
+              <td class="num">25</td>
+              <td class="num">35</td>
+            </tr>
+            <tr>
+              <td><em>Agaricus campestris</em></td>
+              <td>Champiñón silvestre</td>
+              <td class="num">9</td>
+              <td class="num">16</td>
+              <td class="num">24</td>
+              <td class="num">3</td>
+              <td class="num">120</td>
+              <td class="num">7</td>
+              <td class="num">20</td>
+              <td class="num">25</td>
+            </tr>
+            <tr>
+              <td><em>Pleurotus ostreatus</em></td>
+              <td>Seta de ostra</td>
+              <td class="num">6</td>
+              <td class="num">14</td>
+              <td class="num">22</td>
+              <td class="num">-3</td>
+              <td class="num">130</td>
+              <td class="num">8</td>
+              <td class="num">25</td>
+              <td class="num">35</td>
+            </tr>
+            <tr>
+              <td><em>Tricholoma portentosum</em></td>
+              <td>Capuchina</td>
+              <td class="num">4</td>
+              <td class="num">10</td>
+              <td class="num">17</td>
+              <td class="num">0</td>
+              <td class="num">140</td>
+              <td class="num">12</td>
+              <td class="num">35</td>
+              <td class="num">50</td>
+            </tr>
+            <tr>
+              <td><em>Russula vesca</em></td>
+              <td>Rúsula comestible</td>
+              <td class="num">10</td>
+              <td class="num">16</td>
+              <td class="num">25</td>
+              <td class="num">5</td>
+              <td class="num">160</td>
+              <td class="num">9</td>
+              <td class="num">30</td>
+              <td class="num">40</td>
+            </tr>
+            <tr>
+              <td><em>Craterellus cornucopioides</em></td>
+              <td>Trompeta de la muerte</td>
+              <td class="num">7</td>
+              <td class="num">13</td>
+              <td class="num">21</td>
+              <td class="num">3</td>
+              <td class="num">190</td>
+              <td class="num">12</td>
+              <td class="num">35</td>
+              <td class="num">50</td>
+            </tr>
+            <tr>
+              <td><em>Morchella esculenta</em></td>
+              <td>Marzuelo / Seta de marzo</td>
+              <td class="num">7</td>
+              <td class="num">12</td>
+              <td class="num">18</td>
+              <td class="num">0</td>
+              <td class="num">120</td>
+              <td class="num">10</td>
+              <td class="num">20</td>
+              <td class="num">30</td>
+            </tr>
+            <tr>
+              <td><em>Calocybe gambosa</em></td>
+              <td>Perrechico</td>
+              <td class="num">6</td>
+              <td class="num">11</td>
+              <td class="num">17</td>
+              <td class="num">1</td>
+              <td class="num">110</td>
+              <td class="num">9</td>
+              <td class="num">20</td>
+              <td class="num">30</td>
+            </tr>
+            <tr>
+              <td><em>Boletus pinophilus</em></td>
+              <td>Boleto de pino</td>
+              <td class="num">7</td>
+              <td class="num">14</td>
+              <td class="num">21</td>
+              <td class="num">2</td>
+              <td class="num">160</td>
+              <td class="num">11</td>
+              <td class="num">40</td>
+              <td class="num">50</td>
+            </tr>
+            <tr>
+              <td><em>Craterellus lutescens</em></td>
+              <td>Gula de monte / Trompeta amarilla</td>
+              <td class="num">5</td>
+              <td class="num">10</td>
+              <td class="num">17</td>
+              <td class="num">0</td>
+              <td class="num">150</td>
+              <td class="num">14</td>
+              <td class="num">45</td>
+              <td class="num">60</td>
+            </tr>
+            <tr>
+              <td><em>Boletus reticulatus</em></td>
+              <td>Boleto Reticulado</td>
+              <td class="num">10</td>
+              <td class="num">16</td>
+              <td class="num">24</td>
+              <td class="num">5</td>
+              <td class="num">150</td>
+              <td class="num">9</td>
+              <td class="num">30</td>
+              <td class="num">35</td>
+            </tr>
+            <tr>
+              <td><em>Boletus aereus</em></td>
+              <td>Boleto bronce / Hongo negro</td>
+              <td class="num">13</td>
+              <td class="num">18</td>
+              <td class="num">26</td>
+              <td class="num">8</td>
+              <td class="num">170</td>
+              <td class="num">8</td>
+              <td class="num">25</td>
+              <td class="num">30</td>
+            </tr>
+            <tr>
+              <td><em>Pleurotus eryngii</em></td>
+              <td>Seta de cardo</td>
+              <td class="num">8</td>
+              <td class="num">15</td>
+              <td class="num">24</td>
+              <td class="num">2</td>
+              <td class="num">130</td>
+              <td class="num">10</td>
+              <td class="num">25</td>
+              <td class="num">40</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="hint">En negrita y con fondo distinto, la única fila con un óptimo medido:
+      el boleto. Las otras 17 llevan <code>evidencia: estimado</code> o
+      <code>derivado</code> en su ficha.</p>
+
+      <h4>4.2 · <code>gddNeed</code> · grados día que hacen falta</h4>
+      <p>Ninguno está medido. Se dedujo pensando en cuántos días de suelo templado necesita
+      cada especie y cuánto calor aporta un día de esos.</p>
+      <ul class="method-list">
+        <li>Rango entre 110 y 200 grados día. Con aportes diarios de 8 a 10 grados en las
+          fechas de otoño, eso equivale a entre 12 y 25 días seguidos de condiciones
+          adecuadas.</li>
+        <li>Los valores altos — níscalo (200), trompeta de la muerte (190), boleto (180) —
+          son especies que necesitan un episodio largo y sostenido, no un par de días
+          buenos.</li>
+        <li>Los bajos — senderuela (110), perrechico (110) — son especies que brotan
+          deprisa en cuanto el suelo se templa.</li>
+      </ul>
+
+      <h4>4.3 · <code>L</code> y <code>Ro</code> · ventana hídrica y reserva</h4>
+      <p>Ninguno de los dos está medido. Ambos salen de la exigencia hídrica documentada de
+      la especie y de la capacidad de retención de agua del suelo que la soporta.</p>
+      <ul class="method-list">
+        <li><code>L</code>, de 7 a 14 días, es cuántos días de lluvia todavía cuentan. Las
+          especies de tronco y las de pradera seca tienen la ventana más corta; la gula de
+          monte, que vive en pinares húmedos de montaña, la más larga (14).</li>
+        <li><code>Ro</code>, de 20 a 45 mm, es la lluvia acumulada que ya satura el factor.
+          Las especies de suelo ácido y arenoso (boleto, níscalo, boleto de pino)
+          necesitan más para saturarse: 40 mm. Las de pradera, con suelo que retiene poco,
+          se saturan con 20.</li>
+      </ul>
+
+      <h4>4.4 · <code>diasMax</code> · tope de la ventana de acumulación</h4>
+      <p>Es el número de días consecutivos como máximo que se acumulan antes de dar por
+      cerrada la temporada. Va de 25 a 60: senderuela y champiñón silvestre 25; el boleto 45; la
+      gula de monte 60. Un rango de días tan amplio como este tiene sentido en el modelo,
+      pero hay una restricción práctica: el recorrido hacia atrás del que se extrae el
+      total de grados día solo dispone del histórico que pide la aplicación, que son
+      <strong>30 días</strong>. Para las ocho especies con <code>diasMax</code> de 45 a 60,
+      el tope no llega a activarse nunca, porque no hay historial suficiente para alcanzarlo.
+      El motor lo expone y lo dice en el detalle en vez de disimularlo.</p>
+
+      <h4>4.5 · Las bandas altitudinales</h4>
+      <p>Cada ficha lleva <code>alt</code> con tres números —mínimo del óptimo, máximo del
+      óptimo y margen de decaimiento— más el <code>altSuelo</code> donde se detiene la
+      curva. De las 18 bandas, <strong>10 proceden de una fuente que da el rango en metros y
+      8 se deducen del tipo de hábitat</strong>.</p>
+      <div class="table-wrapper">
+        <table class="param-table">
+          <thead><tr>
+            <th>Especie</th><th>Banda óptima</th><th>Margen</th><th>Suelo</th>
+            <th>Evidencia</th><th>Procedencia del rango</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td><em>Boletus edulis</em></td>
+              <td class="num">800–2200 m</td>
+              <td class="num">700 m</td>
+              <td class="num">0,55</td>
+              <td><span class="evid documentado">documentada</span></td>
+              <td class="fuente">Martínez-Peña et al. (2012), gradiente de masa basal 0-38,5 kg/ha en Pinar Grande (Soria, ~1100 m); en España se cita hasta 3500 m</td>
+            </tr>
+            <tr>
+              <td><em>Lactarius deliciosus</em></td>
+              <td class="num">900–1800 m</td>
+              <td class="num">500 m</td>
+              <td class="num">0,55</td>
+              <td><span class="evid documentado">documentada</span></td>
+              <td class="fuente">pinares de montaña de Pinus nigra y P. brutia; Pirineos y Mediterráneo occidental</td>
+            </tr>
+            <tr>
+              <td><em>Amanita caesarea</em></td>
+              <td class="num">200–900 m</td>
+              <td class="num">400 m</td>
+              <td class="num">0,5</td>
+              <td><span class="evid documentado">documentada</span></td>
+              <td class="fuente">termófila mediterránea, típicamente 200-900 m y hasta 1500 m en los mejores casos</td>
+            </tr>
+            <tr>
+              <td><em>Cantharellus cibarius</em></td>
+              <td class="num">500–1400 m</td>
+              <td class="num">500 m</td>
+              <td class="num">0,6</td>
+              <td><span class="evid indicado">estimada</span></td>
+              <td class="fuente">haya y robledal de media montaña; sin fuente con rango en metros</td>
+            </tr>
+            <tr>
+              <td><em>Marasmius oreades</em></td>
+              <td class="num">0–700 m</td>
+              <td class="num">400 m</td>
+              <td class="num">0,7</td>
+              <td><span class="evid indicado">estimada</span></td>
+              <td class="fuente">praderas, cunetas y dunas costeras; sin fuente con rango en metros</td>
+            </tr>
+            <tr>
+              <td><em>Macrolepiota procera</em></td>
+              <td class="num">0–1000 m</td>
+              <td class="num">400 m</td>
+              <td class="num">0,6</td>
+              <td><span class="evid indicado">estimada</span></td>
+              <td class="fuente">praderas y claros, incluida ciudad baja; sin fuente con rango en metros</td>
+            </tr>
+            <tr>
+              <td><em>Agaricus campestris</em></td>
+              <td class="num">0–900 m</td>
+              <td class="num">400 m</td>
+              <td class="num">0,6</td>
+              <td><span class="evid indicado">estimada</span></td>
+              <td class="fuente">pradera y pastizal de secano; sin fuente con rango en metros</td>
+            </tr>
+            <tr>
+              <td><em>Pleurotus ostreatus</em></td>
+              <td class="num">0–1200 m</td>
+              <td class="num">800 m</td>
+              <td class="num">0,7</td>
+              <td><span class="evid documentado">documentada</span></td>
+              <td class="fuente">el complejo P. ostreatus va del nivel del mar a 2000 m en Europa mediterránea (IMA Fungus 2020)</td>
+            </tr>
+            <tr>
+              <td><em>Tricholoma portentosum</em></td>
+              <td class="num">1000–1900 m</td>
+              <td class="num">600 m</td>
+              <td class="num">0,5</td>
+              <td><span class="evid indicado">estimada</span></td>
+              <td class="fuente">pino de montaña; sin fuente con rango en metros</td>
+            </tr>
+            <tr>
+              <td><em>Russula vesca</em></td>
+              <td class="num">400–1600 m</td>
+              <td class="num">500 m</td>
+              <td class="num">0,6</td>
+              <td><span class="evid indicado">estimada</span></td>
+              <td class="fuente">hayedo y robledal; sin fuente con rango en metros</td>
+            </tr>
+            <tr>
+              <td><em>Craterellus cornucopioides</em></td>
+              <td class="num">200–1200 m</td>
+              <td class="num">500 m</td>
+              <td class="num">0,55</td>
+              <td><span class="evid indicado">estimada</span></td>
+              <td class="fuente">haya y roble; registros a 400 m y en hayedo de montaña</td>
+            </tr>
+            <tr>
+              <td><em>Morchella esculenta</em></td>
+              <td class="num">100–1200 m</td>
+              <td class="num">500 m</td>
+              <td class="num">0,55</td>
+              <td><span class="evid indicado">estimada</span></td>
+              <td class="fuente">frutal y ribera; sin fuente con rango en metros</td>
+            </tr>
+            <tr>
+              <td><em>Calocybe gambosa</em></td>
+              <td class="num">500–1200 m</td>
+              <td class="num">400 m</td>
+              <td class="num">0,5</td>
+              <td><span class="evid documentado">documentada</span></td>
+              <td class="fuente">cinturón norte (Álava, Navarra, Burgos, La Rioja, Soria) entre 500 y 1200 m</td>
+            </tr>
+            <tr>
+              <td><em>Boletus pinophilus</em></td>
+              <td class="num">400–1800 m</td>
+              <td class="num">600 m</td>
+              <td class="num">0,5</td>
+              <td><span class="evid documentado">documentada</span></td>
+              <td class="fuente">desde bosque de tierra baja hasta 1800 m</td>
+            </tr>
+            <tr>
+              <td><em>Craterellus lutescens</em></td>
+              <td class="num">300–1200 m</td>
+              <td class="num">500 m</td>
+              <td class="num">0,55</td>
+              <td><span class="evid documentado">documentada</span></td>
+              <td class="fuente">citada a 600 m en el prelittoral mediterráneo y a 1400 m en los Pirineos; pinares de ribera y cerca del mar</td>
+            </tr>
+            <tr>
+              <td><em>Boletus reticulatus</em></td>
+              <td class="num">300–1300 m</td>
+              <td class="num">500 m</td>
+              <td class="num">0,5</td>
+              <td><span class="evid documentado">documentada</span></td>
+              <td class="fuente">termófilo de roble caducifolio; hasta 1500 m</td>
+            </tr>
+            <tr>
+              <td><em>Boletus aereus</em></td>
+              <td class="num">50–1100 m</td>
+              <td class="num">400 m</td>
+              <td class="num">0,5</td>
+              <td><span class="evid documentado">documentada</span></td>
+              <td class="fuente">del nivel del mar a 1100 m, con encinar y alcornocal</td>
+            </tr>
+            <tr>
+              <td><em>Pleurotus eryngii</em></td>
+              <td class="num">0–800 m</td>
+              <td class="num">400 m</td>
+              <td class="num">0,6</td>
+              <td><span class="evid documentado">documentada</span></td>
+              <td class="fuente">praderas secas y estepas mediterráneas</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Dos matices sobre estas bandas que conviene tener presentes:</p>
+      <ul class="method-list">
+        <li>Un rango de distribución no es una curva de productividad. Que una especie se
+          pueda encontrar entre 0 y 2000 m no significa que produzca lo mismo a 100 que a
+          1500 m. Aquí se ha supuesto la forma, no se ha medido la forma.</li>
+        <li>Los bordes de la banda del boleto, 800 y 2200 m, son un criterio derivado del
+          gradiente de productividad medido en Pinar Grande (Soria, alrededor de 1100 m) y
+          del dato de que en España se cita hasta 3500 m. El óptimo coincide con el tramo
+          de máxima productividad medido; el techo de 2200 m es un criterio de suavizado,
+          no una medición.</li>
+      </ul>
+
+      <h4>4.6 · El perfil de pH</h4>
+      <p>El factor de suelo no usa el pH como un interruptor sino como una curva de tres
+      tramos. Los tres centros y sus anchos salen de la ecología documentada de cada grupo
+      funcional, no de mediciones de setas sobre suelos de pH conocido.</p>
+      <ul class="method-list">
+        <li><strong>Acidófilas</strong> — óptimo 5,2, meseta de ±1,5 (de 3,7 a 6,7 sin
+          penalización), suelo 0,60.</li>
+        <li><strong>Alcalinófilas</strong> — óptimo 7,6, meseta de ±1,4, suelo 0,60. Solo el
+          marzuelo.</li>
+        <li><strong>Indiferentes</strong> — óptimo 6,8, meseta de ±1,8 (de 5,0 a 8,6 sin
+          penalización), suelo 0,70.</li>
+      </ul>
+      <p>Fuera de la meseta, el factor decae un punto por cada 2,2 unidades de pH. El suelo
+      está en 0,60 para las especies especializadas y en 0,70 para las indiferentes, porque
+      un error de pH en una acidófila especializada es mucho más determinante que en una
+      especie que no lo tiene en cuenta.</p>
+
+      <h4>4.7 · Los pesos de compatibilidad de hábitat</h4>
+      <p>El factor de hábitat compara la cobertura vegetal estimada del punto con la lista de
+      hábitats de la especie. Las listas están ordenadas por frecuencia, así que los dos
+      primeros son los principales y el resto son secundarios.</p>
+      <ul class="method-list">
+        <li><strong>100 %</strong> — coincide con un hábitat principal.</li>
+        <li><strong>60 %</strong> — coincide con uno secundario.</li>
+        <li><strong>25 %</strong> — no coincide y la especie no está confinada.</li>
+        <li><strong>5 %</strong> — no coincide y la especie está confinada. Solo dos la llevan:
+          el níscalo, que en la práctica es de pinar, y la capuchina, que en la práctica
+          también lo es.</li>
+      </ul>
+      <p>Que el desacuerdo no llegue a cero es deliberado. La vegetación no se lee de un
+      mapa de uso del suelo, se infiere por tablas de coordenadas: un veto duro produciría
+      «gírgola: requiere tronco» en cualquier punto que caiga fuera de la tabla, que es un fallo de
+      conocimiento, no un dato.</p>
+
+      <h4>4.8 · Las ventanas de temporada</h4>
+      <p>Los meses de fructificación de cada especie salen de las fichas micológicas, y es,
+      junto con el hospedante, el dato más firme de que se dispone en micología. Por eso
+      entra como peso y no como veto:</p>
+      <ul class="method-list">
+        <li>dentro de la ventana → <strong>100 %</strong></li>
+        <li>hasta dos meses de distancia → <strong>45 %</strong></li>
+        <li>más lejos → <strong>15 %</strong></li>
+      </ul>
+      <p>La distancia se mide en el círculo del calendario, no en línea recta: enero está a
+      dos meses de diciembre, y por eso el boleto, cuya ventana acaba en noviembre, no cae
+      del todo en el 15 % en enero.</p>
+
+      <h4>4.9 · El resumen de qué está medido</h4>
+      <div class="level-table">
+        <div><span class="indice-badge nivel-alto">1 de ~220</span> constantes con una
+          regresión medida sobre producción real: el <code>tOpt</code> del boleto</div>
+        <div><span class="indice-badge nivel-medio">10 de 18</span> bandas altitudinales con
+          una fuente que da el rango en metros</div>
+        <div><span class="indice-badge nivel-bajo">el resto</span> deducidas de la ecología
+          documentada de cada especie</div>
+      </div>
+      <p>Ninguna de esas constantes se ha inventado ni rellenado con un valor por defecto
+      para que el modelo devuelva una cifra. Cuando un dato falta, se pierde el dato y se dice
+      en la tarjeta: «sin dato de pH», «sin datos de cobertura». El significado de las tres
+      etiquetas de procedencia de cada ficha está en
+      <a href="#">7 · Qué está medido y qué no</a>.</p>
+    </div>
+
+    <!-- ───────────── 5. FÓRMULA ───────────── -->
+    <div class="card">
+      <h3>5 · La fórmula</h3>
+      <p class="formula">I = 100 · S · H<sup>0.5</sup> · A · T · F<sub>hábitat</sub> · F<sub>suelo</sub> · F<sub>altitud</sub> · F<sub>helada</sub></p>
       <p>El índice va de 0 a 100 y se traduce a cuatro niveles cualitativos:</p>
       <div class="level-table">
         <div><span class="indice-badge nivel-alto">70-100</span> Muy favorable</div>
@@ -317,7 +959,7 @@
 
     <!-- ───────────── 5. PROCEDENCIA ───────────── -->
     <div class="card">
-      <h3>5 · Cómo se ejecuta</h3>
+      <h3>6 · Cómo se ejecuta</h3>
       <ol class="method-list">
         <li>Se piden 31 días a Open-Meteo con <code>past_days=30</code> y
           <code>forecast_days=1</code>, de modo que la ventana es observación y no
@@ -327,7 +969,7 @@
         <li>Se consulta SoilGrids en el horizonte de 5-15 cm. Los resultados se
           cachean 180 días en <code>localStorage</code>, porque ISRIC limita a 5
           consultas por minuto.</li>
-        <li>Se calculan los seis factores para las 19 especies y se ordenan de mayor a
+        <li>Se calculan los ocho factores para cada especie y se ordenan de mayor a
           menor índice.</li>
         <li>Las especies marcadas como seleccionadas se pinta como tarjetas; todas
           aparecen en la tabla de Análisis.</li>
@@ -336,7 +978,7 @@
 
     <!-- ───────────── 6. PROCEDENCIA DE DATOS ───────────── -->
     <div class="card warn-card">
-      <h3>6 · Qué está medido y qué no</h3>
+      <h3>7 · Qué está medido y qué no</h3>
       <p>Es el punto más importante del modelo, así que va explícito. Cada ficha de
       especie lleva una etiqueta de procedencia:</p>
       <ul class="method-list">
@@ -353,13 +995,13 @@
       </ul>
       <p>En resumen: los <strong>datos de entrada</strong> son reales y proceden de
       Open-Meteo, SoilGrids y bibliografía. Los <strong>umbrales del modelo</strong> no
-      están medidos para ninguna de las 19 especies salvo una, y no deben leerse como
+      están medidos para ninguna especie salvo una, y no deben leerse como
       resultados científicos.</p>
     </div>
 
     <!-- ───────────── 7. LIMITACIONES ───────────── -->
     <div class="card warn-card">
-      <h3>7 · Limitaciones</h3>
+      <h3>8 · Limitaciones</h3>
       <ul class="method-list">
         <li>La producción real ocurre en <strong>pulsos</strong>, no de forma continua.
           Un índice no puede situar el pulso.</li>
@@ -372,6 +1014,23 @@
           distinto del que hay bajo tus pies.</li>
         <li>Sin observaciones propias el índice no está validado. Úsalo como
           orientación, nunca como garantía.</li>
+        <li>De las 18 bandas altitudinales, <strong>8 están estimadas</strong>
+          por deducción del hábitat, no por una fuente con el rango en metros. La
+          tarjeta las marca con «(estimada)». Las otras 10 sí tienen fuente, pero
+          casi ninguna es una medición de productividad: son rangos de
+          distribución.</li>
+        <li>El factor hídrico <strong>no distingue lluvia normal de lluvia
+          torrencial</strong>. Con 6 mm o con 9 mm diarios el resultado es el
+          mismo, porque la reserva de humedad satura en 100 % y no hay penalización
+          por encharcamiento. El factor no tiene término de exceso.</li>
+        <li>Los cuatro parámetros de helada por especie
+          (<code>frostTol</code>, <code>frostPenalty</code>,
+          <code>frostRecovery</code>, <code>frostSoil</code>) salen de la tolerancia
+          al frío documentada, no de ensayos de daño. No hay datos de cuánta
+          producción pierde una seta concreta por una noche de −5 °C.</li>
+        <li>El factor de helada solo mira hacia atrás, hasta unas tres semanas. Una
+          helada muy anterior a la ventana ya no pesa, y tampoco hay forma de
+          saber que un daño de este tipo se produjo más atrás.</li>
       </ul>
       <p class="hint">Ninguna app puede sustituir el conocimiento micológico de campo.
       En particular, este modelo dice <em>cuándo y dónde</em> las condiciones son
@@ -381,7 +1040,7 @@
 
     <!-- ───────────── 8. REFERENCIAS ───────────── -->
     <div class="card">
-      <h3>8 · Referencias</h3>
+      <h3>9 · Referencias</h3>
       <ul class="method-list refs">
         <li>Lamartiniere &amp; Hoffman (2025) — GLMM sobre <em>Boletus edulis</em>,
           óptimo térmico del suelo 13,2 °C. bioRxiv 10.64898/2025.12.12.693895</li>
@@ -399,8 +1058,60 @@
         <li>Carlavilla &amp; Manjón (2023) Ital. Mycol. — <em>Pleurotus eryngii</em> como
           patógeno necrotrófico de <em>Eryngium campestre</em>.</li>
         <li>Michelot &amp; Toth (1991) J. Appl. Toxicol. 11(4):235-43 — intoxicación por
-          <em>Gyromitra esculenta</em>.</li>
+          <em>Gyromitra esculenta</em>, que no se incluye.</li>
       </ul>
+    </div>
+
+    <div class="card">
+      <h3>10 · De dónde salen las zonas de setas</h3>
+      <p>El desplegable <strong>«Zonas de setas»</strong> no es un ranked de lugares
+      secretos. Son doce <strong>macrozonas de referencia</strong>: áreas de entre diez y
+      varios mil kilómetros cuadrados que se incluyen porque hay una razón
+      documentada para esperarlas, no porque alguien haya publica dónde crecen.</p>
+
+      <p>Es importante decirlo sin rodeos: un mapa de setas al que le faltan los
+      sitios buenos no vale para eso. Quien conoce un monte de verdad no lo
+      escribe, y una coordenada con precisión de metro sería una invención
+      presentada como dato. La app mueve el punto de análisis al centro de la
+      zona para que el cálculo corra sobre su clima y su suelo. Ese punto
+      puede no ser el mejor de la zona: es representativo, no concreto.</p>
+
+      <h4>Las dos etiquetas de procedencia</h4>
+      <p>Cada zona lleva una de estas dos, y la diferencia cambia lo que el dato
+      significa:</p>
+      <ul>
+        <li><strong>Dato documentado</strong> — hay fuente oficial o estudio
+        publicado. Ejemplos: la normativa de recogida del Parque Nacional de la
+        Sierra de Guadarrama, que publica especies y cupos; los modelos de
+        rendimiento de <em>Boletus edulis</em> y <em>Lactarius</em> en pinares de
+        <em>Pinus sylvestris</em> de Soria (Martínez-Peña et al., 2012); las cifras
+        de producción de trufa negra, que dan a Teruel el primer puesto mundial.</li>
+        <li><strong>Bosque documentado, sin cifras propias</strong> — el tipo de
+        bosque y su asociación con esas setas están bien estudiados, pero de esa
+        zona concreta no hay cifras publicadas. Se incluye por el tipo de
+        bosque.</li>
+      </ul>
+
+      <h4>Lo que estas zonas no hacen</h4>
+      <ul>
+        <li>No cambian el modelo. La fórmula y los parámetros de las especies
+        son los mismos estén donde estén. Una zona no "mejora" el resultado: sólo
+        mueve el punto de análisis.</li>
+        <li>No sustituyen a la normativa local. En el Parque Nacional de la Sierra
+        de Guadarrama la recogida está regulada monte a monte y hay montes con
+        permiso previo. En variosayuntamiento hay cupos diarios. La app no puede
+        saber en qué monte está el punto.</li>
+        <li>No cubren la trufa. Teruel entra por su fama trufera, pero
+        <em>Tuber melanosporum</em> es subterránea y este modelo no la calcula.</li>
+      </ul>
+
+      <h4>Un aviso sobre la vegetación estimada</h4>
+      <p>Cuando eliges una zona, el tipo de bosque que aparece en las tarjetas lo
+      deduce la app de las coordenadas, no de la ficha de la zona. En un hayedo
+      documentado puede salir «Pinar», porque la heurística de coordenadas no
+      conoce el monte. Es una limitación conocida y no se ha tocado el modelo para
+      taparla: si prefieres que la ficha de la zona alimente el tipo de bosque,
+      dímelo.</p>
     </div>
   </section>
 
@@ -421,7 +1132,7 @@
         <dt>Potencial (índice I)</dt>
         <dd>Número de 0 a 100 que resume las seis condiciones. No es un porcentaje de
           probabilidad de que salga el hongo: es una posición relativa en una escala
-          común para las 19 especies.</dd>
+          común para todas las especies.</dd>
 
         <dt>Muy favorable / Favorable / Posible / Desfavorable</dt>
         <dd>Traducción del índice en cuatro tramos: 70-100, 45-69, 22-44 y 0-21.</dd>
@@ -450,12 +1161,8 @@
           100 % dentro, 45 % hasta dos meses fuera, 15 % más lejos.</dd>
       </dl>
 
-      <h4>Condiciones de la zona</h4>
+      <h4>Las filas de cada tarjeta</h4>
       <dl class="glossary">
-        <dt>Temp. media del suelo en 24h</dt>
-        <dd>Media de las 24 horas de la temperatura del suelo a 18 cm en el punto
-          elegido. Es la variable con más peso en todo el modelo.</dd>
-
         <dt>T° óptima</dt>
         <dd>Temperatura de suelo a la que la especie rinde mejor. La tiene
           <em>Boletus edulis</em> medida en campo (13,2 °C); en el resto es una
@@ -465,13 +1172,13 @@
         <dd>Vegetación que el modelo cree que hay en el punto, deducida de las
           coordenadas. Es la variable menos fiable de todas.</dd>
 
-        <dt>Calor acumulado</dt>
-        <dd>Columna <em>GDD</em> de la tabla de Análisis: si el micelio ha
-          juntado suficiente calor desde que la temperatura del suelo superó la
-          base de la especie. Un <em>grado día</em> es esa diferencia sumada
-          día a día. Aparece como estado —<em>apenas iniciado</em>,
-          <em>acumulando</em>, <em>casi</em>, <em>suficiente</em>— porque la
-          cifra en crudo es muy grande y sin contexto.</dd>
+        <dt>GDD · grados día acumulados</dt>
+        <dd>Columna de la tabla de Análisis: si el micelio ha juntado suficiente
+          calor desde que la temperatura del suelo superó la base de la especie. Un
+          <em>grado día</em> es esa diferencia sumada día a día. Se muestra como
+          estado —<em>apenas iniciado</em>, <em>acumulando</em>,
+          <em>casi</em>, <em>suficiente</em>— porque la cifra en crudo es muy
+          grande y sin contexto.</dd>
 
         <dt>Lluvia efectiva</dt>
         <dd>Lluvia efectiva en milímetros: la lluvia real de los últimos días después
@@ -484,9 +1191,11 @@
         <dd>Rango de temperatura de suelo en el que la especie puede fructificar.
           <code>tBase</code> es el umbral inferior y <code>tMax</code> el superior.</dd>
 
-        <dt>Helada crítica</dt>
+        <dt>Mínima absoluta</dt>
         <dd>Temperatura de suelo por debajo de la cual se da por perdida la
-          temporada. Es el único fator que pone el índice a cero.</dd>
+          temporada. No es un umbral de helada: el frío del aire se trata
+          aparte, en <em>Helada reciente</em>, con memoria y recuperación. Este
+          número va de −3 °C en la seta de ostra a +10 °C en la amanita.</dd>
 
         <dt>Ventana hídrica</dt>
         <dd>Cuántos días hacia atrás mira el modelo la lluvia, y con qué decaimiento.
@@ -507,8 +1216,27 @@
         <dd>Penalización por la cobertura vegetal estimada. Aparece la marca «bajo»
           cuando la especie no tiene aquí el hábitat que necesita.</dd>
 
+        <dt>Factor de suelo</dt>
+        <dd>Cuánto encaja el <em>pH</em> de SoilGrids con el que prefiere la especie.
+          100 % dentro de su rango cómodo, bajando hasta el 60 % en suelo muy
+          ácido para una acidófila o muy calizo para una alcalinófila. Si no hay
+          dato de pH, la tarjeta pone «sin dato de pH».</dd>
+
+        <dt>Helada reciente</dt>
+        <dd>Qué ha pasado con las heladas en las últimas noches, para esa
+          especie. Pone «sin heladas recientes» cuando no ha habido ninguna por
+          encima de su tolerancia. Si las ha habido, dice cuántas noches, cuándo
+          fue la última, la mínima que se registró y si el suelo llegó a
+          helarse. El porcentaje es el factor: 100 % sin daño, y un suelo por
+          debajo del que la especie pueda soportar. La helada no pone el índice a
+          cero en ningún caso; lo reduce y se recupera.</dd>
+
         <dt>Factor altitud</dt>
-        <dd>Penalización por cota, con óptimo entre 1450 y 1650 m.</dd>
+        <dd>Cuánto encaja la cota del punto con la banda altitudinal de esa
+          especie. La tarjeta dice cuál es su banda y la marca como estimada
+          cuando el rango se dedujo del hábitat en lugar de venir de una
+          fuente. No es la misma para todas: una seta de tronco de costa y una
+          seta de pinar de montaña no comparten banda.</dd>
 
         <dt>Temporada documentada</dt>
         <dd>Meses del año en que esa especie fructifica, según las fichas
@@ -587,15 +1315,8 @@
           rejilla de 250 m.</dd>
       </dl>
 
-      <h4>Estado general</h4>
+      <h4>Procedencia y punto de partida</h4>
       <dl class="glossary">
-        <dt>Condiciones muy favorables / favorables / posibles / desfavorables</dt>
-        <dd>Valoración del conjunto de las especies seleccionadas, por media de sus
-          índices.</dd>
-
-        <dt>Mejor especie</dt>
-        <dd>La que encabeza el ranking en ese punto, con su temperatura óptima.</dd>
-
         <dt>Fuente de datos</dt>
         <dd>Open-Meteo para la meteorología, SoilGrids para el suelo y OpenStreetMap
           para la toponimia y el mapa.</dd>
@@ -621,8 +1342,12 @@
           una estimación por zona amplia, no una lectura del mapa de usos.</dd>
 
         <dt>Zonas de setas</dt>
-        <dd>Desplegable del mapa. Contiene primero los setales que has guardado y
-          después diez zonas micológicas de referencia de toda España.</dd>
+        <dd>Desplegable del mapa. Primero los setales que has guardado y después
+          doce macrozonas micológicas: cinco de la Comunidad de Madrid y siete del
+          resto de España. Al elegir una, el punto de análisis se mueve a su centro;
+          no se guarda nada y no se marca ningún sitio concreto dentro. De dónde
+          sale cada una y qué significa su nivel de evidencia está en
+          Metodología, sección 10.</dd>
       </dl>
     </div>
   </section>

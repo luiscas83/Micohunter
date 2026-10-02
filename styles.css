@@ -8,14 +8,19 @@
 :root {
     --primary: #9c5f2b;
     --primary-light: #cf9340;
+    /* --primary sirve para texto sobre blanco y para botones con texto
+       blanco. Sobre arena (#f1e4cd) baja a 4,09:1 y no llega al 4,5 que
+       pide WCAG, asi que para texto sobre fondo claro esta este tono
+       oscurecido del mismo color. */
+    --primary-ink: #7a4f14;
     --secondary: #8b5a2b;
     --accent: #e0b054;
-    --bg: #fdf9f2;
-    --bg-subtle: #f8f0e2;
+    --bg: #f7efe0;
+    --bg-subtle: #f1e4cd;
     --card-bg: #fffdf9;
     --text: #3b2f22;
-    --text-light: #746450;
-    --border: #eaddc8;
+    --text-light: #6b5b46;
+    --border: #ddcbaa;
     --success: #7b8a3d;
     --warning: #cf8413;
     --danger: #b23c1b;
@@ -542,11 +547,26 @@ body {
     font-style: italic;
 }
 
+/* Las dos cartas de la pestaña Análisis se apilaban sin separación: el
+   contenedor no tenía regla propia y .card no lleva margen, así que quedaba
+   una pegada a la otra. Se le da la misma separación que usa el dashboard
+   (.dashboard-grid y .dashboard-top-row van a 20 px), para que el ritmo
+   vertical sea el mismo en las tres pantallas. */
+#mushroomAnalysisContainer {
+    display: grid;
+    gap: 20px;
+}
+
 /* ===== MUSHROOM INFO GRID ===== */
+/* Tres columnas fijas, igual que las tarjetas del dashboard. Antes era
+   auto-fill con un mínimo de 300 px, que a 1441 px de ancho daba cuatro
+   columnas y rompía el paralelismo con el dashboard. Los saltos van en los
+   mismos breakpoints que .mushroom-cards-grid: 2 columnas hasta 1024 y
+   una sola por debajo de 768. */
 .mushroom-info-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
 }
 
 .mushroom-info-card {
@@ -628,24 +648,34 @@ body {
 }
 
 /* ===== FICHA DE SUELO Y CLIMA =====
-   Sigue siendo la lista de filas de siempre, con el icono a la izquierda y
-   un filete entre filas. Lo único que cambia es que el rótulo va ARRIBA y el
-   dato DEBAJO, en vez de en la misma línea: el dato es lo que se viene a
-   mirar y con el rótulo al lado quedaba perdido en un extremo. */
+   Lista de filas: icono a la izquierda, rotulo arriba y dato debajo, con
+   un filete entre filas. Se probaron dos cosas que no funcionan y se
+   descartaron:
+
+   - Cuadricula de dos columnas con cajas: ocupaba menos alto pero el
+     esquinaje era de ficha tecnica, y el texto largo (una textura) se
+     partia en dos lineas.
+   - Iconos dentro de un circulo con fondo: el circulo competia con los
+     anillos de color de las tarjetas de seta y anadia un borde mas que
+     delineaba la zona. El emoji se lee solo.
+
+   Lo que si mejora la lectura es aire: mas separacion entre filas y mas
+   altura de linea. Antes el rotulo iba pegado al dato y con interlineado
+   de 1.35, que a 0.8rem se leia como un bloque macizo. */
 
 .terrain-list {
     display: flex;
     flex-direction: column;
 }
 
-/* Rejilla de dos columnas: el icono ocupa la primera y salta las dos filas
-   de texto, así se queda centrado al lado del rótulo y del dato. */
+/* Dos columnas: el icono ocupa la primera y salta las dos filas de texto,
+   para quedarse centrado al lado del rotulo y del dato. */
 .terrain-item {
     display: grid;
-    grid-template-columns: 22px minmax(0, 1fr);
-    column-gap: 10px;
+    grid-template-columns: 26px minmax(0, 1fr);
+    column-gap: 12px;
     align-items: center;
-    padding: 9px 0;
+    padding: 8px 0;
     border-bottom: 1px solid var(--border);
 }
 
@@ -653,47 +683,42 @@ body {
     border-bottom: none;
 }
 
-/* El icono va en su propia red y salta las dos filas de texto, así se
-   queda centrado. Con círculo de fondo para que se vea de un vistazo, que
-   a tamaño de emoji pelado pasaba desapercibido. */
+/* El icono, sin circulo ni fondo. Tamano de una letra grande para que se
+   lea de un vistazo pero sin robarle sitio al texto. */
 .terrain-item .ti {
     grid-column: 1;
     grid-row: 1 / 3;
     align-self: center;
-    display: grid;
-    place-items: center;
-    width: 30px;
-    height: 30px;
     font-size: 1.05rem;
     line-height: 1;
-    border-radius: 50%;
-    background: var(--bg-subtle);
-    border: 1px solid var(--border);
+    text-align: left;
+    min-width: 0;
 }
 
-/* El rótulo: arriba, en negrita y más grande que el dato. Es el título de la
-   fila, así que es lo que tiene que fijar la vista. El dato va debajo, más
-   pequeño, con el tamaño de una cifra etiqueta. */
+/* El rotulo: arriba, en negrita y mas grande que el dato. El salto de
+   linea de 1.45 y el margen inferior son los que separan las dos lineas
+   de texto; sin ellos se leen como una sola. */
 .terrain-item .tl {
     grid-column: 2;
     grid-row: 1;
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1.3;
-    color: var(--primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-light);
+    margin-bottom: 3px;
     overflow-wrap: break-word;
 }
 
-/* El dato: debajo y más pequeño que el rótulo. */
+/* El dato: debajo, en el color de marca y con mas cuerpo. */
 .terrain-item .tv {
     grid-column: 2;
     grid-row: 2;
     font-size: 0.88rem;
     font-weight: 600;
     line-height: 1.35;
-    color: var(--text);
+    color: var(--primary-ink);
     font-variant-numeric: tabular-nums;
-    /* Sin min-width:0 un nombre de pueblo o un valor largo ensancharía la
+    /* Sin min-width:0 un nombre de pueblo o un valor largo ensancharia la
        tarjeta entera. */
     min-width: 0;
     overflow-wrap: break-word;
@@ -1638,18 +1663,23 @@ body {
     margin-bottom: 12px;
 }
 
+/* Las cuatro cajas de factores de cada tarjeta. Van sobre arena con borde:
+   sin el borde se fundian con la tarjeta blanca y no se sabia ni por donde
+   empezaban. */
 .factor-item-compact {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 2px;
     padding: 8px 6px;
-    background: var(--bg);
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
 }
 
 .factor-item-compact .factor-label {
     font-size: 0.7rem;
+    font-weight: 600;
     color: var(--text-light);
     text-align: center;
     line-height: 1.2;
@@ -1658,7 +1688,7 @@ body {
 .factor-item-compact .factor-value {
     font-size: 0.95rem;
     font-weight: 700;
-    color: var(--primary);
+    color: var(--primary-ink);
 }
 
 /* ===== NIVELES (nuevo modelo) ===== */
@@ -1901,6 +1931,99 @@ body {
     color: var(--text);
 }
 
+/* Párrafo de apoyo dentro de la Metodología: un ejemplo concreto que aclara
+   lo que dice el apartado de arriba. Mismo tratamiento que .model-note, que
+   es el bloque de nota de la guía. */
+.method-note {
+    margin: 12px 0 16px;
+    padding: 12px 14px;
+    background: var(--bg-subtle);
+    border-left: 3px solid var(--primary);
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: var(--text-light);
+}
+
+.method-note strong {
+    color: var(--text);
+}
+
+/* Tablas de procedencia de la Metodología: una fila por constante, para que se
+   pueda leer de un vistazo qué está medido y qué está deducido. */
+.param-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin-bottom: 6px;
+}
+
+.param-table th {
+    text-align: left;
+    font-weight: 600;
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--primary);
+    color: var(--text);
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+.param-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text-light);
+}
+
+.param-table tbody tr:hover td {
+    background: var(--bg-subtle);
+}
+
+/* Las columnas numéricas van alineadas a la derecha para que las cifras se
+   comparen en vertical, que es de lo que trata la tabla. */
+.param-table td.num,
+.param-table th:nth-child(n + 3):not(:last-child) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* La columna de procedencia es texto largo: en móvil no debe partir la tabla
+   ni empujarla, así que se permite el salto dentro de la celda. */
+.param-table td.fuente {
+    font-size: 0.78rem;
+    line-height: 1.55;
+    min-width: 240px;
+}
+
+/* La fila con el único dato medido en todo el modelo. */
+.param-table tr.fila-medida td {
+    background: rgba(156, 95, 43, 0.1);
+}
+
+.param-table tr.fila-medida td:first-child {
+    border-left: 3px solid var(--primary);
+}
+
+/* Distintivo de evidencia en las tablas de procedencia. */
+.evid {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.evid.documentado {
+    background: rgba(46, 125, 50, 0.14);
+    color: #2e6b31;
+}
+
+.evid.indicado {
+    background: rgba(156, 95, 43, 0.16);
+    color: var(--primary-ink, #7a4f14);
+}
+
 /* La fórmula del modelo va aquí dentro, como código. Con fondo marrón
    oscuro y texto negro era ilegible; ahora es una etiqueta clara con la
    fórmula en el color de marca, que sí se distingue. */
@@ -1948,7 +2071,14 @@ body {
     .mushroom-cards-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
+    /* La rejilla de fichas por especie baja a dos columnas en el mismo
+       punto que las tarjetas del dashboard, para que las dos pantallas
+       mantengan el mismo número de columnas a la vez. */
+    .mushroom-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
     .dashboard-top-row {
         grid-template-columns: 1fr;
     }
@@ -2028,6 +2158,10 @@ body {
     }
 
     .mushroom-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mushroom-info-grid {
         grid-template-columns: 1fr;
     }
 
@@ -3037,11 +3171,11 @@ ul.method-list {
        Bajando un punto el rótulo y otro el dato, cada fila cabe en una línea
        y el rótulo sigue siendo mayor que el dato, que es lo pedido. */
     .terrain-item .tl {
-        font-size: 0.95rem;
+        font-size: 0.88rem;
     }
 
     .terrain-item .tv {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
     }
 
     .level-table {

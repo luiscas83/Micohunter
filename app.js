@@ -1,6 +1,9 @@
 // ============================================================
 // MicoHunter — Lógica de aplicación
 // ============================================================
+// ============================================================
+// MicoHunter — Lógica de aplicación
+// ============================================================
 
 /**
  * Punto inicial: pinares de Soria, en torno a Vinuesa (sierra de Pina).
@@ -232,7 +235,7 @@ async function refresh() {
     if (s.ok) {
       // Repintado quirúrgico: sólo cambia lo que depende del suelo. La
       // textura y el pH se escriben en sus campos y los factores de hábitat
-      // se recalculan, sin tocar el mapa ni reconstruir las 19 tarjetas.
+      // se recalculan, sin tocar el mapa ni reconstruir todas las tarjetas.
       actualizarSoloSuelo(s);
       if (s.parcial) {
         setSoilHint('Faltan propiedades de SoilGrids: se muestran las disponibles');
@@ -249,7 +252,7 @@ async function refresh() {
 /**
  * Segunda fase: llega el suelo y sólo se actualiza lo que depende de él.
  *
- * Antes esto llamaba a aplicarDatos(), que rehacía las 19 tarjetas con
+ * Antes esto llamaba a aplicarDatos(), que rehacía todas las tarjetas con
  * innerHTML. Eso destruía el nodo que tenía el foco y, con ello, la posición
  * del scroll: si habías bajado a mirar las tarjetas, la página te volvía
  * arriba de golpe. Como ISRIC puede tardar 30-50 s, el salto era muy visible.
@@ -288,6 +291,27 @@ function refrescarFactoresHabitat() {
     if (itemHab) {
       itemHab.querySelector('.mushroom-detail-value').textContent =
         `${Math.round(r.detalle.habFactor * 100)}%${r.detalle.habConfuso ? ' (bajo)' : ''}`;
+    }
+
+    // El factor de suelo también cambia cuando llega SoilGrids, así que esta
+    // actualización quirúrgica tiene que reescribirlo o se quedaría con el
+    // "sin dato de pH" del primer pintado.
+    const itemSuelo = items.find(el => el.querySelector('.mushroom-detail-label')
+      ?.textContent.startsWith('Factor de suelo'));
+    if (itemSuelo) {
+      itemSuelo.querySelector('.mushroom-detail-value').textContent =
+        r.detalle.sueloConocido
+          ? `${Math.round(r.detalle.sueloFactor * 100)}% · ${r.detalle.sueloEtiqueta}`
+          : 'sin dato de pH';
+    }
+
+    // La helada se recalcula con el mismo refresco, así que también hay que
+    // reescribir su fila o se quedaría con lo del primer pintado.
+    const itemHelada = items.find(el => el.querySelector('.mushroom-detail-label')
+      ?.textContent.startsWith('Helada reciente'));
+    if (itemHelada) {
+      itemHelada.querySelector('.mushroom-detail-value').textContent =
+        textoHelada(r.detalle);
     }
 
     // Etiqueta de hábitat estimado
@@ -508,7 +532,7 @@ function inferirVegetacion(lat, lng) {
 /**
  * Sólo la línea de "actualizado" y la fuente. La valoración global de
  * condiciones que antes estaba aquí se eliminó de la tarjeta de suelo y clima:
- * repetía lo que ya dicen los 19 anillos y ocupaba más sitio que la ficha.
+ * repetía lo que ya dicen los anillos de índice y ocupaba más sitio.
  */
 function renderEstado() {
   const u = document.getElementById('lastUpdate');
@@ -642,7 +666,7 @@ function tarjeta(r) {
         <span class="mushroom-detail-value">${sp.tBase} / ${sp.tMax} °C</span>
       </div>
       <div class="mushroom-detail-item">
-        <span class="mushroom-detail-label">Helada crítica:</span>
+        <span class="mushroom-detail-label">Mínima absoluta:</span>
         <span class="mushroom-detail-value">${sp.tCrit} °C</span>
       </div>
       <div class="mushroom-detail-item">
@@ -662,8 +686,25 @@ function tarjeta(r) {
         <span class="mushroom-detail-value">${pct(r.detalle.habFactor)}%${r.detalle.habConfuso ? ' (bajo)' : ''}</span>
       </div>
       <div class="mushroom-detail-item">
+        <span class="mushroom-detail-label">Factor de suelo:</span>
+        <span class="mushroom-detail-value">${
+          r.detalle.sueloConocido
+            ? pct(r.detalle.sueloFactor) + '% · ' + r.detalle.sueloEtiqueta
+            : 'sin dato de pH'
+        }</span>
+      </div>
+      <div class="mushroom-detail-item">
+        <span class="mushroom-detail-label">Helada reciente:</span>
+        <span class="mushroom-detail-value">${escaparHtml(textoHelada(r.detalle))}</span>
+      </div>
+      <div class="mushroom-detail-item">
         <span class="mushroom-detail-label">Factor altitud:</span>
-        <span class="mushroom-detail-value">${pct(r.detalle.alt)}%</span>
+        <span class="mushroom-detail-value">${pct(r.detalle.alt)}%${
+          r.detalle.altBanda
+            ? ' · banda ' + r.detalle.altBanda + (
+                r.detalle.altEvidencia === 'indicado' ? ' (estimada)' : '')
+          : ''
+        }</span>
       </div>
     </div>
 
@@ -707,6 +748,7 @@ function renderAnalisis() {
       <td title="Lluvia efectiva">${r.reff.toFixed(0)}</td>
       <td title="Temp. óptima">${sp.tOpt}°C</td>
       <td title="Compatibilidad de hábitat (estimada)">${pct(r.detalle.habFactor)}%</td>
+      <td title="${escaparHtml(textoHelada(r.detalle))}">${pct(r.detalle.heladaFactor)}%</td>
       <td class="col-nivel">${r.viable ? n.texto : `— (${r.motivo})`}</td>
     </tr>`;
   }).join('');
@@ -717,32 +759,6 @@ function renderAnalisis() {
   const acum = k => m.lluvia30.slice(0, k).reduce((a, b) => a + b, 0).toFixed(1);
 
   c.innerHTML = `
-    <div class="card">
-      <h3>📊 Ranking de especies</h3>
-      <p class="model-note">
-        Modelo por ventanas: <code>I = 100 · S · H<sup>0.5</sup> · A · T · F<sub>hábitat</sub> · F<sub>altitud</sub></code><br>
-        <strong>S</strong> potencial térmico del suelo ·
-        <strong>H</strong> reserva de humedad del suelo ·
-        <strong>A</strong> acumulación de grados-día ·
-        <strong>T</strong> temporada documentada ·
-        <strong>G</strong> grados-día acumulados ·
-        La estacionalidad la fija la <em>temperatura del suelo</em>, no el calendario.
-      </p>
-      <div class="table-wrapper">
-        <table class="ranking-table">
-          <thead><tr>
-            <th>Especie</th><th>Índice</th><th>S</th><th>H</th><th>A</th><th>T</th>
-            <th>GDD</th><th>Lluvia efectiva</th><th>T° opt</th><th>F. hábitat</th><th>Estado</th>
-          </tr></thead>
-          <tbody>${filas}</tbody>
-        </table>
-      </div>
-      <p class="hint-text">
-        ⚠️ Parámetros por especie son valores de partida documentados, no calibrados
-        con dataset propio. Requieren validación con observaciones de campo.
-      </p>
-    </div>
-
     <div class="card">
       <h3>🌧️ Meteorología de la zona</h3>
       <div class="detail-grid">
@@ -768,6 +784,34 @@ function renderAnalisis() {
           <div class="analysis-item"><span class="analysis-label">Textura suelo</span><span class="analysis-value">${m.suelo.ok ? m.suelo.textura : 'no disponible'}</span></div>
         </div>
       </div>
+    </div>
+
+    <div class="card">
+      <h3>📊 Ranking de especies</h3>
+      <p class="model-note">
+        Modelo por ventanas: <code>I = 100 · S · H<sup>0.5</sup> · A · T · F<sub>hábitat</sub> · F<sub>suelo</sub> · F<sub>altitud</sub> · F<sub>helada</sub> · F<sub>helada</sub></code><br>
+        <strong>S</strong> potencial térmico del suelo ·
+        <strong>H</strong> reserva de humedad del suelo ·
+        <strong>A</strong> acumulación de grados-día ·
+        <strong>T</strong> temporada documentada ·
+        <strong>G</strong> grados-día acumulados ·
+        La estacionalidad la fija la <em>temperatura del suelo</em>, no el calendario.<br>
+        La <strong>helada</strong> no pone el índice a cero: reduce el potencial y este se
+        recupera conforme el episodio se aleja.
+      </p>
+      <div class="table-wrapper">
+        <table class="ranking-table">
+          <thead><tr>
+            <th>Especie</th><th>Índice</th><th>S</th><th>H</th><th>A</th><th>T</th>
+            <th>GDD</th><th>Lluvia efectiva</th><th>T° opt</th><th>F. hábitat</th><th>Helada</th><th>Estado</th>
+          </tr></thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>
+      <p class="hint-text">
+        ⚠️ Parámetros por especie son valores de partida documentados, no calibrados
+        con dataset propio. Requieren validación con observaciones de campo.
+      </p>
     </div>`;
 }
 
@@ -1027,7 +1071,7 @@ window.delFav = id => {
 function loadSelectedMushrooms() {
   // Se parte siempre del valor por defecto (todas las especies) y sólo se
   // sobrescribe si hay una lista guardada utilizable. Así la función es
-  // idempotente: llamarla sin nada guardado devuelve las 19, no lo que
+  // idempotente: llamarla sin nada guardado devuelve todas, no lo que
   // hubiera quedado de una llamada anterior.
   selectedMushrooms = SPECIES.map(sp => sp.key);
   try {
@@ -1041,6 +1085,27 @@ function loadSelectedMushrooms() {
 
 function saveSelectedMushrooms() {
   localStorage.setItem(MUSH_KEY, JSON.stringify(selectedMushrooms));
+}
+
+/**
+ * Una línea que explica el episodio de helada de una especie, o que dice que
+ * no ha habido ninguno. Se muestra tal cual en la tarjeta y en la tabla de
+ * Análisis, para que el número del factor de helada nunca aparezca solo.
+ */
+function textoHelada(d) {
+  if (!d || !d.heladaNoches) return 'sin heladas recientes';
+  const min = d.heladaMinima == null ? '' : `, mínima ${d.heladaMinima.toFixed(0)} °C`;
+  const suelo = d.heladaSuelo ? ', suelo también helado' : '';
+  const n = d.heladaNoches;
+  const noches = `${n} ${n === 1 ? 'noche' : 'noches'} de helada`;
+  const a = d.heladaAntiguedad;
+  // Una sola noche dice el desfase de una vez; varias lo dicen de la última,
+  // que es la que más pesa.
+  const cuando = n === 1
+    ? (a === 0 ? 'anoche' : a === 1 ? 'hace una noche' : `hace ${a} noches`)
+    : (a === 0 ? 'la última anoche' : a === 1 ? 'la última hace una noche'
+      : `la última hace ${a} noches`);
+  return `${Math.round(d.heladaFactor * 100)} % · ${noches}, ${cuando}${min}${suelo}`;
 }
 
 function initMushroomSelector() {
@@ -1084,7 +1149,7 @@ function initMushroomSelector() {
           <p><strong>Grupo:</strong> ${GUILD_LABELS[sp.guild]}</p>
           <p><strong>Temporada documentada:</strong> ${escaparHtml(temporadaTexto(sp))}</p>
           <p><strong>Comestibilidad:</strong> ${escaparHtml(sp.comestible || 'no documentada')}</p>
-          <p><strong>Rango de temperatura de suelo para fructificar:</strong> ${sp.tBase} a ${sp.tMax} °C, óptimo ${sp.tOpt} °C</p></p>
+          <p><strong>Rango de temperatura de suelo para fructificar:</strong> ${sp.tBase} a ${sp.tMax} °C, óptimo ${sp.tOpt} °C</p>
           <p><strong>Mínima crítica:</strong> ${sp.tCrit} °C</p>
           <p><strong>Grados día necesarios:</strong> ${sp.gddNeed}</p>
           <p><strong>Ventana hídrica:</strong> ${sp.L} días · óptima ${sp.Ro} mm</p>
@@ -1136,25 +1201,201 @@ function initGeoSelect() {
   const s = document.getElementById('geoSelect');
   if (!s) return;
   s.addEventListener('change', async () => {
-    // Formato: "tipo|lat|lng". El tipo distingue un setal propio de una zona
-    // de referencia, que comparten la misma estructura.
+    // Formato: "tipo|lat|lng". El tipo distingue un setal propio de una
+    // zona de referencia, que comparten la misma estructura.
     const [, lat, lng] = s.value.split('|');
-    if (lat) await setLocation(parseFloat(lat), parseFloat(lng));
+    if (!lat) return;
+
+    await setLocation(parseFloat(lat), parseFloat(lng));
   });
 }
 
 /** Zonas micológicas de referencia (centros de zonas con setas). */
-const ZONAS_REFERENCIA = [
-  ["Picos de Europa (Asturias)", 43.18, -4.82],
-  ["Valle de Arán (Pirineo)", 42.70, 0.65],
-  ["Pinares de Soria", 41.76, -2.53],
-  ["Montes de lua (Orense)", 42.33, -7.40],
-  ["Sierra de Guadarrama", 40.56, -3.88],
-  ["Maestrazgo (Castellón)", 40.30, -0.51],
-  ["Sierra Morena", 38.43, -5.44],
-  ["Montes Vascos", 43.03, -2.55],
-  ["La Alcarria (Toledo)", 39.85, -4.15],
-  ["Sierra de Gredos", 40.25, -5.20],
+/*
+ * Zonas de setas de referencia.
+ *
+ * IMPORTANTE, Y NO ES UN MODESTO: son macrozonas de entre diez y varios mil
+ * kilómetros cuadrados, no puntos de setal. Aquí no se buscan setas "aquí":
+ * se busca el tipo de bosque que las lleva. Quien conoce un monte de verdad
+ * no publica el sitio, y no sería responsable inventarlo, porque una
+ * coordenada demasiado precisa daría una certeza que ningún dato sostiene.
+ *
+ * Cada zona declara de dónde sale lo que se afirma de ella:
+ *   evidencia: 'documentado' -> hay fuente oficial o estudio publicado.
+ *              'indicado'    -> el bosque y su asociación con las setas están
+ *                                documentados, pero no hay cifras de producción
+ *                                para esa zona concreta.
+ *
+ * Las coordenadas son el centroide o la localidad de referencia, obtenidas
+ * de Nominatim (OpenStreetMap), no una parcela concreta.
+ */
+const ZONAS_MADRID = [
+
+  /* -- Comunidad de Madrid ------------------------------------------ */
+
+  {
+    nombre: 'Parque Nacional de la Sierra de Guadarrama',
+    zona: 'Madrid / Segovia',
+    lat: 40.8879, lng: -3.9414,
+    bosque: 'Pinar de pino silvestre, hayedo y robledal, de 1.200 a 2.400 m.',
+    especies: ['boletus', 'niscalos', 'rebozuelo', 'boleto_pino', 'gula_monte',
+               'san_jorge', 'hongo_verano', 'seta_pino'],
+    evidencia: 'documentado',
+    nota: 'El propio Parque publica qué especies se pueden recoger y con qué '
+        + 'cupo: 20 kg por persona y día para boleto y níscalo. La recogida está '
+        + 'regulada monte a monte y en varios montes hace falta permiso.',
+    fuente: 'Plan Rector de Uso y Gestión del Parque Nacional (art. 59) y '
+        + 'normativa de recogida de setas del propio Parque; guía de setas y '
+        + 'hongos de la Sierra de Guadarrama, MITECO / CENEAM.',
+  },
+  {
+    nombre: 'Pinares de Valsaín',
+    zona: 'Segovia, en el borde con Madrid',
+    lat: 40.8518, lng: -4.0113,
+    bosque: 'Pinar puro de pino silvestre (Pinus sylvestris) por encima de 1.400 m.',
+    especies: ['boletus', 'niscalos', 'seta_pino', 'girola', 'boleto_pino', 'san_jorge'],
+    evidencia: 'documentado',
+    nota: 'Uno de los mejores pinares de pino silvestre contiguos a la capital. '
+        + 'La banda altitudinal del boleto se tomó de los gradientes de '
+        + 'productividad medidos en masas de pinar de este tipo.',
+    fuente: 'Martínez-Peña et al. (2012), modelos de rendimiento de hongos '
+        + 'ectomicorrícicos en Pinus sylvestris.',
+  },
+  {
+    nombre: 'Pinares de La Cabrera y riberos del Escorial',
+    zona: 'El Escorial, Madrid',
+    lat: 40.5836, lng: -4.1281,
+    bosque: 'Pinar de pino silvestre en la vertiente occidental del Guadarrama.',
+    especies: ['boletus', 'niscalos', 'boleto_pino', 'san_jorge'],
+    evidencia: 'indicado',
+    nota: 'Entra por el tipo de bosque, no por cifras propias: es pino silvestre '
+        + 'del mismo macizo que la zona anterior. No hay estudio de rendimiento '
+        + 'publicado para este pinar en concreto.',
+    fuente: 'Cartografía forestal y límites del Parque Nacional de la Sierra '
+        + 'de Guadarrama.',
+  },
+  {
+    nombre: 'Hayedo de Montejo',
+    zona: 'El Berrueco, Sierra Norte, Madrid',
+    lat: 40.8890, lng: -3.5614,
+    bosque: 'Hayedo de haya (Fagus sylvatica) de unas 250 ha al pie de la Sierra de Ayllón.',
+    especies: ['rebozuelo', 'trompeta', 'rovello', 'hongo_verano', 'boletus', 'boleto_bronce'],
+    evidencia: 'indicado',
+    nota: 'Hayedo puro y húmedo: donde mejor salen la chantarela, las trompetas '
+        + 'de la muerte y las rúsculas. La asociación del haya con el boleto y la '
+        + 'chantarela es de las mejor estudiadas del país, pero de este hayedo '
+        + 'concreto no hay cifras publicadas.',
+    fuente: 'Ficha del Hayedo de Montejo (250 ha, municipio de El Berrueco) y '
+        + 'literatura sobre micorrizas de Fagus sylvatica.',
+  },
+  {
+    nombre: 'Robledales y pino rojo del Valle del Lozoya',
+    zona: 'Valle del Lozoya, Madrid',
+    lat: 40.9632, lng: -3.7840,
+    bosque: 'Robledal de quejigo y fresno con pinar de pino rojo, en el contacto con la montaña.',
+    especies: ['boletus', 'rebozuelo', 'amanita', 'trompeta', 'rovello', 'boleto_bronce'],
+    evidencia: 'indicado',
+    nota: 'Zona ecotón, del robledal al pinar, con setas de los dos bosques a la '
+        + 'vez. Enlaza con el Hayedo de Montejo, que se lista aparte.',
+    fuente: 'Mapa de usos del suelo y manual de selvicultura de la Sierra Norte '
+        + 'de Madrid.',
+  },
+];
+
+const ZONAS_ESPANA = [
+
+  {
+    nombre: 'Pinares de Soria',
+    zona: 'Soria, Castilla y León',
+    lat: 41.7600, lng: -2.5300,
+    bosque: 'Pinar de pino silvestre y pino resinero sobre arenales, de 1.000 a 1.400 m.',
+    especies: ['boletus', 'niscalos', 'seta_pino', 'girola', 'boleto_pino', 'san_jorge'],
+    evidencia: 'documentado',
+    nota: 'Es la referencia de la literatura: el estudio de rendimiento de '
+        + 'boleto y níscalo más citado sobre setas en España se hizo aquí, y '
+        + 'concluyó que el área basal óptima del pinar está entre 20 y 40 m²/ha.',
+    fuente: 'Martínez-Peña et al. (2012), Forest Ecology and Management 282: '
+        + 'modelos de rendimiento para Boletus edulis y Lactarius grupo '
+        + 'deliciosus en pinares de Pinus sylvestris de Soria.',
+  },
+  {
+    nombre: 'Sierra de Albarracín y Alto Maestrazgo',
+    zona: 'Teruel, Aragón',
+    lat: 40.4073, lng: -1.4443,
+    bosque: 'Pinar de pino silvestre y pino resinero, con sabinar en las cotas altas.',
+    especies: ['boletus', 'niscalos', 'seta_pino', 'girola', 'boleto_pino'],
+    evidencia: 'documentado',
+    nota: 'Su fama micológica está en la trufa negra, y ahí el dato es duro: '
+        + 'Teruel es el mayor productor del mundo y en la comarca de Sarrión hay '
+        + 'unas 3.000 ha de plantación trufera. La trufa es subterránea y este '
+        + 'modelo NO la cubre: lo que calcula aquí es el boleto y el níscalo de '
+        + 'sus pinares, no la trufa.',
+    fuente: 'Datos de producción de Tuber melanosporum del Grupo Europeo de la '
+        + 'Trufa; ficha de Tuber melanosporum sobre producción en España y '
+        + 'Aragón; servicio de previsión micológica de la Sierra de Albarracín.',
+  },
+  {
+    nombre: 'Sierra de Aracena y Picos de Aroche',
+    zona: 'Huelva, Andalucía',
+    lat: 37.8949, lng: -6.5624,
+    bosque: 'Castanedo, robledal y alcornocal, con dehesa en los bordes.',
+    especies: ['amanita', 'rebozuelo', 'boleto_bronce', 'rovello', 'trompeta', 'senderuela', 'seta_cardo'],
+    evidencia: 'indicado',
+    nota: 'Lo singular es el castañedo: la ocrea y el rebozuelo salen en castaño '
+        + 'y en avellano, y en las dehesas de la falda hay seta de cardo y parasol.',
+    fuente: 'Parque Natural Sierra de Aracena y Picos de Aroche (186.000 ha); '
+        + 'ficha de hongos de Andalucía (Junta de Andalucía).',
+  },
+  {
+    nombre: 'Alcornocales y Serranía de Ronda',
+    zona: 'Cádiz y Málaga, Andalucía',
+    lat: 36.6512, lng: -5.2742,
+    bosque: 'Alcornocal y encinar con quejigal, en el lugar más lluvioso de España.',
+    especies: ['amanita', 'boleto_bronce', 'rebozuelo', 'rovello', 'trompeta', 'hongo_verano'],
+    evidencia: 'indicado',
+    nota: 'Más de 1.500 mm de lluvia al año, el máximo de la península. Roble y '
+        + 'alcornoque: ocrea, boleto bronce y chantarela.',
+    fuente: 'Parque Natural de Los Alcornocales; atlas climático de Andalucía.',
+  },
+  {
+    nombre: 'Berguedà y Cerdanya',
+    zona: 'Barcelona, Cataluña',
+    lat: 42.1106, lng: 1.8583,
+    bosque: 'Hayedo y pinar de pino silvestre en la montaña, con robledal.',
+    especies: ['boletus', 'rebozuelo', 'gula_monte', 'trompeta', 'rovello', 'hongo_verano', 'seta_cardo'],
+    evidencia: 'indicado',
+    nota: 'Cataluña concentra el consumo y el comercio de setas del país, y el '
+        + 'pino silvestre de cotas altas da boleto mientras el haya da '
+        + 'chantarela y trompetas.',
+    fuente: 'Iglesias Bernabé et al. (2023), caracterización de los factores '
+        + 'que controlan la producción de Boletus edulis (portal científico '
+        + 'de la Universidad de Vigo).',
+  },
+  {
+    nombre: 'Sierra de Aralar',
+    zona: 'Navarra',
+    lat: 42.9761, lng: -2.0106,
+    bosque: 'Hayedo y pinar de pino silvestre hasta los 1.000 m.',
+    especies: ['rebozuelo', 'boletus', 'niscalos', 'trompeta', 'gula_monte', 'boleto_bronce'],
+    evidencia: 'indicado',
+    nota: 'Sin cifras publicadas. Se incluye por la calidad del hayedo y por '
+        + 'una cultura setera viva en la zona, con los "txalak" (níscalos) como '
+        + 'referencia de temporada local.',
+    fuente: 'Inventario de hábitats de la Sierra de Aralar; cultura tradicional '
+        + 'navarra de los txalak.',
+  },
+  {
+    nombre: 'Vega de Pas y Valle de Pas',
+    zona: 'Cantabria',
+    lat: 43.1585, lng: -3.7821,
+    bosque: 'Hayedo atlántico, robledal y pradera de montaña.',
+    especies: ['rebozuelo', 'trompeta', 'rovello', 'hongo_verano', 'boletus', 'girola', 'seta_cardo'],
+    evidencia: 'indicado',
+    nota: 'Hayedo atlántico con mucho rocío: chantarela, trompetas y boleto de '
+        + 'haya.',
+    fuente: 'Zonas protegidas de Cantabria; atlas de los hábitats naturales de '
+        + 'Cantabria.',
+  },
 ];
 
 /**
@@ -1177,13 +1418,16 @@ function renderGeoselector() {
     `<option value="fav:${f.id}|${f.lat}|${f.lng}">⭐ ${escaparHtml(f.name)}</option>`
   ).join('');
 
-  const zonas = ZONAS_REFERENCIA.map(z =>
-    `<option value="zona|${z[1]}|${z[2]}">${escaparHtml(z[0])}</option>`
-  ).join('');
+  const opcionZona = z =>
+    `<option value="zona|${z.lat}|${z.lng}">`
+    + `${escaparHtml(z.nombre)}</option>`;
 
   s.innerHTML = `<option value="">— Zonas de setas —</option>`
     + (mios ? `<optgroup label="Mis setales (${favorites.length})">${mios}</optgroup>` : '')
-    + `<optgroup label="Zonas de referencia">${zonas}</optgroup>`;
+    + `<optgroup label="Zonas de referencia · Madrid">`
+    + ZONAS_MADRID.map(opcionZona).join('') + `</optgroup>`
+    + `<optgroup label="Zonas de referencia · resto de España">`
+    + ZONAS_ESPANA.map(opcionZona).join('') + `</optgroup>`;
 
   if (seleccionada) {
     const porValor = [...s.options].find(o => o.value === seleccionada);
@@ -1251,6 +1495,7 @@ const MUSHROOM_META = {
   gula_monte: { icon: '🟡', color: '#fbc02d' },
   hongo_verano: { icon: '🟨', color: '#c9a227' },
   boleto_bronce: { icon: '⚫', color: '#4e342e' },
-  gurmelo: { icon: '☠️', color: '#b71c1c' },
   seta_cardo: { icon: '⚪', color: '#d7ccc8' },
 };
+// Lista completa, por si algún otro sitio la recorre entera.
+const ZONAS_REFERENCIA = [...ZONAS_MADRID, ...ZONAS_ESPANA];

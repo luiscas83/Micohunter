@@ -15,7 +15,8 @@
 //    1. GDD (Growing Degree Days) — suma de calor acumulado desde que la
 //       temperatura del suelo cruza la base de la especie.
 //    2. Un factor hídrico con decaimiento exponencial sobre la ventana L.
-//    3. Restricciones duras: heladas, techo térmico, fuera de rango.
+//    3. Un estrés por helada con memoria, que reduce pero no borra.
+//    4. Techo térmico y fuera de rango, como decaimientos.
 //
 //  I = 100 · S · H^0.5 · A   donde:
 //    S  = potencial estacional por temperatura del suelo (0-1)
@@ -51,10 +52,37 @@ const API = {
  * L       : días — constante de decaimiento del reservorio hídrico
  * Ro      : mm — lluvia efectiva que satura el factor hídrico
  * diasMax : días — ventana máxima de acumulación
+ *
+ * RESPUESTA A LA HELADA (cuatro campos, todos en grados Celsius)
+ *
+ * La helada es un estado que se acumula y se desvanece, no un interruptor:
+ *
+ *   frostTol   : °C de aire mínimo por debajo del cual la especie sufre.
+ *                0 significa que cualquier helada le hace daño; -6 que se
+ *                la banca con una helada fuerte.
+ *   frostPenalty : multiplicador del índice con el estrés de helada al
+ *                máximo. 0,75 = apenas le afecta; 0,10 = casi la destruye.
+ *                Nunca es 0: una helada muy fuerte reduce el potencial, no
+ *                lo borra, y el índice se recupera con el deshielo.
+ *   frostRecovery : días — constante de tiempo con la que se olvida el
+ *                episodio. Es lo que hace que hoy con +7 °C después de tres
+ *                noches de hielo el índice no esté a cero, sino reducido.
+ *   frostSoil  : grados extra de estrés cuando el suelo también se congela,
+ *                porque entonces se congeló el micelio y no solo el aire.
+ *
+ * HEURÍSTICO. Los valores salen de la tolerancia al frío documentada de cada
+ * especie, no de mediciones de daños por helada: para eso no hay ensayos.
  */
 const SPECIES = [
   {
     key: 'boletus', lat: 'Boletus edulis', es: 'Boleto / Hongo',
+    // tomaba del boleto para todas.
+    alt: [800, 2200, 700],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.55,
+    altEvidencia: 'documentado',
+    altFuente: 'Martínez-Peña et al. (2012), gradiente de masa basal 0-38,5 kg/ha en Pinar Grande (Soria, ~1100 m); en España se cita hasta 3500 m',    // Respuesta a la helada: micelio resistente, pero el cuerpo fructífero es blando.
+    frostTol: -2, frostPenalty: 0.4, frostRecovery: 4, frostSoil: 1.2,
+
     guild: 'ectomicorricico',
     prioridad: 10,
     habitat: ['pinar', 'hayedo', 'robledal', 'castaneral', 'bosque_mixto'],
@@ -73,6 +101,13 @@ const SPECIES = [
   },
   {
     key: 'niscalos', lat: 'Lactarius deliciosus', es: 'Níscalo / Rovelló',
+    // tomaba del boleto para todas.
+    alt: [900, 1800, 500],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.55,
+    altEvidencia: 'documentado',
+    altFuente: 'pinares de montaña de Pinus nigra y P. brutia; Pirineos y Mediterráneo occidental',    // Respuesta a la helada: micelio resistente.
+    frostTol: -2, frostPenalty: 0.4, frostRecovery: 4, frostSoil: 1.2,
+
     guild: 'ectomicorricico',
     prioridad: 20,
     habitat: ['pinar'],          // casi exclusivamente Pinus
@@ -88,6 +123,13 @@ const SPECIES = [
   {
     key: 'amanita', lat: 'Amanita caesarea', es: 'Amanita caesarea',
     alias: 'Oronja · Reig',
+    // tomaba del boleto para todas.
+    alt: [200, 900, 400],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.5,
+    altEvidencia: 'documentado',
+    altFuente: 'termófila mediterránea, típicamente 200-900 m y hasta 1500 m en los mejores casos',    // Respuesta a la helada: termofila mediterranea, la mas fragil ante el frio.
+    frostTol: 2, frostPenalty: 0.15, frostRecovery: 7, frostSoil: 1.6,
+
     guild: 'ectomicorricico',
     prioridad: 50,
     habitat: ['robledal', 'castaneral', 'encinar', 'bosque_mixto'],
@@ -103,6 +145,13 @@ const SPECIES = [
   {
     key: 'rebozuelo', lat: 'Cantharellus cibarius', es: 'Rebozuelo / Chantarela',
     alias: 'Galán',
+    // tomaba del boleto para todas.
+    alt: [500, 1400, 500],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.6,
+    altEvidencia: 'indicado',
+    altFuente: 'haya y robledal de media montaña; sin fuente con rango en metros',    // Respuesta a la helada: verano-otono tardio.
+    frostTol: -1, frostPenalty: 0.35, frostRecovery: 4, frostSoil: 1.2,
+
     guild: 'ectomicorricico',
     prioridad: 30,
     habitat: ['hayedo', 'robledal', 'castaneral', 'bosque_mixto'],
@@ -117,6 +166,13 @@ const SPECIES = [
   },
   {
     key: 'senderuela', lat: 'Marasmius oreades', es: 'Senderuela',
+    // tomaba del boleto para todas.
+    alt: [0, 700, 400],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.7,
+    altEvidencia: 'indicado',
+    altFuente: 'praderas, cunetas y dunas costeras; sin fuente con rango en metros',    // Respuesta a la helada: pradera y cuneta; muy tolerante a la sequia y al frio, rebrota.
+    frostTol: -2, frostPenalty: 0.55, frostRecovery: 3, frostSoil: 0.7,
+
     guild: 'saprofita',
     prioridad: 57,
     habitat: ['pradera', 'pastizal', 'cesped', 'claro'],
@@ -131,6 +187,13 @@ const SPECIES = [
   },
   {
     key: 'parasol', lat: 'Macrolepiota procera', es: 'Parasol',
+    // tomaba del boleto para todas.
+    alt: [0, 1000, 400],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.6,
+    altEvidencia: 'indicado',
+    altFuente: 'praderas y claros, incluida ciudad baja; sin fuente con rango en metros',    // Respuesta a la helada: pradera de verano, muy delicate.
+    frostTol: 1, frostPenalty: 0.25, frostRecovery: 6, frostSoil: 1.4,
+
     guild: 'saprofita',
     prioridad: 58,
     habitat: ['claro', 'borde_bosque', 'pastizal', 'matorral'],
@@ -145,6 +208,13 @@ const SPECIES = [
   },
   {
     key: 'champinon', lat: 'Agaricus campestris', es: 'Champiñón silvestre',
+    // tomaba del boleto para todas.
+    alt: [0, 900, 400],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.6,
+    altEvidencia: 'indicado',
+    altFuente: 'pradera y pastizal de secano; sin fuente con rango en metros',    // Respuesta a la helada: pradera de secano, otono.
+    frostTol: -1, frostPenalty: 0.35, frostRecovery: 4, frostSoil: 1.2,
+
     guild: 'saprofita',
     prioridad: 60,
     habitat: ['pradera', 'pastizal', 'majadal', 'ganado'],
@@ -160,6 +230,13 @@ const SPECIES = [
   {
     key: 'girola', lat: 'Pleurotus ostreatus', es: 'Seta de ostra',
     alias: 'Gírgola',
+    // tomaba del boleto para todas.
+    alt: [0, 1200, 800],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.7,
+    altEvidencia: 'documentado',
+    altFuente: 'el complejo P. ostreatus va del nivel del mar a 2000 m en Europa mediterránea (IMA Fungus 2020)',    // Respuesta a la helada: fructifica con la helada y seStimula con ella; la trehalosa le da antifreeze.
+    frostTol: -6, frostPenalty: 0.75, frostRecovery: 2, frostSoil: 0.4,
+
     guild: 'saprofita_lignum',
     prioridad: 55,
     substrate: 'madera',         // requiere sustrato leñoso
@@ -179,6 +256,13 @@ const SPECIES = [
   {
     key: 'seta_pino', lat: 'Tricholoma portentosum', es: 'Capuchina',
     alias: 'Seta de los piñones',
+    // tomaba del boleto para todas.
+    alt: [1000, 1900, 600],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.5,
+    altEvidencia: 'indicado',
+    altFuente: 'pino de montaña; sin fuente con rango en metros',    // Respuesta a la helada: especie de pino de montana, otoño tardio hasta invierno.
+    frostTol: -5, frostPenalty: 0.6, frostRecovery: 3, frostSoil: 0.8,
+
     guild: 'ectomicorricico',
     prioridad: 54,
     habitat: ['pinar'],
@@ -193,6 +277,13 @@ const SPECIES = [
   },
   {
     key: 'rovello', lat: 'Russula vesca', es: 'Rúsula comestible',
+    // tomaba del boleto para todas.
+    alt: [400, 1600, 500],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.6,
+    altEvidencia: 'indicado',
+    altFuente: 'hayedo y robledal; sin fuente con rango en metros',    // Respuesta a la helada: miceliaruble.
+    frostTol: -2, frostPenalty: 0.4, frostRecovery: 4, frostSoil: 1.2,
+
     guild: 'ectomicorricico',
     prioridad: 53,
     habitat: ['hayedo', 'robledal', 'pinar', 'bosque_mixto'],
@@ -207,6 +298,13 @@ const SPECIES = [
   },
   {
     key: 'trompeta', lat: 'Craterellus cornucopioides', es: 'Trompeta de la muerte',
+    // tomaba del boleto para todas.
+    alt: [200, 1200, 500],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.55,
+    altEvidencia: 'indicado',
+    altFuente: 'haya y roble; registros a 400 m y en hayedo de montaña',    // Respuesta a la helada: haya y roble, otono tardio.
+    frostTol: -2, frostPenalty: 0.5, frostRecovery: 4, frostSoil: 1,
+
     guild: 'ectomicorricico',
     prioridad: 51,
     habitat: ['hayedo', 'robledal', 'castaneral'],
@@ -222,6 +320,13 @@ const SPECIES = [
   {
     key: 'morena', lat: 'Morchella esculenta', es: 'Marzuelo / Seta de marzo',
     alias: 'Colmenilla · Morella',
+    // tomaba del boleto para todas.
+    alt: [100, 1200, 500],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.55,
+    altEvidencia: 'indicado',
+    altFuente: 'frutal y ribera; sin fuente con rango en metros',    // Respuesta a la helada: primavera temprana, tras el deshielo; las ascosporas necesitan suelo sobre 10 °C.
+    frostTol: -4, frostPenalty: 0.5, frostRecovery: 3, frostSoil: 0.8,
+
     guild: 'saprofita',
     prioridad: 56,
     // Hospedantes documentados en la península y el Mediterráneo (Morchella,
@@ -245,6 +350,13 @@ const SPECIES = [
   },
   {
     key: 'san_jorge', lat: 'Calocybe gambosa', es: 'Perrechico',
+    // tomaba del boleto para todas.
+    alt: [500, 1200, 400],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.5,
+    altEvidencia: 'documentado',
+    altFuente: 'cinturón norte (Álava, Navarra, Burgos, La Rioja, Soria) entre 500 y 1200 m',    // Respuesta a la helada: pradera de primavera, tolera las heladas tardias.
+    frostTol: -3, frostPenalty: 0.5, frostRecovery: 3, frostSoil: 0.8,
+
     guild: 'saprofita',
     prioridad: 59,
     habitat: ['pradera', 'claro', 'borde_bosque'],
@@ -264,6 +376,13 @@ const SPECIES = [
   {
     key: 'boleto_pino', lat: 'Boletus pinophilus', es: 'Boleto de pino',
     alias: 'Boletus pinicola · Cep vermellós · Calabaza',
+    // tomaba del boleto para todas.
+    alt: [400, 1800, 600],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.5,
+    altEvidencia: 'documentado',
+    altFuente: 'desde bosque de tierra baja hasta 1800 m',    // Respuesta a la helada: micelio resistente.
+    frostTol: -2, frostPenalty: 0.4, frostRecovery: 4, frostSoil: 1.2,
+
     guild: 'ectomicorricico',
     prioridad: 40,
     // Hospedantes documentados: Pinus (muy detallado: P. sylvestris, pinea,
@@ -287,6 +406,13 @@ const SPECIES = [
   {
     key: 'gula_monte', lat: 'Craterellus lutescens', es: 'Gula de monte / Trompeta amarilla',
     alias: 'Cantharellus lutescens · Camagroc',
+    // tomaba del boleto para todas.
+    alt: [300, 1200, 500],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.55,
+    altEvidencia: 'documentado',
+    altFuente: 'citada a 600 m en el prelittoral mediterráneo y a 1400 m en los Pirineos; pinares de ribera y cerca del mar',    // Respuesta a la helada: pinar humedo de montana.
+    frostTol: -3, frostPenalty: 0.5, frostRecovery: 4, frostSoil: 1,
+
     guild: 'ectomicorricico',
     prioridad: 52,
     // Micorrízico, en pinares y abetales, sobre musgo y suelos húmedos;
@@ -307,6 +433,13 @@ const SPECIES = [
   {
     key: 'hongo_verano', lat: 'Boletus reticulatus', es: 'Boleto Reticulado',
     alias: 'Boletus aestivalis · Cèpe d\'été · Sommerröhrling',
+    // tomaba del boleto para todas.
+    alt: [300, 1300, 500],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.5,
+    altEvidencia: 'documentado',
+    altFuente: 'termófilo de roble caducifolio; hasta 1500 m',    // Respuesta a la helada: boleto termofilo de verano.
+    frostTol: 0, frostPenalty: 0.2, frostRecovery: 6, frostSoil: 1.5,
+
     guild: 'ectomicorricico',
     prioridad: 41,
     // Micorrízico con Quercus, Fagus y Castanea en robledal caducifolio.
@@ -329,6 +462,13 @@ const SPECIES = [
   {
     key: 'boleto_bronce', lat: 'Boletus aereus', es: 'Boleto bronce / Hongo negro',
     alias: 'Boletus edulis f. aereus · B. mamorensis',
+    // tomaba del boleto para todas.
+    alt: [50, 1100, 400],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.5,
+    altEvidencia: 'documentado',
+    altFuente: 'del nivel del mar a 1100 m, con encinar y alcornocal',    // Respuesta a la helada: boleto termofilo, robledal y encinar.
+    frostTol: 0, frostPenalty: 0.2, frostRecovery: 6, frostSoil: 1.5,
+
     guild: 'ectomicorricico',
     prioridad: 42,
     // Micorrízico con frondosas y arbustos esclerófilos. Hospedante clave:
@@ -349,34 +489,15 @@ const SPECIES = [
     gddNeed: 170, L: 8, Ro: 25, diasMax: 30,
   },
   {
-    key: 'gurmelo', lat: 'Gyromitra esculenta', es: 'Gurumelo',
-    alias: 'Helvella esculenta · Morfalsa · Falsa colmenilla',
-    guild: 'saprofita',
-    prioridad: 62,
-    // Suelo arenoso, pinares y bosques caducifolios.
-    habitat: ['pinar', 'hayedo', 'bosque_mixto'],
-    temporada: [3, 4, 5],
-    temporadaTxt: 'marzo-mayo',
-    comestible: 'TÓXICO',
-    aviso: 'Contiene gyromitrin, que se metaboliza a monometilhidracina '
-      + '(MMH): neurológica, hepática y renal. La cocción y el secado sólo '
-      + 'reducen la toxina, no la eliminan, y los vapores de la cocción son '
-      + 'también tóxicos. Venta prohibida en toda España y especie peligrosa '
-      + 'en las listas oficiales de la Generalitat de Cataluña. EnTrust: NO COMER.',
-    evidencia: 'derivado',
-    fuente: 'Wikipedia "Gyromitra esculenta"; StatPearls "Gyromitra Mushroom '
-      + 'Toxicity"; Journal of Applied Toxicology 11(4):235-43, 1991 '
-      + '(Michelot & Toth); contenido de gyromitrin 40-732 mg/kg fresco',
-    acidofilo: false, confined: false,
-    avoidDrySW: false,
-    // La tarjeta se marca en rojo y no viene seleccionada por defecto.
-    toxica: true,
-    tBase: 4, tOpt: 11, tMax: 18, tCrit: -1,
-    gddNeed: 110, L: 10, Ro: 25, diasMax: 25,
-  },
-  {
     key: 'seta_cardo', lat: 'Pleurotus eryngii', es: 'Seta de cardo',
     alias: 'Cardoncello · Gírgola de panical · Pleurote du panicaut',
+    // tomaba del boleto para todas.
+    alt: [0, 800, 400],   // [óptimo min, óptimo max, margen]
+    altSuelo: 0.6,
+    altEvidencia: 'documentado',
+    altFuente: 'praderas secas y estepas mediterráneas',    // Respuesta a la helada: pradera seca y estepa, clima calido.
+    frostTol: 3, frostPenalty: 0.12, frostRecovery: 7, frostSoil: 1.6,
+
     guild: 'saprofita_raices',
     prioridad: 61,
     // NO crece sobre madera: es la única Pleurotus que fructifica sobre las
@@ -420,13 +541,64 @@ function tShift(altitude, reference = 500) {
   return 0;
 }
 
-/** Índice de-productividad altitudinal (Martínez-Peña et al. 2012). */
-function altitudeFactor(altitude) {
+/* ---------------------------------------------------------------------
+ * Altitud: banda POR ESPECIE
+ *
+ * Cada especie trae lo suyo en `alt`: [optMin, optMax, margen], en metros,
+ * mas `altSuelo`, el valor fuera de rango.
+ *
+ *   dentro de [optMin, optMax]   1,00   el optimo documentado
+ *   fuera                        decae 1 punto por cada `margen` metros
+ *   en `altSuelo`                se queda, no baja mas
+ *
+ * Curva de meseta, igual que la del factor de suelo por pH. Se eligió esta
+ * forma y no una de escalones porque así los datos tienen que ser continuos:
+ * no hay peldaños sin motivo entre dos bandas contiguas.
+ *
+ * `altEvidencia` dice de donde sale cada banda:
+ *   documentado  hay una fuente con el rango en metros
+ *   indicado    deducido del tipo de habitat y del resto de la ficha
+ */
+
+function altitudeFactor(altitude, sp) {
+  const banda = sp && Array.isArray(sp.alt) && sp.alt.length === 3 ? sp.alt : null;
+  if (!banda) return altitudeFactorGlobal(altitude);
+  if (!Number.isFinite(altitude)) return 1;
+
+  const min = banda[0], max = banda[1], margen = banda[2];
+  const suelo = Number.isFinite(sp.altSuelo) ? sp.altSuelo : 0.5;
+
+  // Distancia al borde mas cercano de la banda optima.
+  const fuera = altitude < min ? min - altitude
+    : altitude > max ? altitude - max
+      : 0;
+  if (fuera === 0) return 1;
+  if (!(margen > 0)) return suelo;
+
+  return clamp(1 - (1 - suelo) * (fuera / margen), suelo, 1);
+}
+
+/**
+ * Curva altitudinal de reserva, sin especie.
+ *
+ * Solo se usa si una ficha llega sin banda `alt`, por ejemplo un registro de
+ * favorito de una versión antigua. Los escalones salen de Martínez-Peña et
+ * al. (2012), que midió productividad de masa basal de Boletus edulis en un
+ * pinar de Soria, así que sirven para un boleto de montaña y no para una
+ * seta de tronco de costa.
+ */
+function altitudeFactorGlobal(altitude) {
   if (altitude < 800) return 0.5;
   if (altitude < 1450) return 0.85;
-  if (altitude <= 1650) return 1.0;   // óptimo observado
+  if (altitude <= 1650) return 1.0;
   if (altitude < 2000) return 0.8;
   return 0.5;
+}
+
+/** Texto de la banda optima, para la tarjeta. */
+function altitudEtiqueta(sp) {
+  if (!Array.isArray(sp?.alt)) return '';
+  return `${sp.alt[0]}-${sp.alt[1]} m`;
 }
 
 // ------------------------------------------------------------
@@ -492,26 +664,160 @@ function potencialEstacional(tSuelo, sp) {
 // ------------------------------------------------------------
 
 /**
+ * Estrés por helada, acumulado y con memoria.
+ *
+ * Devuelve un valor entre 0 y 1 y el multiplicador que le corresponde al
+ * índice. No es un interruptor: una noche mala no borra el potencial, lo
+ * reduce, y el potencial vuelve a subir conforme se aleja el episodio.
+ *
+ * DOS SEÑALES, porque no son lo mismo:
+ *
+ *   · el AIRE, por su mínima nocturna (historial[i].tmin). Es donde se
+ *     congela de verdad, y es la señal principal.
+ *   · el SUELO, por su temperatura a 18 cm. Va muy amortiguada, así que un
+ *     suelo a 5 °C no es una helada física, pero sí es un estado profundo
+ *     para una especie cuyo mínimo crítico está en +10 °C. Cuando el suelo
+ *     además baja del mínimo crítico de la especie, se congeló el micelio y
+ *     no solo el aire, y el daño pesa más.
+ *
+ * LA MEMORIA es lo que separa un episodio prolongado de uno aislado:
+ *
+ *   día -3 → -2 °C, día -2 → -3 °C, día -1 → +1 °C, hoy → +7 °C
+ *   tres noches malas y un día bueno: el daño se acumula y pesa.
+ *
+ *   día -3 → +8 °C, día -2 → +7 °C, día -1 → -2 °C, hoy → +7 °C
+ *   una sola noche mala y tres buenas: pesa mucho menos, y con el mismo
+ *   desfase temporal.
+ *
+ * Cada noche aporta `severidad` grados de estrés y se pesa por
+ * exp(-días / frostRecovery), así que lo que ocurrió hace tres noches cuenta
+ * menos que lo de anoche. La suma se divide por HELADA_SATURA, los grados de
+ * estrés que saturan la escala.
+ *
+ * HEURÍSTICO: la forma es razonable, los umbrales salen de la tolerancia al
+ * frío documentada de cada especie. No hay ensayos de daño por helada que
+ * den estos números.
+ */
+const HELADA_SATURA = 4;   // grados de estrés que saturan la escala
+
+function frostStress(historial, sp, shift) {
+  const tol = Number.isFinite(sp.frostTol) ? sp.frostTol : 0;
+  const rec = Number.isFinite(sp.frostRecovery) && sp.frostRecovery > 0
+    ? sp.frostRecovery : 4;
+  const pesoSuelo = Number.isFinite(sp.frostSoil) ? Math.max(0, sp.frostSoil) : 1;
+
+  // Un suelo por debajo de 0 °C cuenta siempre algo, aunque el aire medido no
+  // llegara: las heladas de radiación en cielo claro congelan el suelo con
+  // una temperatura de aire bastante más suave.
+  const sueloBase = Number.isFinite(sp.tCrit) ? Math.min(0, sp.tCrit) : 0;
+
+  let acum = 0;
+  let peorMin = null;      // mínima de aire más baja del episodio
+  let noches = 0;          // noches con helada por encima de la tolerancia
+  let antiguedad = null;   // cuántas noches atrás fue la última
+  let sueloHelado = false;
+
+  const n = historial.length;
+  // La ventana es un poco más larga que la constante de desvanecimiento: más
+  // allá de tres constantes el peso es menor del 5 % y no compensa escanear.
+  const ventana = Math.min(n, Math.ceil(rec * 3) + 2);
+
+  for (let k = 0; k < ventana; k++) {
+    const dia = historial[n - 1 - k];    // k = 0 es hoy
+    if (!dia) continue;
+
+    let severidad = 0;
+
+    const tmin = dia.tmin;
+    if (tmin != null && Number.isFinite(tmin)) {
+      const porAire = Math.max(0, tol - tmin);
+      if (porAire > 0) {
+        severidad += porAire;
+        noches++;
+        if (antiguedad === null) antiguedad = k;
+        if (peorMin === null || tmin < peorMin) peorMin = tmin;
+      }
+    }
+
+    const suelo = dia.t;
+    if (suelo != null && Number.isFinite(suelo)) {
+      const s = suelo + shift;
+      if (s <= sp.tCrit) {
+        // El micelio estuvo por debajo del mínimo absoluto de la especie.
+        severidad += pesoSuelo;
+        sueloHelado = true;
+        if (antiguedad === null) antiguedad = k;
+      } else if (s <= sueloBase) {
+        // Suelo congelado, pero dentro de lo que la especie aguanta.
+        severidad += pesoSuelo * 0.4;
+        sueloHelado = true;
+        if (antiguedad === null) antiguedad = k;
+      }
+    }
+
+    if (severidad > 0) acum += severidad * Math.exp(-k / rec);
+  }
+
+  const stress = clamp(acum / HELADA_SATURA, 0, 1);
+  const pen = Number.isFinite(sp.frostPenalty)
+    ? clamp(sp.frostPenalty, 0.05, 1) : 0.4;
+
+  // Interpolación entre "sin daño" (1) y "peor caso" (frostPenalty).
+  const mult = 1 - (1 - pen) * stress;
+
+  return {
+    stress, mult,
+    peorMin, noches, antiguedad, sueloHelado,
+    tol, pen, rec,
+  };
+}
+
+/**
  * Suma de grados-día desde el último día con temperatura de suelo
  * por debajo de la base de la especie.
  */
 function calcularGDD(historial, sp, shift) {
   let gdd = 0;
   let diasEnRango = 0;
-  let helada = false;
 
   // historial va de más antiguo (índice 0) a hoy (índice final).
+  //
+  // El tope se comprueba al PRINCIPIO de cada vuelta, antes de acumular. Si
+  // se comprobara al final, el día por encima de tMax no lo respetaría,
+  // porque hace `continue`: un episodio largo de calor podría recorrer los
+  // 30 días de histórico incrementando diasEnRango sin límite.
+  //
+  // topeAlcanzable dice si sp.diasMax cabe siquiera en el histórico que
+  // tenemos. Con 30 días de pasado, las especies con diasMax de 45 a 60
+  // (boleto, gula de monte, seta de cardo) nunca pueden topar, porque no hay
+  // historial suficiente para llegar. Se expone para poder decirlo en voz
+  // alta en vez de fingir que el parámetro se está aplicando.
+  const tope = Math.min(sp.diasMax, historial.length);
+
   for (let i = historial.length - 1; i >= 0; i--) {
-    const t = historial[i].t + shift;
-    if (t <= sp.tCrit) { helada = true; break; }
+    // El día se comprueba ANTES de sumarle el desplazamiento: en JavaScript
+    // null + 0 da 0, no NaN, así que un día sin número pasaría por si la
+    // temperatura del suelo fuera de 0 °C. El chequeo tiene que ir antes.
+    const bruto = historial[i].t;
+    if (bruto == null || !Number.isFinite(bruto)) continue;
+    const t = bruto + shift;
+    // El suelo por debajo de la mínima absoluta cierra la temporada: es un
+    // corte real, no un daño que se recupere. Lo que deja el frío del aire es
+    // frostStress(), que se aplica al final como multiplicador del índice.
+    if (t <= sp.tCrit) break;
+    if (diasEnRango >= tope) break;   // ventana agotada
     if (t < sp.tBase) break;           // aún no arranca la temporada
     if (t > sp.tMax) { gdd += 2; diasEnRango++; continue; } // estrés cuenta poco
     gdd += (t - sp.tBase);
     diasEnRango++;
-    if (diasEnRango > sp.diasMax) break;
   }
 
-  return { gdd, diasEnRango, helada };
+  return {
+    gdd, diasEnRango,
+    tope,
+    diasDisponibles: historial.length,
+    topeAlcanzable: sp.diasMax <= historial.length,
+  };
 }
 
 /** Fracción de Acondicionamiento alcanzada (0-1, con techo). */
@@ -589,15 +895,6 @@ function evaluarHabitat(sp, terreno) {
     factor *= 0.5;
   }
 
-  // El pH ácido del frondoso caducifolio favorece a los ectomicorrícicos
-  // acidófilos (boleto, níscalo, seta de pino) y desfavorece a los saprofitas
-  // de pradera, que necesitan suelos más neutrófilos.
-  if (terreno.ph != null) {
-    if (sp.acidofilo && terreno.ph < 5.5) factor = Math.min(1, factor * 1.15);
-    if (sp.alcalinofila && terreno.ph > 7.2) factor = Math.min(1, factor * 1.15);
-    if (!sp.acidofilo && !sp.alcalinofila && terreno.ph > 7.5) factor *= 0.7;
-  }
-
   // Exposición ycontinental seca del sur: el boleto no la coloniza.
   if (sp.avoidDrySW && terreno.exposicion === 'S' && terreno.umedad === 'seco') {
     factor *= 0.15;
@@ -616,6 +913,49 @@ function evaluarHabitat(sp, terreno) {
   return { factor: clamp(factor, 0, 1), etiqueta, confuso: !hitSecundario };
 }
 
+/**
+ * Factor de suelo por pH.
+ *
+ * Factor aparte, con recorrido propio entre 1,00 y su suelo. Va después del
+ * factor de hábitat y no dentro de él: el pH es una variable continua del
+ * suelo, no un condicionante de cobertura vegetal.
+ *
+ * HEURISTICO, pendiente de calibracion con observaciones reales: los tres
+ * centros salen de la ecologia documentada de cada grupo, no de mediciones
+ * de setas.
+ *
+ *   acidofilo    optimo 5,2   meseta +-1,5   suelo 0,60
+ *   alcalinofila optimo 7,6   meseta +-1,4   suelo 0,60
+ *   indiferente  optimo 6,8   meseta +-1,8   suelo 0,70
+ *
+ * El suelo nunca llega a 0: un pH equivocado penaliza, pero no anula a una
+ * especie que ya tenga el resto de condiciones.
+ */
+function factorSuelo(pH, sp) {
+  if (pH == null || !Number.isFinite(pH)) {
+    return { factor: 1, etiqueta: '', conocido: false };
+  }
+
+  const perfil = sp.acidofilo
+    ? { opt: 5.2, meseta: 1.5, suelo: 0.60 }
+    : sp.alcalinofila
+      ? { opt: 7.6, meseta: 1.4, suelo: 0.60 }
+      : { opt: 6.8, meseta: 1.8, suelo: 0.70 };
+
+  const d = Math.abs(pH - perfil.opt);
+  // Meseta dentro del rango: 1.00. Fuera, decae 1 por cada 2,2 de pH.
+  const bruto = d <= perfil.meseta ? 1 : 1 - (d - perfil.meseta) / 2.2;
+  const factor = clamp(bruto, perfil.suelo, 1);
+
+  const etiqueta = factor >= 0.999
+    ? 'pH adecuado'
+    : (sp.acidofilo ? 'suelo demasiado calizo'
+      : sp.alcalinofila ? 'suelo demasiado ácido'
+        : 'pH poco habitual');
+
+  return { factor, etiqueta, conocido: true };
+}
+
 // ------------------------------------------------------------
 // Índice principal
 // ------------------------------------------------------------
@@ -629,6 +969,23 @@ function evaluarHabitat(sp, terreno) {
  * @returns  { I, S, H, A, G, reff, viable, motivo }
  */
 function indice(sp, ctx) {
+  /* Especie inválida: se comprueba antes de calcular nada, para que un objeto
+   * sin parámetros térmicos válidos devuelva un 0 controlado en vez de un
+   * NaN que se llevaría el índice entero. En la práctica no ocurre: indice()
+   * solo se llama con especies de SPECIES. */
+  const clavesTermicas = ['tBase', 'tOpt', 'tMax', 'tCrit', 'gddNeed', 'L', 'Ro'];
+  const faltan = clavesTermicas.filter(k => !Number.isFinite(sp?.[k]));
+  if (faltan.length) {
+    return {
+      I: 0, S: 0, H: 0, A: 0, T: 0, G: 0, reff: 0,
+      viable: false,
+      motivo: `Especie con parametros incompletos: ${faltan.join(', ') || 'no reconocida'}`,
+      detalle: { gdd: 0, diasEnRango: 0 },
+    };
+  }
+  if (!Array.isArray(sp.habitat)) sp = { ...sp, habitat: [] };
+  if (!Array.isArray(sp.temporada)) sp = { ...sp, temporada: [] };
+
   const shift = tShift(ctx.altitude);
 
   // Temperatura del suelo actual (con desplazamiento por altitud)
@@ -638,8 +995,9 @@ function indice(sp, ctx) {
   const S = potencialEstacional(tSuelo, sp);
 
   // 2. Acondicionamiento térmico (GDD desde el arranque de temporada)
-  const { gdd, diasEnRango, helada } = calcularGDD(ctx.historial, sp, shift);
-  const A = helada ? 0 : factorAcondicionamiento(gdd, sp);
+  const g = calcularGDD(ctx.historial, sp, shift);
+  const { gdd, diasEnRango } = g;
+  const A = factorAcondicionamiento(gdd, sp);
 
   // 3. Factor hídrico
   const reff = lluviaEfectiva(ctx.lluvia30, sp);
@@ -648,24 +1006,23 @@ function indice(sp, ctx) {
   // 4. Hábitat (degradado, no veto)
   const hab = evaluarHabitat(sp, ctx.terreno);
 
-  // 5. Altitud
-  const alt = altitudeFactor(ctx.altitude);
+  // 4b. Suelo por pH, como factor aparte
+  const sueloF = factorSuelo(ctx.terreno?.ph, sp);
+
+  // 5. Altitud, con la banda de esta especie
+  const alt = altitudeFactor(ctx.altitude, sp);
 
   // 6. Temporada documentada (peso, no veto)
   const T = factorTemporada(sp, ctx.mes);
 
-  // Restricción dura: SOLO helada reciente. El hábitat ya va en el factor.
-  if (helada) {
-    return {
-      I: 0, S, H, A, T, G: gdd, reff,
-      viable: false,
-      motivo: 'Helada reciente en el suelo',
-      detalle: { gdd, diasEnRango, habFactor: hab.factor, habEtiqueta: hab.etiqueta, alt },
-    };
-  }
+  // 7. Estrés por helada, con memoria. Multiplicador: reduce el potencial y
+  // el potencial vuelve conforme el episodio se aleja.
+  const hel = frostStress(ctx.historial, sp, shift);
 
-  // Índice compuesto
-  const I = 100 * S * Math.pow(H, 0.5) * A * hab.factor * alt * T;
+  // Índice compuesto. Ojo: son ocho factores multiplicativos y H va con
+  // exponente 0,5 a propósito (ver Metodología: un suelo saturado no sigue
+  // admitiendo más agua).
+  const I = 100 * S * Math.pow(H, 0.5) * A * hab.factor * sueloF.factor * alt * T * hel.mult;
 
   return {
     I: clamp(I, 0, 100),
@@ -677,7 +1034,22 @@ function indice(sp, ctx) {
       habFactor: hab.factor,
       habEtiqueta: hab.etiqueta,
       habConfuso: hab.confuso,
+      sueloFactor: sueloF.factor,
+      sueloEtiqueta: sueloF.etiqueta,
+      sueloConocido: sueloF.conocido,
+      gddTope: g.tope,
+      gddTopeAlcanzable: g.topeAlcanzable,
+      gddDiasDisponibles: g.diasDisponibles,
       alt,
+      altBanda: altitudEtiqueta(sp),
+      altEvidencia: sp.altEvidencia || 'indicado',
+      heladaFactor: hel.mult,
+      heladaEstres: hel.stress,
+      heladaMinima: hel.peorMin,
+      heladaNoches: hel.noches,
+      heladaAntiguedad: hel.antiguedad,
+      heladaSuelo: hel.sueloHelado,
+      heladaTolerancia: hel.tol,
     },
   };
 }
@@ -1024,4 +1396,20 @@ function nivelTexto(I) {
   if (I >= 45) return { texto: 'Favorable', clase: 'nivel-medio' };
   if (I >= 22) return { texto: 'Posible', clase: 'nivel-bajo' };
   return { texto: 'Desfavorable', clase: 'nivel-nulo' };
+}
+/* ---------------------------------------------------------------------
+ * Exportación para los tests en Node.
+ *
+ * En el navegador este fichero se carga como script clásico y `module` no
+ * existe, así que este bloque no hace nada. En Node permite
+ * `require("./algoritmo.js")` sin usar un truco de vm.
+ */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    SPECIES, indice, ranking, porPrioridad, potencialEstacional,
+    calcularGDD, factorAcondicionamiento, lluviaEfectiva, evaluarHabitat,
+    factorSuelo, factorTemporada, altitudeFactor, altitudeFactorGlobal,
+    altitudEtiqueta, frostStress, diaDelAnio,
+    FACTOR_LABELS, EVIDENCIA_LABELS, GUILD_LABELS, nivelTexto,
+  };
 }
