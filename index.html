@@ -681,6 +681,15 @@
     // worker del navegador del usuario.
     if (location.protocol === 'file:') return;
 
+    // Se espera a que la página esté pintada. Si la recarga de abajo se
+    // lanzara mientras el documento todavía se está descargando, el navegador
+    // la cortaría por la mitad y la navegación quedaría marcada como fallida
+    // (ERR_ABORTED). Waiting hasta 'load' no cuesta nada: la comprobación es
+    // una petición de cabeceras en segundo plano.
+    if (document.readyState !== 'complete') {
+      await new Promise(r => window.addEventListener('load', r, { once: true }));
+    }
+
     /** Huella por si el servidor no manda fecha ni ETag. */
     function huella(txt) {
       let h = 5381;
@@ -761,4 +770,4 @@
   })();
 </script>
 </body>
-</html><!-- v2 1790886319 -->
+</html>
