@@ -990,6 +990,80 @@ prueba('el contraste documenta la regla de urbano = 0 que choca con los datos', 
     'no declara que la regla de urbano contradice a las fuentes');
 });
 
+grupo('13. Lista corta de fuentes en la ficha');
+
+prueba('fuentesBreves devuelve solo nombres, sin comillas ni dos puntos', () => {
+  // El fallo que se quiere evitar: que en la ficha aparezca el resumen de lo
+  // que dice la fuente. Se detecta buscando comillas y dos puntos, que son
+  // justo lo que abre una cita o un resumen.
+  for (const sp of A.SPECIES) {
+    const b = A.fuentesBreves(sp);
+    assert.ok(b.length > 0, sp.key + ': lista de fuentes vacía');
+    assert.ok(!b.includes('"'), sp.key + ': la lista corta trae una cita entrecomillada');
+    assert.ok(!b.includes('“'), sp.key + ': la lista corta trae una cita tipográfica');
+    assert.ok(!b.includes(':'), sp.key + ': la lista corta trae un resumen con dos puntos');
+    assert.ok(b.length < 190, sp.key + ': la lista corta es demasiado larga (' + b.length + ')');
+  }
+});
+
+prueba('ninguna especie repite el mismo autor en la lista corta', () => {
+  for (const sp of A.SPECIES) {
+    const partes = A.fuentesBreves(sp).split(' · ');
+    assert.strictEqual(partes.length, new Set(partes).size,
+      sp.key + ': fuente repetida -> ' + partes.join(' | '));
+  }
+});
+
+prueba('todas citan la fuente primaria del proyecto', () => {
+  // 18 de 19 salen de Laux. La excepción, la seta de cardo, no está en el
+  // libro y por eso cita al artículo que sí la describe.
+  for (const sp of A.SPECIES) {
+    const b = A.fuentesBreves(sp);
+    if (sp.key === 'seta_cardo') {
+      assert.ok(/Carlavilla/.test(b),
+        sp.key + ': debería citar a Carlavilla & Manjón');
+      assert.ok(!/Laux/.test(b),
+        sp.key + ': el libro no tiene su ficha, no debe citarse a Laux como primaria');
+    } else {
+      assert.ok(/Laux/.test(b),
+        sp.key + ': le falta la fuente primaria del libro');
+    }
+  }
+});
+
+prueba('las fuentes de contraste solo salen si CRUCE las tiene', () => {
+  for (const sp of A.SPECIES) {
+    const b = A.fuentesBreves(sp);
+    const c = A.CRUCE[sp.key] || {};
+    assert.strictEqual(/Waldschatzfinder/.test(b), !!c.ws,
+      sp.key + ': Waldschatzfinder no coincide con CRUCE');
+    assert.strictEqual(/Wikipedia/.test(b), !!c.wiki,
+      sp.key + ': Wikipedia no coincide con CRUCE');
+  }
+});
+
+prueba('la cita larga se conserva intacta para la Metodología', () => {
+  // Las dos cosas conviven: la ficha va corta y el apartado 4 va largo. Si esto
+  // falla, se ha borrado el detalle en lugar de ocultarlo en la ficha.
+  for (const sp of A.SPECIES) {
+    assert.ok((sp.fuente || '').length > 40,
+      sp.key + ': la cita larga sigue vacía');
+  }
+  const boletus = A.SPECIES.find(s => s.key === 'boletus');
+  assert.ok(boletus.fuente.includes('Laux'), 'la cita larga perdió el libro');
+  assert.ok(/[«"]/.test(boletus.fuente),
+    'la cita larga ya no incluye el resumen de la fuente');
+});
+
+prueba('la lista corta es mucho más corta que la larga', () => {
+  for (const sp of A.SPECIES) {
+    const corta = A.fuentesBreves(sp).length;
+    const larga = (sp.fuente || '').length;
+    assert.ok(corta < larga / 2,
+      sp.key + ': la lista corta (' + corta + ') no es mucho más corta que la larga (' + larga + ')');
+  }
+});
+
 console.log('\n' + '-'.repeat(58));
 console.log(pruebas + ' pruebas, ' + fallos + ' fallos');
 console.log('-'.repeat(58));

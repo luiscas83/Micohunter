@@ -1267,7 +1267,19 @@ function initMushroomSelector() {
         </div>
         <p class="card-evidencia">
           <span class="evidencia-badge ev-${sp.evidencia || 'estimado'}">${EVIDENCIA_LABELS[sp.evidencia] || EVIDENCIA_LABELS.estimado}</span>
-          ${sp.fuente ? `<span class="fuente">Fuente: ${escaparHtml(sp.fuente)}</span>` : ''}
+          ${(() => {
+          // Solo los NOMBRES de las fuentes, no lo que dicen.
+          //
+          // `sp.fuente` es un párrafo: la cita del libro, un resumen de lo que
+          // escribe, el origen de los parámetros numéricos y el contraste con
+          // Waldschatzfinder y Wikipedia. Todo eso vive en el apartado 4 de la
+          // Metodología, donde está bien y se contrasta. Aquí, en la ficha de la
+          // especie, es ruido: lo que se lee de un vistazo es si los parámetros
+          // están publicados o son estimados, y quién lo ha dicho. El detalle
+          // completo sigue en `sp.fuente`, que no se borra.
+          const b = fuentesBreves(sp);
+          return b ? `<span class="fuente">Fuente: ${escaparHtml(b)}</span>` : '';
+        })()}
         </p>
       </div>`;
     }).join('');

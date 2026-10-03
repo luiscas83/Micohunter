@@ -3463,3 +3463,28 @@ ul.method-list {
         color: #e6a05a;
     }
 }
+
+
+/* ============================================================
+   HIJOS DE REJILLA QUE DEBEN PODER ENCOGERSE
+   ============================================================
+   Complemento del `min-width: 0` que ya aplican las rejillas del dashboard,
+   pero este va fuera de cualquier @media porque el defecto no es de móvil:
+   aparece en cuanto una columna de `1fr` queda más estrecha que su contenido.
+
+   El valor por defecto de `min-width` en un elemento de rejilla es `auto`, y
+   `auto` significa "tan ancho como mi contenido, siempre". Con eso, dos
+   columnas de 1fr dentro de 796 px piden 828 px (404 + 404 + 20 de hueco), se
+   salen 32 px por la derecha, y la última tarjeta queda pegada al borde de la
+   pantalla mientras por la izquierda sigue habiendo 44 px de margen.
+
+   Solo se declara `min-width: 0`. No se toca `grid-template-columns`: el
+   número de columnas lo sigue mandando el proyecto por sus puntos de
+   ruptura, que es lo correcto. Un intento anterior de arreglarlo redefiniendo
+   las columnas aquí pisó esos puntos de ruptura y descuadró la pantalla.
+*/
+.mushroom-info-grid > *,
+.mushroom-selector > *,
+.detail-grid > * {
+    min-width: 0;
+}

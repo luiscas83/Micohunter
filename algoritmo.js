@@ -262,6 +262,68 @@ const LAUX = {
 };
 
 /**
+ * Origen de los PARÁMETROS NUMÉRICOS de cada especie, solo el nombre.
+ *
+ * Es el dato que se squeeda de `sp.fuente` para la lista corta de la ficha. Lo
+ * que no está aquí significa que los umbrales del modelo son valores de partida
+ * reasoned, sin fuente publicada, y por eso no se cita ninguna.
+ *
+ * OJO con la confusion entre las dos fuentes de una ficha: el libro dice DÓNDE
+ * y CUÁNDO crece la seta, que es un hecho documentado; estos números son el
+ * modelo, que es otra cosa. La ficha dice las dos, y no se mezclan.
+ */
+const FUENTES_NUMERAS = {
+  boletus: 'Lamartiniere & Hoffman 2025; Martínez-Peña et al. 2012',
+  niscalos: 'literatura ibérica sobre Pinus nigra y P. brutia',
+  seta_pino: 'Woodland Trust; cultivo publicado',
+  morena: 'Woodland Trust; EnglishFungi',
+  hongo_verano: 'Beugelsdijk et al. 2008',
+  boleto_bronce: 'Beugelsdijk et al. 2008',
+  pie_azul: 'Woodland Trust; cultivo publicado',
+  // Carlavilla ya es la fuente primaria de esta ficha, así que aquí solo se
+  // cita el segundo artículo y no se repite el primero.
+  seta_cardo: 'Zervakis et al. 2001',
+};
+
+/**
+ * Fuentes de una especie, en una línea y solo con los NOMBRES.
+ *
+ * Es lo que se pinta en la ficha. Va derivada de los datos que ya había —la
+ * fuente primaria, `FUENTES_NUMERAS` y `CRUCE`— en lugar de ser una lista
+ * escrita a mano, porque si las tres se desincronizan la ficha acaba
+ * citando a un autor que ya no aparece en el apartado 4, que es justo el
+ * fallo que hace inservible este apartado.
+ *
+ * @param sp  objeto de SPECIES
+ * @returns  'Laux (2012) · Wikipedia' o '' si no hay ninguna
+ */
+function fuentesBreves(sp) {
+  if (!sp) return '';
+  const partes = [];
+
+  // 1. Fuente primaria. Laux es la del proyecto entero salvo la excepción que
+  //    la propia ficha declara.
+  partes.push(sp.key === 'seta_cardo'
+    ? 'Carlavilla & Manjón, Italian Mycology 2023'
+    : 'Laux, Setas de España y Europa (TIKAL, 2012)');
+
+  // 2. Origen de los umbrales del modelo, si lo tiene.
+  const num = FUENTES_NUMERAS[sp.key];
+  if (num) partes.push(num);
+
+  // 3. Fuentes de contraste, solo si existen para esa especie.
+  const c = CRUCE[sp.key];
+  if (c) {
+    if (c.ws) partes.push('Waldschatzfinder');
+    if (c.wiki) partes.push('Wikipedia');
+  }
+
+  // Se quitan las repeticiones conservando el orden: puede pasar que un autor
+  // esté ya en los parámetros numéricos y además aparezca como contraste.
+  return [...new Set(partes)].join(' · ');
+}
+
+/**
  * Cómo se cita el libro en las fichas, con el contraste de las otras dos
  * fuentes detrás.
  *
@@ -2058,7 +2120,8 @@ function nivelTexto(I) {
  */
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    SPECIES, LAUX, CRUCE, fuenteLaux, fuenteCruce, indice, ranking, porPrioridad, potencialEstacional,
+    SPECIES, LAUX, CRUCE, FUENTES_NUMERAS, fuenteLaux, fuenteCruce,
+    fuentesBreves, indice, ranking, porPrioridad, potencialEstacional,
     calcularGDD, factorAcondicionamiento, lluviaEfectiva, evaluarHabitat,
     factorSuelo, factorTemporada, altitudeFactor, altitudeFactorGlobal,
     altitudEtiqueta, frostStress, diaDelAnio,
