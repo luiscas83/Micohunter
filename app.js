@@ -33,6 +33,17 @@ let peticionActual = 0;     // testigo: descarta respuestas de puntos viejos
 let puntoCargado = null;    // {lat, lng} de lo que hay ahora en pantalla
 let currentRanking = [];
 let map = null;
+
+/**
+ * Resultado del servicio de hábitat (habitat.js) para el punto en pantalla.
+ *
+ * Vive aparte del contexto porque llega después: el MFE tarda medio segundo y
+ * la meteorología 40 ms, así que las tarjetas se pintan primero con la
+ * heurística de coordenadas y se corrigen cuando llega el dato bueno. Guardar
+ * el resultado completo —no sólo la lista de hábitats— es lo que permite
+ * decir en la tarjeta de qué fuente salió cada cosa.
+ */
+let currentHabitat = null;
 let marker = null;
 
 const FAV_KEY = 'micohunter_favorites';
@@ -219,9 +230,20 @@ async function refresh() {
   // sobre el mismo sitio ya no tiene que volver a pedir nada.
   puntoCargado = { lat: selectedLat, lng: selectedLng };
 
+  // El hábitat se invalida siempre antes de pedirlo. Si no, al moverse a un
+  // pueblo se pintaría primero con el pinar del punto anterior, que es
+  // exactamente el error que este servicio viene a arreglar.
+  currentHabitat = null;
+  renderVegetacion();
+
   // Primera pasada: meteorología sí, suelo todavía no.
   aplicarDatos(m, SIN_SUELO);
   showLoading(false);
+
+  // Tercera fase: el hábitat. Lanza antes de esperar al suelo porque es mucho
+  // más rápido (~0.4 s) y toca un factor que pesa en el índice. Como el suelo,
+  // no bloquea ni salta el scroll.
+  aplicarHabitat(testigo);
 
   // Segunda pasada: el suelo, cuando llegue. No bloquea nada.
   try {
@@ -384,8 +406,14 @@ function aplicarDatos(m, s) {
   // El término "sustrato leñoso" no se puede inferir de coordenadas con
   // fiabilidad. Se pasa null (desconocido) para que la penalización de
   // los saprofitas lignícolas no se aplique a ciegas.
+  //
+  // La vegetación sí se sabe de verdad si el servicio de hábitat ya respondió;
+  // si no, se recurre a la heurística de coordenadas hasta que llegue.
   const terreno = {
-    vegetacion: inferirVegetacion(selectedLat, selectedLng),
+    vegetacion: currentHabitat?.vegetacion?.length
+      ? currentHabitat.vegetacion
+      : inferirVegetacion(selectedLat, selectedLng),
+    urbano: !!currentHabitat?.urbano,
     exposicion: null,
     humedad: s.phGrupo === 'calizo' ? 'seco' : s.ok ? 'normal' : null,
     hayMadera: null,
@@ -504,12 +532,113 @@ function cap(s) {
 }
 
 /**
- * Heurística de vegetación por coordenadas.
+ * Tercera fase: llega el hábitat real y sólo se actualiza lo que depende de él.
  *
- * Es LA fuente de error más probable del modelo: cubre sólo grandes zonas
- * de España y devuelve el hábitat dominante, no la mezcla real. Por eso
- * `evaluarHabitat` la degrada en vez de vetar, y por eso la interfaz marca
- * el factor como estimado.
+ * El repintado es quirúrgico por el mismo motivo que el del suelo: si se
+ * llamara a aplicarDatos(), las tarjetas se reconstruían con innerHTML y la
+ * página volvía arriba, y el MFE contesta en cuanto contesta.
+ *
+ * Lo importante para el usuario es que este repintado CORRIGE lo que se había
+ * pintado antes con la heurística: es normal que un boletus aparezca primero
+ * con factor de hábitat del 100 % y baje a 5 % un segundo después, porque se
+ * ha descubierto que ese punto es una plaza.
+ */
+async function aplicarHabitat(testigo) {
+  const lat = selectedLat;
+  const lng = selectedLng;
+  let h;
+  try {
+    h = await consultarHabitat(lat, lng);
+  } catch (e) {
+    console.warn('Hábitat no disponible:', e);
+    return;
+  }
+  if (testigo !== peticionActual) return;   // el usuario ya se movió
+
+  currentHabitat = h;
+
+  // Si el MFE respondió y no encontró árbol, la heurística por coordenadas no
+  // puede aportar los bosques que soltaba: ahora sabemos que aquí no hay.
+  // Sólo se conservan sus hábitats abiertos, y sólo si el MFE no dijo nada.
+  const veg = h.vegetacion.length
+    ? h.vegetacion
+    : h.fuente.startsWith('MFE') && !h.urbano
+      ? []
+      : inferirVegetacion(lat, lng);
+
+  if (!currentCtx) return;
+  currentCtx.terreno.vegetacion = veg;
+  currentCtx.terreno.urbano = !!h.urbano;
+  currentRanking = ranking(currentCtx);
+
+  refrescarFactoresHabitat();
+  renderVegetacion();
+  renderAnalisis();
+}
+
+/**
+ * Dónde crece lo que hay en el punto y de dónde sale el dato.
+ *
+ * Se trata de forma distinta según la fuente porque no es lo mismo: el MFE es
+ * cartografía forestal oficial y su cobertura es un dato; OpenStreetMap es
+ * colaboración voluntaria y su densidad de edificios es una señal.
+ */
+function renderVegetacion() {
+  const cont = document.getElementById('habitatLine');
+  if (!cont) return;
+  const h = currentHabitat;
+  if (!h) {
+    // También se limpia el tooltip: si no, al moverse a un punto que aún no ha
+    // respondido se lee el dato del punto anterior, que es peor que no leer.
+    cont.textContent = 'consultando…';
+    cont.title = '';
+    return;
+  }
+
+  if (h.arboles && h.arboles.length) {
+    const principal = h.arboles[0];
+    const resto = h.arboles.length - 1;
+
+    // En la tarjeta va el nombre corto, no el del MFE.
+    //
+    // Los nombres oficiales de formación son largos de verdad —"Tomillares y
+    // agrupaciones fisonómicamente afines (Pinus pinaster)" son tres líneas en
+    // este panel— y además son nomenclatura administrativa: nadie busca esa
+    // frase. Lo útil es "pinar" y, entre paréntesis, el árbol. La formación
+    // oficial completa queda en el tooltip, que es donde se busca el detalle.
+    cont.textContent = cap(principal.habitat)
+      + (principal.especie ? ` (${principal.especie})` : '')
+      + (resto > 0 ? ` +${resto}` : '');
+
+    cont.title = 'MFE · Mapa Forestal de España\n\n'
+      + h.arboles.map(a =>
+        `• ${cap(a.habitat)}${a.especie ? ': ' + a.especie : ''}`
+        + (a.formacion ? `\n  ${a.formacion}` : '')).join('\n');
+    return;
+  }
+
+  if (h.urbano) {
+    cont.textContent = 'entorno urbano';
+    cont.title = `Núcleo urbano según OpenStreetMap`
+      + (h.detalles?.edificios ? ` (${h.detalles.edificios} edificios en 150 m)` : '');
+    return;
+  }
+
+  cont.textContent = h.vegetacion.length ? h.vegetacion.join(', ') : 'sin datos';
+  cont.title = h.fuente;
+}
+
+/**
+ * Heurística de vegetación por coordenadas. AHORA ES SÓLO UN RESPALDO.
+ *
+ * Antes esto era la única fuente y era la principal fuente de error del
+ * modelo: `evaluarHabitat` la degradaba en vez de vetarla porque sabía que era
+ * una foto hecha a base de coordenadas. Ahora habitat.js pregunta al MFE, y esta
+ * función sólo entra si el MFE y Overpass han fallado los dos.
+ *
+ * Se conserva, y no se borra, por una razón práctica: si los servicios se
+ * caen, es mejor mostrar la estimación con su etiqueta de estimada que dejar
+ * la aplicación sin predecir nada.
  */
 function inferirVegetacion(lat, lng) {
   if (lat < 36.0) return ['encinar', 'dehesa', 'matorral'];
@@ -780,7 +909,7 @@ function renderAnalisis() {
           <h4>Contexto</h4>
           <div class="analysis-item"><span class="analysis-label">Altitud</span><span class="analysis-value">${m.altitude} m</span></div>
           <div class="analysis-item"><span class="analysis-label">Humedad media relativa en 7 días</span><span class="analysis-value">${w.hr7 == null ? '—' : Math.round(w.hr7) + '%'}</span></div>
-          <div class="analysis-item"><span class="analysis-label">Vegetación (est.)</span><span class="analysis-value">${escaparHtml(m.terreno.vegetacion.map(cap).join(', '))}</span></div>
+          <div class="analysis-item"><span class="analysis-label">Vegetación (${currentHabitat?.fuente || 'estimada'})</span><span class="analysis-value">${escaparHtml(m.terreno.vegetacion.map(cap).join(', ') || 'sin datos')}</span></div>
           <div class="analysis-item"><span class="analysis-label">Textura suelo</span><span class="analysis-value">${m.suelo.ok ? m.suelo.textura : 'no disponible'}</span></div>
         </div>
       </div>

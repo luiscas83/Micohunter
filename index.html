@@ -85,6 +85,12 @@
           <div class="terrain-item"><span class="ti">📅</span><span class="tl">Día del año</span><span class="tv" id="dayOfYearValue">—</span></div>
           <div class="terrain-item"><span class="ti">🪨</span><span class="tl">Textura</span><span class="tv" id="soilTypeValue">—</span></div>
           <div class="terrain-item"><span class="ti">⚗️</span><span class="tl">pH</span><span class="tv" id="phValue">—</span></div>
+          <!-- El hábitat va el primero de los tres últimos porque es el que
+               decide el factor que más pesa después del agua: sin saber qué
+               crece en el punto, el resto de los números no significa nada.
+               El texto corto es la formación; el detail del elemento lleva
+               la lista completa de capas del MFE que han coincidido. -->
+          <div class="terrain-item"><span class="ti">🌲</span><span class="tl">Hábitat en el punto</span><span class="tv" id="habitatLine">consultando…</span></div>
         </div>
         <div class="soil-summary" id="soilSummary"></div>
 
@@ -1365,6 +1371,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="algoritmo.js"></script>
+<script src="habitat.js"></script>
 <script src="app.js"></script>
 <script>
   // El service worker es lo que evita que el móvil combine el HTML nuevo con

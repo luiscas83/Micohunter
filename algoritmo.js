@@ -870,6 +870,24 @@ function lluviaEfectiva(lluvia30, sp) {
  */
 function evaluarHabitat(sp, terreno) {
   const veg = terreno.vegetacion || [];
+
+  // Núcleo urbano: factor 0, sin excepciones ni degradación.
+  //
+  // Es el único caso donde el hábitat anula en vez de penalizar, y a
+  // propósito. Una seta micorrícica necesita un árbol con el quevivir; en
+  // una calle no lo hay, y no es que las condiciones sean "menos buenas", es
+  // que la seta no tiene dónde crecer. Degradar aquí —que es lo que hace el
+  // resto de la función— dejaría a un boletus con 0.25 en la Plaza Mayor,
+  // que es justo el falso positivo que motivó consultar el MFE.
+  //
+  // La detección viene de OpenStreetMap (densidad de edificios) en habitat.js,
+  // y sólo se marca `urbano` si la fuente cartografió algo: un punto sin
+  // datos en OSM no se da por urbano, porque en el campo OSM no tiene nada
+  // y en un pueblo lo tiene todo.
+  if (terreno.urbano) {
+    return { factor: 0, etiqueta: 'entorno urbano', confuso: false };
+  }
+
   if (!veg.length) return { factor: 0.7, etiqueta: 'sin datos de cobertura', confuso: true };
 
   // Los hábitats están ordenados por frecuencia: los primeros son los

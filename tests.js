@@ -693,6 +693,130 @@ prueba('el factor de helada aparece en el índice final', () => {
     'la helada no baja el índice: ' + conHelada + ' vs ' + sinHelada);
 });
 
+/* ------------------------------------------------------------------ */
+/* 9. Hábitat real (MFE + urbano)                                       */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Estas pruebas comprueban lo que NO depende de la red: el vocabulario del MFE
+ * traducido al del motor, y la regla de que el núcleo urbano anula.
+ *
+ * Las consultas al GeoServer del IEPNB y a Overpass se probaron aparte y
+ * funcionan, pero meterlas aquí haría que la suite dependiera de un servidor
+ * de la administración. Si algún día sube un cambio en habitat.js que rompa la
+ * forma de la consulta, eso se ve con `_probe17.py`, no con los tests.
+ */
+
+grupo('9. Hábitat: núcleo urbano');
+
+prueba('el núcleo urbano pone el factor de hábitat a 0', () => {
+  const r = A.evaluarHabitat(esp('boletus'), { vegetacion: ['urbano'], urbano: true });
+  assert.strictEqual(r.factor, 0);
+});
+
+prueba('el urbano anula también a las especies no confinadas', () => {
+  // El error que se quería evitar: degradar en vez de anular, que dejaba a un
+  // boletus con 0.25 en la Plaza Mayor.
+  for (const k of ['boletus', 'niscalos', 'senderuela', 'parasol', 'rebozuelo']) {
+    const r = A.evaluarHabitat(esp(k), { vegetacion: ['urbano'], urbano: true });
+    assert.strictEqual(r.factor, 0, k + ' no llega a 0 en urbano');
+  }
+});
+
+prueba('el urbano pone el índice entero a cero, sin NaN', () => {
+  const c = ctx({ vegetacion: ['pinar'], tSuelo: 18 });
+  const urbano = A.indice(esp('boletus'), {
+    ...c,
+    terreno: { ...c.terreno, vegetacion: ['urbano'], urbano: true },
+  });
+  assert.strictEqual(urbano.I, 0);
+  assert.ok(Number.isFinite(urbano.I), 'NaN en urbano');
+  assert.strictEqual(urbano.detalle.habEtiqueta, 'entorno urbano');
+});
+
+prueba('mismo punto, misma meteorología: urbano vs pinar cambia el índice', () => {
+  const c = ctx({ tSuelo: 18 });
+  const enPinar = A.indice(esp('boletus'), {
+    ...c, terreno: { ...c.terreno, vegetacion: ['pinar'], urbano: false },
+  }).I;
+  const enPlaza = A.indice(esp('boletus'), {
+    ...c, terreno: { ...c.terreno, vegetacion: ['urbano'], urbano: true },
+  }).I;
+  assert.ok(enPinar > enPlaza, enPinar + ' no es mayor que ' + enPlaza);
+});
+
+prueba('sin marca de urbano, el comportamiento antiguo se conserva', () => {
+  // Regresión: los tests anteriores pasaban terreno sin `urbano`, y eso no
+  // puede cambiar el resultado.
+  const r = A.evaluarHabitat(esp('boletus'), { vegetacion: ['pinar'] });
+  assert.ok(r.factor > 0.5, 'el pinar sin la marca urbano dejó de valer 1: ' + r.factor);
+});
+
+prueba('vegetación vacía sigue degradando, no anulando', () => {
+  const r = A.evaluarHabitat(esp('boletus'), { vegetacion: [] });
+  assert.ok(r.factor > 0, 'la falta de datos no puede anular');
+  assert.ok(r.confuso, 'debe declararse confuso');
+});
+
+grupo('10. Hábitat: vocabulario del MFE');
+
+const H = require('./habitat.js');
+
+prueba('el MFE no consulta capas inventadas', () => {
+  // Regresión contra el desastre de la sesión anterior: pedir una capa que
+  // no existe devuelve HTTP 400 y, con Promise.all, tumba la consulta entera.
+  for (const c of H.MFE_CAPAS) {
+    assert.ok(c.capa && /^[a-z0-9_]+$/.test(c.capa),
+      'nombre de capa suspectso: ' + c.capa);
+    assert.ok(c.tag && /^[a-z_]+$/.test(c.tag), 'hábitat suspectso: ' + c.tag);
+  }
+});
+
+prueba('todas las capas del MFE dan hábitats que el motor conoce', () => {
+  const conocidos = new Set();
+  for (const sp of A.SPECIES) for (const h of sp.habitat) conocidos.add(h);
+  // Hábitats que el motor usa para clasificar aunque no estén en la lista de
+  // ninguna especie concreta.
+  ['olmedal', 'ribera', 'urbano', 'perturbado'].forEach(x => conocidos.add(x));
+
+  const desconocidos = [...new Set(H.MFE_CAPAS.map(c => c.tag))]
+    .filter(t => !conocidos.has(t));
+  assert.strictEqual(desconocidos.length, 0,
+    'el motor no reconocería: ' + desconocidos.join(', '));
+});
+
+prueba('no se repite la misma capa en la lista blanca', () => {
+  const capas = H.MFE_CAPAS.map(c => c.capa);
+  assert.strictEqual(new Set(capas).size, capas.length, 'capas duplicadas');
+});
+
+prueba('la capa pinaster existe y da pinar', () => {
+  // La comprobación más importante: es la capa que el resto del proyecto da
+  // por buena (INICIO está en un pinar de pinaster) y la que devuelve
+  // Pinus pinaster en el GeoServer.
+  const p = H.MFE_CAPAS.find(c => c.capa === 'pinar_pino_pinaster_reg_mediterranea');
+  assert.ok(p, 'no está la capa de pinaster mediterráneo');
+  assert.strictEqual(p.tag, 'pinar');
+});
+
+prueba('HABITATS_ARBOLADOS cubre todos los hábitats arbolados', () => {
+  // Sirve para lo contrario: cuando el MFE dice que no hay árbol, no se puede
+  // devolver un bosque de la heurística.
+  for (const c of H.MFE_CAPAS) {
+    const arbolado = ['pinar', 'hayedo', 'robledal', 'castaneral', 'fresnedal',
+      'encinar', 'dehesa', 'bosque_mixto', 'ribera', 'perturbado'].includes(c.tag);
+    if (arbolado) {
+      assert.ok(H.HABITATS_ARBOLADOS.has(c.tag),
+        c.tag + ' da árbol pero no está en HABITATS_ARBOLADOS');
+    }
+  }
+});
+
+prueba('la clave de caché redondea a ~110 m y no a la precisión del click', () => {
+  assert.strictEqual(H.habitatKey(40.41681, -3.70379), H.habitatKey(40.41682, -3.70378));
+  assert.notStrictEqual(H.habitatKey(40.4168, -3.7038), H.habitatKey(41.9, -2.5));
+});
+
 console.log('\n' + '-'.repeat(58));
 console.log(pruebas + ' pruebas, ' + fallos + ' fallos');
 console.log('-'.repeat(58));

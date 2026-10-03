@@ -1,0 +1,3298 @@
+=== #1  09-30 17:06 ===
+necesito una web  para saber cuando salen setas de temporada, necesita analisis de lluvias y condiciones del tiempo para una optima eclosion de setas, para boletus y niscalos, tienes que saber cual es el punto exacto de eclosión de las setas indicadas
+
+=== #2  09-30 18:06 ===
+quiero que mejores la web la ubicacion tiene que ser para todo el territorio español, quiero poder elegir la zona manualmente en un mapa y automaticamente que se reconozca el tipo de suelo y la altitud
+
+=== #3  09-30 18:17 ===
+esta bien el mapa pero me gustaria poder guardar las ubicaciones favoritas y poder comprar, tambien quiero el dashboard la probabilidad de eclosion sobre la zona marcada en el mapa
+
+=== #4  09-30 18:30 ===
+hay un problema, no se puede seleccionar las zonas recuadradas por la leyenda del mapa, fuera de la leyenda si deja. luego otro problema es que no almacena favoritos
+
+=== #5  09-30 18:35 ===
+los poligonos de zonas micologicas necesito un boton que se pueedan descativar y activar mediante un boton, cambia el nombre de web a MicoHunter
+
+=== #6  09-30 18:42 ===
+necesito que metas mas tipos de setas, las mas comunes que sean comestibles en españa, luego quiero poder seleccionar las setas que yo quiero mostrar y necesito un buscador de ubicacion en el mapa del dashboard y de la pestaña mapa
+
+=== #7  09-30 18:57 ===
+se ha roto todo, al seleccionar las setas no aparecen en el dashboard y se queda con un mensaje cargando datos
+
+=== #8  09-30 19:02 ===
+no funciona se queda asi como la imagen
+
+=== #9  09-30 19:10 ===
+guardar como favorito no funciona
+
+=== #10  09-30 19:13 ===
+quiero que la pestaña mapa se unifique al dashboard unificando criterior, la funcion de guardar favorito no funciona todavia
+
+=== #11  09-30 19:20 ===
+quiero un mejor reparto de las tarjetas del dashboard, el mapa un poco mas grande,al lado del mapa debe aparecer la tarjeta informacion del terrenoy debajo las tarjetas de las setas
+
+=== #12  09-30 19:31 ===
+el boton favorito no funciona cuando pulso gardar favorito debe aparecer en la pestaña favoritos, cuando pulse el boton me pedira que inserte nombre al favorito, tambien cambia de sitio la informcaion debajo del mapa donde sale el nombre del punto elegido en el mapa, la temperatura, el tipo de terreno y la temperatura a la zona de informacion de terreno el boton guardar favortio que aparezca tambien en informacion de terreno y lo qutas de la posicion donde esta debajo del mapa. Este espacio extra hace que el mapa se vea mas grande
+
+=== #13  09-30 19:35 ===
+la temperatura que salga en toda la web con dos decimales maximo, la tarjeta estado actual integrala con la tarjeta información del terreno y pon iconitos chulos en la tarjeta informacion del terreno
+
+=== #14  09-30 19:39 ===
+no funciona lo de guardar favorito, necesito que lo arregles. Necesito que pongas en las tarjetas de las setas en vez de puntos de colores identificando setas que pongas iconos con la seta real en concreto. de la taedeta resumende temporada quita la innformacion de setas seleccionadas y la tarjeta de mejor seta pon mejor seta y el nombre de la seta
+
+=== #15  09-30 19:53 ===
+te has quedado en bucle pensando
+
+=== #16  09-30 20:51 ===
+NO inventar un "punto exacto" de eclosión si la ciencia disponible no permite determinarlo.Utiliza fuentes reales y fiables.
+
+Prioridad para meteorología en España:
+
+AEMET:
+https://www.aemet.es/
+
+Investigar y utilizar la API oficial de AEMET cuando sea posible.
+
+También estudiar:
+- Open-Meteo
+- Copernicus Climate Data Store
+- Copernicus ERA5 / ERA5-Land
+- datos satelitales Copernicus
+- otros servicios públicos europeos fiables
+
+NO depender exclusivamente de una única API comercial.
+
+=== #17  09-30 20:51 ===
+IMPORTANTE:
+No quiero una demo visual ni datos inventados. Quiero una aplicación funcional, preparada para utilizar APIs y fuentes de datos meteorológicos, geográficas, climáticas y de suelo reales.
+
+=== #18  09-30 21:02 ===
+quiero que añadas en las tarjetas de las setas  del dashboard la informacion completa de la seta que aparece en la pestaña setas en el apartado informacion de setas
+
+=== #19  09-30 21:05 ===
+la especificacion de las setas debe ser real cogido de fuentes fiables como libros de setas como por ejemplo Setas de España y Europa
+
+=== #20  09-30 21:13 ===
+no quiero la funcion de comparar
+
+=== #21  09-30 21:14 ===
+y que me quites del mapa las zonas y quita el botn zonas on off
+
+=== #22  09-30 21:16 ===
+cuando abro la web en navegador sale ese error en el mapa
+
+=== #23  09-30 21:18 ===
+dejalo como estaba antes
+
+=== #24  09-30 21:27 ===
+se a perdido el selector de setas en la pestaña setas
+
+=== #25  09-30 21:29 ===
+la web se ve un poco mal en dispositivos moviles
+
+=== #26  09-30 21:32 ===
+en las tarjetas del dashboard de las setas pon el nombre en una linea y debajo pon el nombre cientifico
+
+=== #27  09-30 21:34 ===
+no esta bien, ponlo en dos lineas
+
+=== #28  09-30 21:37 ===
+en las tarjetas de las setas del dashboard necesito que salga una prediccion de cuantos dias queda para una eclosion basandote en las condiciones metereologicas
+
+=== #29  09-30 21:41 ===
+en el nombre cientifico no quiero que salga por ejemplo senderuela marasmius oreades (bolton) Fr querio quitar el bolton fr que no se que es, asi en todas las setas
+
+=== #30  09-30 21:43 ===
+en informacion de terreno quiero que aparezca el nombre del lugar seleccionado en el mapa
+
+=== #31  09-30 21:50 ===
+pero quiero que tambien salgan las coordenadas en otro apartado llamado coordenadas
+
+=== #32  09-30 21:51 ===
+la lluvia debe ser a 10 dias y no a 72 h
+
+=== #33  09-30 21:53 ===
+tambien debe aparecer el apartado lluvia 72h
+
+=== #34  09-30 21:58 ===
+Lluvia 72h: undefinedmm, dejalo como antes que solo aparezca la lluvia 72h
+
+=== #35  09-30 22:01 ===
+ahora aparece dos apartados de lluvia 72h solo quiero un apartado con la informacion, ademas no funcina porque sale undefinedmm
+
+=== #36  09-30 22:05 ===
+¿en que te basas para calcular si es desfavorable o favorable la eclosion?
+
+=== #37  09-30 22:08 ===
+en algunas setas sigue apareciendo  abreviaturas de autores
+
+=== #38  09-30 22:18 ===
+necesito que busques y añadas los periodos optimos de eclosion en dias despues de las lluvis
+
+=== #39  10-01 15:04 ===
+continua por donde lo dejaste
+
+=== #40  10-01 15:07 ===
+veo que en el dashboard si hay muchas setas seleccionadas salen 4 tarjetas y abajo otras 4 y asi sucesivamente, quero que aparezcan mejor 2
+
+=== #41  10-01 15:23 ===
+prefiero 3 columnas
+
+=== #42  10-01 15:51 ===
+quiero que congeles esta version y me hagas otra variante con estos datos Sí. Te dejo una **especificación completa para pegar directamente en OpenCode**. He planteado los tiempos de aparición como **ventanas probabilísticas**, no como una incubación biológica exacta. Esto es importante porque para varias especies no existe evidencia científica suficiente para afirmar algo como “exactamente 8 días después de 20 mm de lluvia”.
+
+Los datos de *Boletus edulis* y *Lactarius deliciosus* tienen bastante respaldo en estudios realizados en España, incluyendo series largas de producción y variables de humedad del suelo, precipitación y temperatura. ([DOI][1]) Para otras especies, algunas cifras deben tratarse explícitamente como **umbrales heurísticos iniciales que el algoritmo deberá poder recalibrar**. Por ejemplo, *Agaricus campestris* está documentado en España como especie que fructifica tras chaparrones y a los pocos días, mientras que *Marasmius oreades* puede responder muy rápidamente a lluvias sobre suelo previamente cálido. ([Ministerio de Transición Ecológica][2])
+
+# ESPECIFICACIÓN ECOLÓGICA PARA EL MOTOR DE PREDICCIÓN DE SETAS
+
+## Objetivo
+
+Implementar en la aplicación un perfil ecológico individual para cada especie de seta.
+
+El sistema debe estimar diariamente una:
+
+**PROBABILIDAD DE FRUCTIFICACIÓN: 0–100**
+
+La puntuación debe representar exclusivamente la adecuación de las condiciones meteorológicas y ecológicas para la aparición de cuerpos fructíferos.
+
+NO interpretar la puntuación como garantía de que habrá setas.
+
+El modelo debe considerar:
+
+* precipitación reciente
+* precipitación acumulada
+* distribución de la lluvia
+* temperatura
+* temperatura del suelo si está disponible
+* humedad relativa
+* humedad del suelo si está disponible
+* días secos consecutivos
+* tendencia de temperatura
+* época del año
+* altitud
+* tipo de vegetación
+* tipo de suelo
+* hábitat
+* ventana temporal desde las últimas lluvias
+* condiciones meteorológicas de las semanas anteriores
+
+---
+
+# IMPORTANTE: CONCEPTO DE "INCUBACIÓN"
+
+No utilizar internamente el término "incubación" como si fuese un tiempo biológico exacto.
+
+Utilizar:
+
+`FRUITING_LAG_WINDOW`
+
+Es decir:
+
+**tiempo estimado entre un episodio meteorológico favorable y el aumento de probabilidad de aparición de cuerpos fructíferos.**
+
+La lluvia no crea el micelio.
+
+El micelio ya está presente en el suelo o sustrato cuando las condiciones ecológicas son adecuadas.
+
+Por tanto:
+
+LLUVIA
+→ aumento de humedad disponible
+→ condiciones térmicas adecuadas
+→ activación/respuesta del micelio
+→ formación de primordios
+→ desarrollo del cuerpo fructífero
+→ aparición observable
+
+El modelo debe mostrar ventanas y probabilidades, no fechas exactas.
+
+---
+
+# ESCALA GENERAL
+
+Crear una puntuación:
+
+`FRUITING_SCORE = 0–100`
+
+Interpretación:
+
+0–19:
+Condiciones muy desfavorables
+
+20–39:
+Condiciones poco favorables
+
+40–59:
+Condiciones posibles
+
+60–74:
+Condiciones favorables
+
+75–89:
+Condiciones muy favorables
+
+90–100:
+Condiciones excepcionalmente favorables
+
+NO mostrar "90 = habrá setas".
+
+Mostrar:
+
+"Condiciones meteorológicas muy favorables para la fructificación."
+
+---
+
+# VARIABLES METEOROLÓGICAS
+
+El motor debe calcular:
+
+## Precipitación
+
+* rain_24h
+* rain_72h
+* rain_7d
+* rain_14d
+* rain_21d
+* rain_30d
+* rain_45d
+* rain_60d
+
+También:
+
+* días desde última lluvia >= 1 mm
+* días desde última lluvia >= 5 mm
+* días desde última lluvia >= 10 mm
+* días desde última lluvia >= 20 mm
+* días desde última lluvia >= 30 mm
+
+No considerar únicamente la última lluvia.
+
+La precipitación acumulada de varias semanas puede ser más importante que un único episodio.
+
+---
+
+# TEMPERATURA
+
+Calcular:
+
+* temperatura media 24 h
+* mínima 24 h
+* máxima 24 h
+* media 3 días
+* media 7 días
+* media 14 días
+* media 21 días
+* media 30 días
+
+Además:
+
+* tendencia térmica
+* diferencia entre temperatura actual y media de los últimos 7 días
+* número de días con Tmax > 30 °C
+* número de días con Tmin < 0 °C
+* número de días con Tmin < 5 °C
+
+---
+
+# HUMEDAD
+
+Utilizar:
+
+* humedad relativa media
+* humedad relativa mínima
+* humedad nocturna
+* humedad del suelo si la API proporciona este dato
+
+Si existe humedad del suelo:
+
+DAR MÁS PESO A HUMEDAD DEL SUELO QUE A HUMEDAD RELATIVA.
+
+La humedad ambiental no significa necesariamente que el suelo tenga suficiente agua.
+
+---
+
+# SEQUÍA
+
+Calcular:
+
+`DRY_DAYS`
+
+Número de días consecutivos con precipitación inferior a 1 mm.
+
+Crear penalización progresiva:
+
+0–3 días:
+sin penalización
+
+4–7:
+penalización ligera
+
+8–14:
+penalización moderada
+
+15–21:
+penalización alta
+
+> 21:
+> penalización muy alta
+
+La penalización debe modificarse según la especie.
+
+---
+
+# PERFIL 01 — BOLETUS EDULIS
+
+Nombre:
+Boletus edulis
+
+Nombre común:
+Boletus / hongo / calabaza
+
+Tipo:
+Ectomicorrícico
+
+Hábitat:
+
+* pinares
+* hayedos
+* robledales
+* castañares
+* bosques mixtos
+* determinadas formaciones de montaña
+
+Árboles asociados:
+
+* Pinus
+* Fagus
+* Quercus
+* Castanea
+* otras especies compatibles
+
+Suelo:
+
+* fresco
+* húmedo
+* bien drenado
+* variable según bosque
+* frecuente asociación con suelos ácidos o descalcificados
+
+Temporada principal:
+
+Septiembre–noviembre
+
+Ventana secundaria:
+
+finales de verano y principios de invierno dependiendo de altitud y clima.
+
+### Temperatura
+
+Zona favorable:
+
+10–18 °C
+
+Zona especialmente favorable:
+
+11–15 °C
+
+Penalizar:
+
+> 22–24 °C mantenidos
+
+Penalizar fuertemente:
+
+> 28 °C
+
+También penalizar heladas fuertes durante la fructificación.
+
+### Precipitación
+
+No utilizar una cantidad mínima absoluta.
+
+Dar especial importancia a:
+
+* lluvia de finales de verano
+* lluvia de septiembre
+* lluvia de octubre
+* humedad del suelo
+* acumulación de lluvia durante varias semanas
+
+Una lluvia abundante después de una sequía puede no producir una respuesta inmediata.
+
+### Lag
+
+Ventana principal:
+
+7–15 días
+
+Ventana extendida:
+
+5–25 días
+
+Máxima sensibilidad inicial:
+
+aproximadamente 7–15 días.
+
+Utilizar además una ventana de precipitación acumulada de varias semanas.
+
+Estudios recientes han encontrado relación entre la fructificación y precipitación acumulada durante una ventana de aproximadamente 26 días, además de una relación con la temperatura media de las semanas anteriores. ([bioRxiv][3])
+
+En pinares de Soria, la reserva de agua del suelo fue una de las variables más explicativas del inicio de fructificación. ([Archivo Digital UPM][4])
+
+### Peso recomendado
+
+rain_7d: 15%
+
+rain_21d: 20%
+
+rain_30d: 10%
+
+soil_moisture: 20%
+
+temperature: 20%
+
+season: 5%
+
+habitat: 10%
+
+---
+
+# PERFIL 02 — LACTARIUS DELICIOSUS
+
+Nombre:
+Lactarius deliciosus
+
+Nombre común:
+Níscalo / rovellón
+
+Tipo:
+Ectomicorrícico
+
+Hábitat:
+
+Principalmente pinares.
+
+Árbol asociado:
+
+Pinus.
+
+Temporada:
+
+Septiembre–diciembre
+
+Máximo habitual:
+
+octubre–noviembre.
+
+### Temperatura
+
+Favorable:
+
+8–18 °C
+
+Óptimo aproximado:
+
+10–15 °C
+
+Favorecer descenso térmico otoñal.
+
+Penalizar:
+
+> 22–25 °C mantenidos
+
+Penalizar:
+
+heladas fuertes.
+
+### Lluvia
+
+Muy importante.
+
+Utilizar:
+
+rain_7d
+rain_14d
+rain_30d
+
+Dar importancia especial a las precipitaciones de finales de verano y comienzo del otoño.
+
+En estudios de pinares del centro de España, la precipitación estacional fue un factor meteorológico importante para la emergencia y producción de *L. deliciosus*. ([ScienceDirect][5])
+
+### Humedad
+
+Muy importante.
+
+Aumentar puntuación cuando:
+
+* humedad relativa alta
+* suelo húmedo
+* lluvias repetidas
+* ausencia de sequía
+
+### Lag
+
+Principal:
+
+7–15 días
+
+Ventana ampliada:
+
+5–25 días.
+
+No asumir que cada lluvia genera una nueva oleada.
+
+### Peso
+
+rain_7d: 15%
+
+rain_21d: 20%
+
+rain_30d: 15%
+
+soil_moisture: 20%
+
+temperature: 15%
+
+season: 5%
+
+habitat/pine: 10%
+
+---
+
+# PERFIL 03 — CANTHARELLUS CIBARIUS
+
+Nombre común:
+Rebozuelo / chantarela
+
+Tipo:
+Ectomicorrícico
+
+Hábitat:
+
+* hayedos
+* robledales
+* castañares
+* bosques mixtos
+* otros bosques adecuados
+
+Temporada habitual:
+
+junio–octubre
+
+Muy dependiente de:
+
+* humedad
+* lluvias estivales
+* temperaturas suaves
+* continuidad de humedad del suelo.
+
+([sporas.io][6])
+
+### Temperatura
+
+Favorable:
+
+12–22 °C
+
+Óptimo:
+
+14–19 °C
+
+Penalizar:
+
+> 27–28 °C
+
+### Lluvia
+
+Muy importante.
+
+No buscar únicamente grandes tormentas.
+
+Favorecer:
+
+lluvia regular + humedad persistente.
+
+### Lag
+
+Principal:
+
+7–14 días
+
+Ventana:
+
+5–21 días
+
+### Perfil
+
+rain_7d: 20%
+
+rain_21d: 15%
+
+soil_moisture: 25%
+
+temperature: 20%
+
+season: 10%
+
+habitat: 10%
+
+---
+
+# PERFIL 04 — MARASMIUS OREADES
+
+Nombre común:
+Senderuela / senderina
+
+Tipo:
+Saprófita
+
+Hábitat:
+
+* praderas
+* pastizales
+* céspedes
+* claros
+* dehesas
+* zonas herbosas
+
+Característica importante:
+
+Puede formar "corros de brujas".
+
+Es una especie capaz de sobrevivir a desecación y rehidratarse.
+
+Por ello el algoritmo NO debe interpretar siempre una aparición posterior a lluvia como una nueva fructificación.
+
+Puede existir:
+
+`REHYDRATION_EVENT`
+
+además de:
+
+`NEW_FRUITING_EVENT`
+
+([Mushroom][7])
+
+### Temperatura
+
+Favorable:
+
+12–26 °C
+
+### Lluvia
+
+Muy sensible a lluvia.
+
+Umbral heurístico:
+
+~10 mm acumulados en 7 días.
+
+### Lag
+
+Muy rápido:
+
+1–5 días
+
+En condiciones ideales:
+
+1–3 días
+
+### Perfil
+
+rain_7d: 30%
+
+rain_72h: 20%
+
+temperature: 20%
+
+soil_moisture: 15%
+
+humidity: 10%
+
+habitat: 5%
+
+---
+
+# PERFIL 05 — MACROLEPIOTA PROCERA
+
+Nombre común:
+Parasol
+
+Tipo:
+Saprófita
+
+Hábitat:
+
+* claros forestales
+* bordes de bosque
+* pastizales
+* dehesas
+* zonas herbosas
+* matorral aclarado
+
+Temporada:
+
+agosto–noviembre
+
+Máximo habitual:
+
+septiembre–octubre.
+
+([sporas.io][8])
+
+### Temperatura
+
+Favorable:
+
+12–23 °C
+
+Óptimo:
+
+15–20 °C
+
+Penalizar:
+
+> 28 °C
+
+### Lluvia
+
+Importante:
+
+lluvia acumulada + temperatura suave.
+
+No utilizar una única lluvia como disparador.
+
+### Lag
+
+Principal:
+
+7–14 días
+
+Ventana:
+
+5–20 días
+
+### Perfil
+
+rain_7d: 20%
+
+rain_21d: 20%
+
+soil_moisture: 15%
+
+temperature: 20%
+
+season: 10%
+
+habitat: 15%
+
+---
+
+# PERFIL 06 — AGARICUS CAMPESTRIS
+
+Nombre común:
+Champiñón de campo
+
+Tipo:
+Saprófita
+
+Hábitat:
+
+* praderas
+* pastizales
+* majadales
+* zonas frecuentadas por ganado
+* terrenos ricos en nitrógeno
+
+Especialmente asociado a:
+
+* ovejas
+* cabras
+* vacas
+
+Especie nitrófila.
+
+En España está documentada su fructificación después de chaparrones y pocos días después de la lluvia. ([Ministerio de Transición Ecológica][2])
+
+### Temperatura
+
+Favorable:
+
+10–22 °C
+
+Óptimo:
+
+13–18 °C
+
+### Lluvia
+
+Umbral heurístico:
+
+15 mm en 7 días.
+
+### Lag
+
+2–6 días
+
+### Perfil
+
+rain_72h: 25%
+
+rain_7d: 30%
+
+temperature: 20%
+
+humidity: 10%
+
+habitat: 15%
+
+---
+
+# PERFIL 07 — PLEUROTUS OSTREATUS
+
+Nombre común:
+Seta de ostra
+
+Tipo:
+Saprófita
+
+Sustrato:
+
+* troncos
+* ramas
+* madera muerta
+* tocones
+* árboles debilitados
+
+IMPORTANTE:
+
+La lluvia no debe tratarse como el principal factor.
+
+El sustrato de madera debe existir.
+
+### Temperatura exterior
+
+Para poblaciones silvestres:
+
+favorecer temperaturas frescas.
+
+Rango orientativo:
+
+8–20 °C
+
+Óptimo aproximado:
+
+10–18 °C.
+
+### Humedad
+
+Muy importante.
+
+Favorecer:
+
+> 80% HR
+
+La humedad elevada favorece la formación y desarrollo de cuerpos fructíferos de *Pleurotus*. ([PubMed Central (PMC)][9])
+
+### Lag
+
+Después de una combinación favorable de humedad + temperatura:
+
+3–10 días
+
+Ventana:
+
+3–14 días
+
+### Perfil
+
+humidity: 30%
+
+temperature: 25%
+
+rain_7d: 15%
+
+rain_14d: 10%
+
+wood_substrate: 20%
+
+---
+
+# PERFIL 08 — TRICHOLOMA PORTENTOSUM
+
+Nombre común:
+Capuchina
+
+Tipo:
+Ectomicorrícico
+
+Hábitat:
+
+Principalmente pinares y bosques de coníferas.
+
+Temporada:
+
+final de otoño
+
+Principalmente:
+
+octubre–diciembre.
+
+Es una especie asociada a condiciones más frías de final de temporada. En Castilla y León se observa que el descenso de temperaturas favorece su fructificación en la fase final del otoño. ([PFCyL][10])
+
+### Temperatura
+
+Favorable:
+
+5–15 °C
+
+Óptimo:
+
+7–12 °C
+
+Favorecer:
+
+descenso térmico progresivo.
+
+### Lluvia
+
+Importante:
+
+rain_7d
+rain_14d
+soil_moisture
+
+### Lag
+
+7–15 días
+
+### Penalización
+
+Penalizar:
+
+> 20 °C mantenidos
+
+Penalizar:
+
+suelo seco.
+
+### Perfil
+
+temperature: 30%
+
+rain_14d: 20%
+
+soil_moisture: 20%
+
+rain_7d: 10%
+
+season: 10%
+
+habitat: 10%
+
+---
+
+# PERFIL 09 — RUSSULA VESCA
+
+Nombre común:
+Rúsula comestible
+
+Tipo:
+Ectomicorrícico
+
+Hábitat:
+
+* bosques caducifolios
+* coníferas
+* bosques mixtos
+
+Temporada:
+
+primavera–otoño.
+
+([Wikipedia][11])
+
+### Temperatura
+
+Favorable:
+
+12–23 °C
+
+### Lluvia
+
+Moderadamente importante.
+
+Favorecer:
+
+humedad estable.
+
+### Lag
+
+5–14 días
+
+### Perfil
+
+soil_moisture: 25%
+
+rain_7d: 20%
+
+rain_21d: 15%
+
+temperature: 25%
+
+season: 10%
+
+habitat: 5%
+
+---
+
+# PERFIL 10 — CRATERELLUS CORNUCOPIOIDES
+
+Nombre común:
+Trompeta de los muertos
+
+Tipo:
+Ectomicorrícico
+
+Hábitat:
+
+* hayedos
+* robledales
+* castañares
+* bosques caducifolios
+* bosques mixtos
+
+Temporada:
+
+final de verano–otoño
+
+Especialmente:
+
+septiembre–noviembre.
+
+### Temperatura
+
+Favorable:
+
+8–20 °C
+
+Óptimo:
+
+10–16 °C
+
+### Lluvia
+
+Muy importante.
+
+Favorecer:
+
+humedad persistente.
+
+Evitar considerar una tormenta aislada suficiente si el suelo estaba extremadamente seco.
+
+### Lag
+
+7–18 días
+
+### Perfil
+
+rain_7d: 20%
+
+rain_21d: 20%
+
+soil_moisture: 25%
+
+temperature: 20%
+
+season: 5%
+
+habitat: 10%
+
+---
+
+# PERFIL 11 — MORCHELLA ESCULENTA
+
+Nombre común:
+Colmenilla / morilla
+
+Tipo:
+Ecológicamente compleja; asociada a determinados bosques y ambientes perturbados dependiendo de población y contexto.
+
+Temporada:
+
+primavera.
+
+Principalmente:
+
+marzo–mayo en gran parte de España, dependiendo de altitud.
+
+### IMPORTANTE
+
+No utilizar el mismo modelo que para setas otoñales.
+
+El principal factor es la combinación:
+
+TEMPERATURA DEL SUELO
++
+LLUVIA
++
+CALENTAMIENTO PRIMAVERAL
+
+Los estudios de fructificación de *Morchella esculenta* muestran relación entre el inicio de fructificación y temperatura del aire/suelo y entre abundancia y episodios de lluvia superiores a aproximadamente 10 mm durante los 30 días anteriores. ([PubMed][12])
+
+### Temperatura
+
+Usar temperatura del suelo si está disponible.
+
+Rango aproximado:
+
+8–16 °C
+
+Especialmente importante:
+
+calentamiento progresivo del suelo.
+
+### Lluvia
+
+Ventana:
+
+30 días
+
+No utilizar únicamente rain_7d.
+
+### Lag
+
+Principal:
+
+5–15 días
+
+Pero puede variar ampliamente.
+
+### Perfil
+
+soil_temperature: 30%
+
+rain_30d: 25%
+
+temperature_trend: 20%
+
+soil_moisture: 15%
+
+season: 10%
+
+### Regla especial
+
+Si:
+
+spring == true
+
+AND
+
+soil_temperature dentro de rango
+
+AND
+
+rain_30d >= umbral
+
+THEN
+
+incrementar significativamente el potencial.
+
+---
+
+# PERFIL 12 — CALOCYBE GAMBOSA
+
+Nombre común:
+Perrechico / seta de San Jorge
+
+Tipo:
+Saprófita
+
+Hábitat:
+
+* praderas
+* claros
+* bordes de bosque
+* zonas herbosas
+* corros de brujas
+
+Temporada:
+
+primavera.
+
+Principalmente:
+
+abril–mayo.
+
+Puede extenderse hacia marzo–junio según altitud y clima.
+
+En estudios de fructificación de *C. gambosa* se ha observado la fase productiva principalmente entre marzo y junio, con temperaturas medias alrededor de 11–12 °C en el periodo estudiado. ([PubMed Central (PMC)][13])
+
+### Temperatura
+
+Favorable:
+
+7–16 °C
+
+Óptimo:
+
+9–13 °C
+
+Penalizar:
+
+> 20 °C
+
+### Lluvia
+
+Importante pero no exclusivamente inmediata.
+
+Utilizar:
+
+rain_7d
+rain_14d
+rain_21d
+
+### Lag
+
+5–14 días
+
+### Perfil
+
+temperature: 30%
+
+rain_14d: 20%
+
+rain_7d: 15%
+
+soil_moisture: 15%
+
+season: 10%
+
+habitat: 10%
+
+---
+
+# TABLA RESUMEN
+
+| Especie                    | Temporada       | Temperatura favorable | Lag principal | Lluvia           |
+| -------------------------- | --------------- | --------------------: | ------------: | ---------------- |
+| Boletus edulis             | Sep-Nov         |              10-18 °C |        7-15 d | Alta importancia |
+| Lactarius deliciosus       | Sep-Dic         |               8-18 °C |        7-15 d | Muy alta         |
+| Cantharellus cibarius      | Jun-Oct         |              12-22 °C |        7-14 d | Alta             |
+| Marasmius oreades          | Primavera-Otoño |              12-26 °C |         1-5 d | Muy alta         |
+| Macrolepiota procera       | Ago-Nov         |              12-23 °C |        7-14 d | Alta             |
+| Agaricus campestris        | Primavera-Otoño |              10-22 °C |         2-6 d | Muy alta         |
+| Pleurotus ostreatus        | Otoño-Invierno  |               8-20 °C |        3-10 d | Media            |
+| Tricholoma portentosum     | Oct-Dic         |               5-15 °C |        7-15 d | Alta             |
+| Russula vesca              | Primavera-Otoño |              12-23 °C |        5-14 d | Media-Alta       |
+| Craterellus cornucopioides | Sep-Nov         |               8-20 °C |        7-18 d | Muy alta         |
+| Morchella esculenta        | Mar-May         |         8-16 °C suelo |        5-15 d | Ventana 30 d     |
+| Calocybe gambosa           | Mar-Jun         |               7-16 °C |        5-14 d | Alta             |
+
+---
+
+# ALGORITMO DE FRUCTIFICACIÓN
+
+No utilizar una fórmula lineal simple.
+
+Crear un modelo por componentes.
+
+```javascript
+fruitingScore =
+
+    rainScore
+  + temperatureScore
+  + soilMoistureScore
+  + humidityScore
+  + seasonScore
+  + habitatScore
+  + altitudeScore
+  + temperatureTrendScore
+  + precipitationLagScore
+
+  - droughtPenalty
+  - heatPenalty
+  - frostPenalty
+```
+
+Normalizar siempre el resultado:
+
+```javascript
+score = Math.max(0, Math.min(100, score));
+```
+
+---
+
+# MODELO DE LLUVIA
+
+La aplicación debe calcular diferentes ventanas:
+
+```javascript
+rain24h
+rain72h
+rain7d
+rain14d
+rain21d
+rain30d
+```
+
+NO asumir:
+
+```text
+más lluvia = siempre mejor
+```
+
+Utilizar una función de saturación.
+
+Ejemplo:
+
+```javascript
+rainScore = sigmoid(
+    accumulatedRain / species.rainOptimal
+)
+```
+
+Esto evita que 150 mm produzcan automáticamente una puntuación superior a 40 mm.
+
+---
+
+# MODELO DE RETARDO
+
+Cada especie debe disponer de:
+
+```javascript
+fruitingLagMin
+fruitingLagOptimalMin
+fruitingLagOptimalMax
+fruitingLagMax
+```
+
+Ejemplo:
+
+```javascript
+Boletus_edulis = {
+    fruitingLagMin: 5,
+    fruitingLagOptimalMin: 7,
+    fruitingLagOptimalMax: 15,
+    fruitingLagMax: 25
+}
+```
+
+El score debe aumentar cuando:
+
+```javascript
+daysSinceRelevantRain
+```
+
+se encuentre dentro de la ventana óptima.
+
+Ejemplo:
+
+```javascript
+if (daysSinceRain >= 7 && daysSinceRain <= 15) {
+    lagScore = 100;
+}
+```
+
+Pero NO hacer esto para todas las especies.
+
+Utilizar una curva gradual:
+
+```text
+0 días       0
+1-2 días     bajo
+3-5 días     medio
+6-10 días    alto
+10-15 días   alto
+15-20 días   medio
+20-30 días   bajo
+>30 días     0
+```
+
+Los límites deben ser específicos por especie.
+
+---
+
+# LLUVIA EFECTIVA
+
+Crear:
+
+```javascript
+effectiveRain
+```
+
+No utilizar únicamente precipitación bruta.
+
+Conceptualmente:
+
+```javascript
+effectiveRain =
+    precipitation
+    × soilMoistureFactor
+    × temperatureFactor
+    × droughtRecoveryFactor
+```
+
+Ejemplo:
+
+Una tormenta de 30 mm después de 30 días secos:
+
+→ recuperación parcial
+
+30 mm repartidos en 3 días sobre suelo ya húmedo:
+
+→ condiciones potencialmente mejores.
+
+---
+
+# DETECCIÓN DE EPISODIO DE LLUVIA
+
+Crear:
+
+```javascript
+rainEvent
+```
+
+Un episodio comienza cuando:
+
+```text
+rain >= 1 mm
+```
+
+y continúa mientras no haya más de:
+
+```text
+24 horas sin lluvia significativa
+```
+
+Guardar:
+
+```javascript
+eventTotalRain
+eventDuration
+eventStart
+eventEnd
+```
+
+Esto permitirá distinguir:
+
+```text
+Tormenta:
+35 mm en 2 horas
+
+de
+
+Lluvia persistente:
+35 mm en 72 horas
+```
+
+---
+
+# IMPORTANCIA DEL HÁBITAT
+
+El score meteorológico NO debe ser suficiente.
+
+Crear un:
+
+```javascript
+habitatScore = 0-100
+```
+
+Ejemplo para Boletus:
+
+```text
+pinar adecuado       + alto
+hayedo adecuado      + alto
+robledal              + alto
+pradera               - muy bajo
+zona urbana           - muy bajo
+```
+
+Para Agaricus:
+
+```text
+pradera con ganado    + muy alto
+pastizal              + alto
+bosque cerrado        - bajo
+```
+
+Para Marasmius:
+
+```text
+pradera               + muy alto
+pastizal              + muy alto
+bosque cerrado        - bajo
+```
+
+Para Lactarius:
+
+```text
+pinar                 + muy alto
+bosque mixto con pino + alto
+hayedo sin pino       - bajo
+```
+
+---
+
+# ALTITUD
+
+La altitud debe modificar la temporada.
+
+No establecer una única fecha para toda España.
+
+Ejemplo:
+
+```javascript
+seasonShift =
+    altitude * altitudeTemperatureCoefficient
+```
+
+A mayor altitud:
+
+* temporada generalmente más tardía en otoño
+* temporada generalmente más temprana en primavera para determinadas especies dependiendo del calentamiento local, exposición y latitud
+
+El algoritmo debe evitar reglas rígidas.
+
+---
+
+# EXPOSICIÓN Y MICROCLIMA
+
+Si los datos geográficos están disponibles:
+
+considerar:
+
+* orientación
+* pendiente
+* sombra
+* cubierta forestal
+* proximidad de cursos de agua
+* orientación norte/sur
+* altitud
+
+Las zonas umbrías deben conservar humedad más tiempo.
+
+Las solanas pueden calentarse y secarse antes.
+
+---
+
+# ESTADO DE LA TEMPORADA
+
+Crear:
+
+```javascript
+seasonScore
+```
+
+Ejemplo:
+
+```javascript
+if month outside species season:
+    seasonScore = 0-10
+```
+
+Dentro de temporada:
+
+```text
+inicio temporada      40-70
+pico temporada        80-100
+final temporada       30-70
+```
+
+No eliminar completamente la posibilidad fuera de la temporada salvo especies estrictamente estacionales.
+
+---
+
+# SALIDA DEL ALGORITMO
+
+La aplicación debe mostrar:
+
+```text
+BOLETUS EDULIS
+
+Probabilidad de fructificación
+████████░░ 82%
+
+Condiciones:
+✓ Humedad del suelo favorable
+✓ 28 mm de lluvia acumulada
+✓ Temperatura favorable
+✓ 9 días desde la última lluvia importante
+✓ Hábitat compatible
+
+Ventana estimada:
+3–7 días
+
+Nivel:
+MUY FAVORABLE
+```
+
+No decir:
+
+❌ "Habrá boletus en 3 días."
+
+Decir:
+
+✅ "Las condiciones actuales son muy favorables y la ventana estimada de fructificación es de 3–7 días."
+
+---
+
+# PRONÓSTICO FUTURO
+
+La aplicación debe realizar dos cálculos:
+
+## Estado actual
+
+Utiliza:
+
+datos meteorológicos observados.
+
+## Pronóstico
+
+Utiliza:
+
+predicción meteorológica.
+
+Ejemplo:
+
+```text
+HOY
+62%
+
+EN 3 DÍAS
+74%
+
+EN 7 DÍAS
+86%
+
+EN 10 DÍAS
+71%
+```
+
+Esto permitirá detectar una futura ventana de fructificación.
+
+---
+
+# REGLA MUY IMPORTANTE
+
+NO calcular:
+
+```text
+"ha llovido → X días → seta"
+```
+
+Calcular:
+
+```text
+lluvia
++
+humedad acumulada
++
+temperatura
++
+tendencia térmica
++
+época
++
+hábitat
++
+altitud
++
+estado previo del suelo
++
+tiempo desde lluvia
+=
+probabilidad de fructificación
+```
+
+---
+
+# NIVEL DE CONFIANZA
+
+Crear una segunda variable:
+
+```javascript
+confidenceScore
+```
+
+de 0 a 100.
+
+No confundir:
+
+`fruitingScore`
+
+con:
+
+`confidenceScore`.
+
+Ejemplo:
+
+```text
+Probabilidad ecológica: 82/100
+Confianza del modelo: 61/100
+```
+
+La confianza disminuye cuando:
+
+* faltan datos de humedad del suelo
+* faltan datos de temperatura del suelo
+* el hábitat no está bien identificado
+* existen pocos datos históricos
+* la especie tiene respuesta meteorológica muy variable
+* la estación está en transición
+
+---
+
+# CALIBRACIÓN FUTURA
+
+El sistema debe estar diseñado para que los parámetros NO estén codificados permanentemente.
+
+Guardar cada especie en una estructura JSON:
+
+```javascript
+{
+    id: "boletus_edulis",
+
+    season: {
+        startMonth: 8,
+        endMonth: 12
+    },
+
+    temperature: {
+        min: 8,
+        optimalMin: 11,
+        optimalMax: 15,
+        max: 24
+    },
+
+    rain: {
+        windows: [7, 14, 21, 30],
+        importance: 0.35
+    },
+
+    fruitingLag: {
+        min: 5,
+        optimalMin: 7,
+        optimalMax: 15,
+        max: 25
+    },
+
+    humidity: {
+        importance: 0.20
+    },
+
+    soilMoisture: {
+        importance: 0.20
+    },
+
+    habitat: {
+        importance: 0.15
+    }
+}
+```
+
+Crear estructuras equivalentes para todas las especies.
+
+---
+
+# APRENDIZAJE DEL MODELO
+
+La arquitectura debe permitir posteriormente incorporar observaciones reales.
+
+Cada observación debería guardar:
+
+```javascript
+{
+    species,
+    latitude,
+    longitude,
+    altitude,
+    date,
+    rainPrevious7d,
+    rainPrevious14d,
+    rainPrevious30d,
+    temperatureMean7d,
+    temperatureMean14d,
+    soilMoisture,
+    habitat,
+    observedFruiting
+}
+```
+
+Con suficientes observaciones, recalibrar:
+
+* umbrales de lluvia
+* ventana de lag
+* temperatura óptima
+* peso de humedad
+* peso de temperatura
+* peso del hábitat
+
+La aplicación debe poder evolucionar de un modelo heurístico a un modelo estadístico/ML.
+
+---
+
+# PRINCIPIO CIENTÍFICO DEL MODELO
+
+Las cifras iniciales son parámetros operativos y no deben presentarse como leyes biológicas exactas.
+
+Especialmente importante para:
+
+* Cantharellus cibarius
+* Marasmius oreades
+* Macrolepiota procera
+* Agaricus campestris
+* Pleurotus ostreatus
+* Tricholoma portentosum
+* Russula vesca
+* Craterellus cornucopioides
+* Calocybe gambosa
+
+Cuando no existan datos científicos suficientemente sólidos para una relación exacta entre lluvia y días posteriores, utilizar:
+
+`heuristic = true`
+
+y mostrar internamente:
+
+```javascript
+dataConfidence: "medium"
+```
+
+o:
+
+```javascript
+dataConfidence: "low"
+```
+
+No inventar precisión científica.
+
+---
+
+# FUENTES CIENTÍFICAS PRIORITARIAS
+
+Priorizar para futuras mejoras:
+
+1. AEMET
+2. MITECO
+3. universidades españolas
+4. CSIC
+5. publicaciones científicas revisadas por pares
+6. proyectos micológicos españoles como MIKOGEST
+7. observaciones micológicas regionales
+8. bases de datos de biodiversidad
+
+Evitar utilizar blogs o páginas comerciales como fuente primaria de parámetros científicos.
+
+Pueden utilizarse únicamente como información secundaria.
+
+---
+
+# MODO DE PRESENTACIÓN
+
+Cada especie debe tener una ficha:
+
+## Ecología
+
+Hábitat, suelo, árboles asociados y altitud.
+
+## Temporada
+
+Meses y desplazamiento según altitud.
+
+## Meteorología
+
+Temperatura, lluvia y humedad.
+
+## Respuesta a lluvia
+
+Ventana temporal estimada.
+
+## Predicción
+
+Score 0–100.
+
+## Confianza
+
+0–100.
+
+## Explicación
+
+Mostrar las variables que están impulsando el resultado.
+
+Ejemplo:
+
+"El índice es alto porque durante los últimos 14 días se han acumulado 42 mm de lluvia, el suelo mantiene humedad elevada y la temperatura media de los últimos 7 días se encuentra dentro del rango favorable."
+
+---
+
+# REGLA DE SEGURIDAD
+
+La aplicación NO debe recomendar consumir una seta basándose en identificación automática.
+
+El sistema puede indicar:
+
+"Especie potencialmente presente"
+
+pero nunca:
+
+"Seta comestible confirmada."
+
+La identificación y consumo requieren confirmación por una persona experta cuando exista cualquier duda.
+
+Una cosa que **sí cambiaría respecto al planteamiento inicial** es no meter todos los tiempos de “incubación” como valores científicos rígidos. Por ejemplo, en *Boletus edulis* tenemos bastante evidencia de que la **humedad del suelo y la precipitación acumulada** son importantes, pero incluso estudios largos muestran que una parte considerable de la variabilidad queda sin explicar. ([Archivo Digital UPM][4])
+
+Para *Lactarius deliciosus* ocurre algo parecido: en pinares españoles se ha observado una relación positiva de la producción con precipitación y humedad relativa y negativa con temperaturas máximas y mínimas. ([PubMed][14])
+
+Esto hace que para tu web sea mucho más interesante mostrar algo como **“ventana probable: 7–15 días” + “confianza 72 %”** que afirmar “saldrá exactamente en 10 días”.
+
+Y además hay una especie que merece un tratamiento completamente distinto: **Morchella esculenta**. Para ella el modelo debe ser primaveral y prestar bastante atención a la **temperatura del suelo + lluvia acumulada de los 30 días anteriores**, en lugar de utilizar el mismo algoritmo de los boletus otoñales. ([PubMed][12])
+
+[1]: https://doi.org/10.1016/j.agrformet.2020.108015?utm_source=chatgpt.com "Primary productivity and climate control mushroom yields in Mediterranean pine forests - ScienceDirect"
+[2]: https://www.miteco.gob.es/content/dam/miteco/es/biodiversidad/temas/incendios-forestales/221275_937guiagestionmatorrales_web_tcm30-589399.pdf?utm_source=chatgpt.com "Agaricus campestris (champiñón de campo, hongo blanco)"
+[3]: https://www.biorxiv.org/content/10.64898/2025.12.12.693895v2?utm_source=chatgpt.com "Predicting porcini: a decade of sporocarp monitoring reveals the meteorological triggers of Boletus edulis fruiting in central European beech forests | bioRxiv"
+[4]: https://oa.upm.es/48556/?utm_source=chatgpt.com "Modelización de producciones forestales no leñosas: aplicación a la fructificación de Boletus edulis Bull.: Fr. en pinares de silvestre de Soria | Archivo Digital UPM"
+[5]: https://www.sciencedirect.com/science/article/pii/S1754504816300514?utm_source=chatgpt.com "Meteorological conditions and site characteristics driving edible mushroom production in Pinus pinaster forests of Central Spain - ScienceDirect"
+[6]: https://sporas.io/especies/cantharellus-cibarius?utm_source=chatgpt.com "Rebozuelo: la seta de temporada más larga | sporas.io"
+[7]: https://mushroom.billhuang.me/catalog/marasmius-oreades?utm_source=chatgpt.com "Foray · A Mushrooming Field Book"
+[8]: https://sporas.io/especies/macrolepiota-procera?utm_source=chatgpt.com "Parasol: dónde sale la seta más grande del monte | sporas.io"
+[9]: https://pmc.ncbi.nlm.nih.gov/articles/PMC6486501/?utm_source=chatgpt.com "Factors affecting mushroom Pleurotus spp - PMC"
+[10]: https://pfcyl.es/node/29366?utm_source=chatgpt.com "Las lluvias y el descenso de temperaturas propician la fructificación de especies más propias de finales de otoño | PFCyL"
+[11]: https://es.wikipedia.org/wiki/Russula_vesca?utm_source=chatgpt.com "Russula vesca"
+[12]: https://pubmed.ncbi.nlm.nih.gov/17363234/?utm_source=chatgpt.com "Spatial and temporal patterns of morel fruiting - PubMed"
+[13]: https://pmc.ncbi.nlm.nih.gov/articles/PMC12473715/?utm_source=chatgpt.com "Analysis of Plant–Fungus Interactions in Calocybe gambosa Fairy Rings - PMC"
+[14]: https://pubmed.ncbi.nlm.nih.gov/23392533/?utm_source=chatgpt.com "Seasonal dynamics of Boletus edulis and Lactarius deliciosus extraradical mycelium in pine forests of central Spain."
+
+=== #43  10-01 16:01 ===
+no me gusta vuelve a la version anterior
+
+=== #44  10-01 16:53 ===
+me gustaria que apareciera tambien la lluvia acumulada  en 7 dias
+
+=== #45  10-01 16:53 ===
+me gustaria que apareciera tambien la lluvia acumulada  en 7 dias
+
+=== #46  10-01 16:58 ===
+de donde estas tomado el parametro de lluvia openmeteo?
+
+=== #47  10-01 17:01 ===
+pero necesito dato real de lluvia, en otra pagin a web me pone en las mismas coordenadas 28,4 mm de lluvia acumulada. ¿Cual es el error?
+
+=== #48  10-01 17:04 ===
+añade aemet
+
+=== #49  10-01 17:12 ===
+no tengo key pero se puede usar esto Proyecto GitLab: Aemet OpenData API
+
+=== #50  10-01 17:39 ===
+este es el algortimo de prediccion de setas y quiero que lo implemntes
+
+=== #51  10-01 17:40 ===
+// ============================================================
+// Predicción de fructificación de setas — módulo independiente
+// Sin dependencias. Funciona en navegador y en Node 18+ (fetch).
+// ============================================================
+//
+// FUENTES DE DATOS
+//  - Meteorología: Open-Meteo Forecast API (sin clave, CORS abierto)
+//      https://api.open-meteo.com/v1/forecast
+//      variables diarias: precipitation_sum, temperature_2m_mean,
+//      temperature_2m_min, relative_humidity_2m_mean
+//      past_days=30 devuelve los últimos 30 días + hoy.
+//  - Geocodificación (nombre -> coordenadas): Open-Meteo Geocoding API
+//      https://geocoding-api.open-meteo.com/v1/search
+//  - Parámetros de especie (tabla SPECIES): valores de partida
+//    estimados a partir de literatura micológica mediterránea.
+//    NO proceden de un dataset: hay que calibrarlos con observaciones.
+//
+// MODELO
+//   I = 100 · S · R^1.5 · T · H^0.5
+//   S: estacionalidad gaussiana (distancia circular al día pico)
+//   R: lluvia efectiva con retardo L (núcleo gaussiano) / R_opt, máx. 1
+//   T: gaussiana alrededor de T_opt; 0 si la mínima < T_crit (helada)
+//   H: (HR - 55) / 30 limitado a [0, 1]
+
+// pico = día del año del máximo; sS = anchura estacional (días)
+// To/sT = temperatura óptima y desviación (°C); Tc = mínima crítica (°C)
+// L = retardo lluvia->setas (días); Ro = lluvia óptima (mm)
+export const SPECIES = [
+  { lat: "Boletus edulis",             es: "Boleto / Hongo",        pico: 280, sS: 35, To: 14, sT: 4, Tc: 3,  L: 11, Ro: 40 },
+  { lat: "Lactarius deliciosus",       es: "Níscalo / Rovelló",     pico: 300, sS: 30, To: 12, sT: 4, Tc: 2,  L: 12, Ro: 40 },
+  { lat: "Amanita caesarea",           es: "Oronja / Reig",         pico: 255, sS: 25, To: 21, sT: 4, Tc: 10, L: 8,  Ro: 30 },
+  { lat: "Cantharellus cibarius",      es: "Rebozuelo / Girola",    pico: 250, sS: 40, To: 16, sT: 4, Tc: 6,  L: 10, Ro: 30 },
+  { lat: "Marasmius oreades",          es: "Senderuela",            pico: 200, sS: 80, To: 15, sT: 5, Tc: 3,  L: 7,  Ro: 20 },
+  { lat: "Macrolepiota procera",       es: "Parasol",               pico: 275, sS: 35, To: 17, sT: 4, Tc: 6,  L: 7,  Ro: 25 },
+  { lat: "Agaricus campestris",        es: "Champiñón silvestre",   pico: 290, sS: 60, To: 15, sT: 5, Tc: 3,  L: 7,  Ro: 20 },
+  { lat: "Pleurotus ostreatus",        es: "Gírgola",               pico: 320, sS: 40, To: 9,  sT: 4, Tc: -3, L: 8,  Ro: 25 },
+  { lat: "Tricholoma portentosum",     es: "Seta de pino",          pico: 315, sS: 30, To: 10, sT: 4, Tc: 0,  L: 12, Ro: 35 },
+  { lat: "Russula vesca",              es: "Rúsula comestible",     pico: 270, sS: 35, To: 16, sT: 4, Tc: 5,  L: 9,  Ro: 30 },
+  { lat: "Craterellus cornucopioides", es: "Trompeta de la muerte", pico: 295, sS: 30, To: 12, sT: 4, Tc: 3,  L: 12, Ro: 35 },
+  { lat: "Morchella esculenta",        es: "Colmenilla / Morella",  pico: 100, sS: 20, To: 11, sT: 3, Tc: 0,  L: 10, Ro: 20 },
+  { lat: "Calocybe gambosa",           es: "Seta de San Jorge",     pico: 115, sS: 20, To: 12, sT: 3, Tc: 1,  L: 9,  Ro: 20 },
+];
+
+const gauss = (x, mu, s) => Math.exp(-((x - mu) ** 2) / (2 * s * s));
+
+export function diaDelAnio(date = new Date()) {
+  const ini = new Date(date.getFullYear(), 0, 0);
+  return Math.floor((date - ini) / 864e5);
+}
+
+/**
+ * Índice 0-100 para una especie.
+ * @param sp   objeto de SPECIES
+ * @param w    { dia, lluvia30, tMedia7, tMin7, hr }
+ *             lluvia30[d] = mm caídos hace d días (d = 0..30; 0 = hoy)
+ * @returns    { I, S, R, T, H }
+ */
+export function indice(sp, w) {
+  const dist = Math.abs(w.dia - sp.pico);
+  const S = gauss(Math.min(dist, 365 - dist), 0, sp.sS);
+
+  let reff = 0;
+  w.lluvia30.forEach((p, d) => { reff += p * gauss(d, sp.L, 3); });
+  const R = Math.min(1, reff / sp.Ro);
+
+  const T = w.tMin7 < sp.Tc ? 0 : gauss(w.tMedia7, sp.To, sp.sT);
+  const H = Math.min(1, Math.max(0, (w.hr - 55) / 30));
+
+  return { I: 100 * S * Math.pow(R, 1.5) * T * Math.pow(H, 0.5), S, R, T, H };
+}
+
+/** Ranking de todas las especies, de mayor a menor índice. */
+export function ranking(w) {
+  return SPECIES.map(sp => ({ sp, ...indice(sp, w) })).sort((a, b) => b.I - a.I);
+}
+
+/** Descarga y resume la meteorología de una coordenada. */
+export async function meteo(lat, lon) {
+  const url = "https://api.open-meteo.com/v1/forecast"
+    + `?latitude=${lat}&longitude=${lon}&past_days=30&forecast_days=1`
+    + "&daily=precipitation_sum,temperature_2m_mean,temperature_2m_min,relative_humidity_2m_mean"
+    + "&timezone=auto";
+  const j = await (await fetch(url)).json();
+  const d = j.daily, n = d.time.length;
+  const ult = (k, c) => d[k].slice(n - c);
+  const media = a => a.reduce((x, y) => x + (y || 0), 0) / a.length;
+
+  return {
+    dia: diaDelAnio(),
+    lluvia30: Array.from({ length: 31 }, (_, i) => d.precipitation_sum[n - 1 - i] || 0),
+    tMedia7: media(ult("temperature_2m_mean", 7)),
+    tMin7: Math.min(...ult("temperature_2m_min", 7)),
+    hr: media(ult("relative_humidity_2m_mean", 7)),
+    altitud: j.elevation,
+  };
+}
+
+/** Nombre de lugar -> lista de { name, admin1, country, latitude, longitude }. */
+export async function buscarLugar(nombre) {
+  const url = "https://geocoding-api.open-meteo.com/v1/search?count=6&language=es&name="
+    + encodeURIComponent(nombre);
+  const j = await (await fetch(url)).json();
+  return j.results || [];
+}
+
+// ---- Ejemplo de uso ----
+// const [lugar] = await buscarLugar("Valsaín");
+// const w = await meteo(lugar.latitude, lugar.longitude);
+// ranking(w).forEach(r => console.log(r.sp.es, Math.round(r.I)));
+
+=== #52  10-01 17:53 ===
+explicame que es cada parametro de la tarjeta boletus
+
+=== #53  10-01 17:58 ===
+simplificamelo porque no lo entiendo
+
+=== #54  10-01 18:00 ===
+pero la lluvia para que eclosione la seta sera la lluevia caida durante los 11 dias y no exclusivamente hace 11 dias no?
+
+=== #55  10-01 18:03 ===
+version intermedia
+
+=== #56  10-01 18:20 ===
+y estos parametros son estimados o los sacas de openmeteo
+
+=== #57  10-01 18:22 ===
+me refiero a los datos climaticos
+
+=== #58  10-01 18:25 ===
+que significa lluvia efectiva en las tarjetas
+
+=== #59  10-01 18:28 ===
+solo tienes que usar los ultimos 11 dias de lluvia no 30 dias
+
+=== #60  10-01 18:29 ===
+no solo para el boletus si no para todas las setas
+
+=== #61  10-01 18:35 ===
+el problema es que tengo una web profesional y quiero hacerlo similar y los datos que me da tu web no cuadran con la otra web, como harias tu los calculos segun la especie y clima
+
+=== #62  10-01 18:38 ===
+haz todos los cambios
+
+=== #63  10-01 19:24 ===
+quiero mantener la distribucion de tarjetas suelo y clima al lado del mapa
+
+=== #64  10-01 19:32 ===
+quiero que cuando le demos al boton guardar ubicacion en el dashboard se quede guardada posicion en la pestaña guardados con el nombre y las coordenadas
+
+=== #65  10-01 19:41 ===
+quiero cambiar el nombre al boton en el dashboard guardar ubiccion a Guardar ubicación de setal y la pestaña Guardados cambia el nombre a Mis setales
+
+=== #66  10-01 19:44 ===
+el icono de la pestaña Mis setales seria mejor con una estrella, luego en el dashboard dentro de zona de setas en otro apartado en la lista deben aparecer mis setales guardados
+
+=== #67  10-01 19:47 ===
+el icono del dashboard es muy feo, pon otro mas bonito
+
+=== #68  10-01 19:48 ===
+y queria que aparecieran los setales guardados tambien en la lista desplegable del dashboard --- Zonas de setas---
+
+=== #69  10-01 19:49 ===
+quiero que mantengas el nombre Dashboard en lugar de Zona
+
+=== #70  10-01 19:52 ===
+la tarjeta resumen del dashboardno la quiero
+
+=== #71  10-01 19:55 ===
+no quiero que aparezca mis setales debajo del botn guardar ubicacion de setal
+
+=== #72  10-01 20:07 ===
+quiero que añadas mas setas, con todas sus especificaciones y nada inventado, Boleto de pino / Boletus pinicola, Gula de monte / Trompeta amarilla, Gurumelo, Hongo de verano /Boleto reticulatum, Hongo negro / Boleto bronce, Marzuelo / Seta de marzo, Seta de cardo
+
+=== #73  10-01 20:24 ===
+quiero que quites de las cartas de setas del dashboard la info parametros publicados y parametros estimados
+
+=== #74  10-01 20:26 ===
+En la pestaña Metodologia solo quiero que aparezca una descripcion del metedo usado para predecir la eclosion con todo lujo de detalle y quiero que crees otra pestaña con una leyenda de todos los apartados que aparecen en las tarjetas de setas y en la parte de suelo y clima
+
+=== #75  10-01 20:39 ===
+como puedo subir esta web a github pages
+
+=== #76  10-01 20:45 ===
+como lo subo de forma manual por la web de github
+
+=== #77  10-01 20:50 ===
+https://luiscas83.github.io/micohunter/ no funciona
+
+=== #78  10-01 20:58 ===
+en la cabecera no quiero que salga open meteo solilgrids y openstreetmap, por defecto al abri la web el mapa debe mostrar sierra de guadarrama y por defecto en el dashboard deben aparecer todas las setas, en primer lugar el boletus edulos y luego el niscalo, y luego cantarellus, luego los demas boletus y el resto da igual el orden
+
+=== #79  10-01 21:13 ===
+Ponlo en un pinar de soria como dices y al abrir la web que se vea el mapa de españa sin zoom, por otra parte en la visualizacion movil no se encaja la pantalla bien hay que hacer un pequeño zomm in con los dedos para que encaje al 100 por cien
+
+=== #80  10-01 21:24 ===
+tambien puedes cambiar el nombre a Rebozuelo / Galán cambiar a Rebozuelo / Chantarela, Hongo de verano a Boleto Reticulado, Oronja / Reig a Amanita caesarea, Seta de pino a Capuchina, Gírgola a Seta de ostra, Seta de San Jorge a Perrechico. tambien quita de la carta del dashboard Suelo y clima la info condiciones desfavorables y tambien retoma retomo lo que dejé pendiente: el scroll salta arriba cuando llega el suelo desde SoilGrids, que puede tardar 30-50 segundos
+
+=== #81  10-01 21:31 ===
+como elimino los archivos antiguos de github
+
+=== #82  10-01 21:34 ===
+pero en el movil no sale la web actualizada
+
+=== #83  10-01 21:37 ===
+la parte de textura en la tarjeta Suelo y clima sale consultando y el PH no sale, en el movil el texto potencial dentro del circulo sale en dos lineas
+
+=== #84  10-01 21:38 ===
+la parte de textura en la tarjeta Suelo y clima sale consultando y el PH no sale, en el movil el texto potencial dentro del circulo sale en dos lineas, lo demas se ve bien, en el movil la pestaña analisis se ve todo descuadrado imagino que no entra todo
+
+=== #85  10-01 21:50 ===
+cambia en todos los sitios GDD acum por Grados día acumulado. esto He añadido ?v=20261001b a los tres recursos locales. Cuando subas cambios, tienes que incrementar ese número; si no, tu móvil seguirá viendo la versión anterior. Lo he dejado anotado en un comentario en el propio index.html. puedes hacerlo que sea automatico?
+
+=== #86  10-01 21:54 ===
+que significa Grados día acumulado:
+292 / 180
+
+=== #87  10-01 21:55 ===
+pero como van a ser 292 grados? eso es abrasador
+
+=== #88  10-01 22:00 ===
+no lo cambies la prediccion de eclosion de la especie es lo mas importante tiene que ser perfecto y no tocar nada que altere la eclosion real, para que no asuste calor acumulado quitalo de las tarjetas del dash
+
+=== #89  10-01 22:03 ===
+tambien cambia 🥶
+Mín. 7d a Tº Mín. 7d y Lluvia eff por Lluvia efectiva
+
+=== #90  10-01 22:05 ===
+tambien cambia Base / Techo:
+ a Rango de temperatura de suelo para fructificar: tambien el habitat donde crecen que la primera letra sea mayuscula
+
+=== #91  10-01 22:08 ===
+cambia Hídrico por Reserva de humedad del suelo
+
+=== #92  10-01 22:12 ===
+he reemplazado los archivos de github y no actualiza cambios
+
+=== #93  10-01 22:13 ===
+la primera
+
+=== #94  10-02 15:35 ===
+continua
+
+=== #95  10-02 15:47 ===
+en suelo y clima T° suelo vambialo por Temp. suelo 24h, T° aire
+ por Temp. aire 24h, 
+T° Mín. 7d por Temperatura más baja 7d
+
+=== #96  10-02 15:56 ===
+Puedes cambiar la organizacion del panel Suelo y clima para que por ejemplo lugar quede arriba y la respuesta debajo? con un look vistoso?
+
+=== #97  10-02 16:04 ===
+me gustaba mas con el diseño de antes pero colocando el titulo resaltado arriba y el resultado abajo
+
+=== #98  10-02 16:11 ===
+Ahora que estan asi ordenados me cambias Temp. suelo 24h por Temperatura media del suelo en 24h.
+Temp. aire 24h por Temperatura media del aire en 24h.
+Temperatura más baja 7d por Temperatura más baja en 7 días
+Humedad 7d por Humedad media relativa en 7 días
+Lluvia 7d por Lluvia acumulada en 7 días
+me gustaria que en el panel Suelo y clima los titulos sean mas grandes que los datos
+Ahora el tamaño de la ventana del mapa tiene que ser el mismo alto que la columna suelo y clima
+el color de toda la web me gustaria en tonos otoñales acorde al mundo del bosque otoñal y de setas.
+tambien lo ideal es no llamar todo el rato a la api si el punto del mapa no cambia
+
+=== #99  10-02 16:46 ===
+el color de Modelo por ventanas: I = 100 · S · H0.5 · A · T · Fhábitat · Faltitud sale en un marron oscuro y el texto de la formula en negro y no se lee apenas, los iconos del panel suelo y clima los veo bastante pequeños. y el tono marron chocolate de toda la web me parece un poco oscuro. Por otro lado me gustaria que hagas un estudio profundo por internet para añadir zonas de setas que se sepa que son muy fructiferas, se que es un dato que las personas no revelan pero estaria bien si encontraras algo
+
+=== #100  10-02 16:47 ===
+abrebia la palabra Temperatura en el panel suelo y clima a Temp.
+
+=== #101  10-02 16:58 ===
+tambien haz especial incapie en zonas de madrid cooncretas por coordenadas aunque sea dificil
+
+=== #102  10-02 17:39 ===
+las cajas de las tarjetas de setas donde pone estacional, reserva de humedad del suelo, acumulacion, temporada se ven muy claras y no se distinguen con el color de fondo, cambia ese color y donde afecte en toda la web
+
+=== #103  10-02 17:42 ===
+y quiero que quites la informacion que has incluido encima del mapa al seleccionar setales de referencia
+
+=== #104  10-02 17:55 ===
+el gurumelo como es toxico quitalo y añade la seta psilocibes con todas sus caracteristicas y amanatita muscaria. tampoci me gusta demasiado el panel suelo y clima, veo el textocomo apelotonado y los icopnos no me gusta el circulo que lo dea, no se quiero algo mas limpio y bonito
+
+=== #105  10-02 18:07 ===
+estoy pensando que como son toxicas estas setas elimines las tres setas
+
+=== #106  10-02 18:07 ===
+actualiza la pestaña leyenda con los nuevos nombres
+
+=== #107  10-02 18:29 ===
+puedes hacer el texto ligeramente mas pequeño para que el panel sea mas corto y no se apelotone
+
+=== #108  10-02 18:56 ===
+tengo dudas sobre el algortimo y he preguntado a chatgpt. chatgpt me ha dado este prompt y no si si el algoritmo que me ha dado se parece al que esta mos usando, te paso el algoritmo Quiero que implementes en mi aplicación web un MOTOR DE ESTIMACIÓN DEL POTENCIAL DE FRUCTIFICACIÓN DE SETAS.
+
+IMPORTANTE:
+
+    NO quiero que el usuario introduzca observaciones manualmente.
+
+    NO quiero formularios de "he encontrado una seta".
+
+    NO quiero depender de datos de entrenamiento externos.
+
+    NO quiero fingir que tenemos un modelo de Machine Learning entrenado si no existe un dataset de observaciones reales.
+
+    El sistema debe calcular una estimación a partir EXCLUSIVAMENTE de los datos ambientales que mi aplicación ya obtiene de Open-Meteo y SoilGrids.
+
+    La estimación debe ser reproducible, explicable y mostrar qué factores están contribuyendo al resultado.
+
+    Diseña el código para que en el futuro podamos sustituir el motor heurístico por un modelo estadístico/ML sin rehacer toda la aplicación.
+
+==================================================
+
+    FUENTES DE DATOS EXISTENTES
+    ==================================================
+
+Mi aplicación ya obtiene:
+
+OPEN-METEO:
+
+    precipitación diaria
+
+    temperatura del aire a 2 m
+
+    temperatura mínima diaria
+
+    temperatura máxima diaria
+
+    humedad relativa
+
+    temperatura del suelo a 18 cm
+
+Se solicitan:
+
+    30 días históricos
+
+    día actual
+
+Los datos históricos son OBSERVADOS, no previsiones.
+
+SOILGRIDS 2.0 / ISRIC:
+
+    textura del suelo
+
+    pH
+
+    carbono orgánico
+
+    resolución aproximada de 250 m
+
+    horizonte de referencia: 5–15 cm
+
+IMPORTANTE:
+Los datos de SoilGrids son estimaciones interpoladas para el píxel. NO deben presentarse como mediciones directas del suelo.
+
+OPENSTREETMAP / NOMINATIM:
+
+    se utiliza únicamente para toponimia/mapa.
+
+    No debe entrar en el cálculo ecológico del índice.
+
+==================================================
+2. OBJETIVO
+
+Crear un índice de:
+
+"POTENCIAL DE FRUCTIFICACIÓN"
+
+entre 0 y 100.
+
+NO llamarlo:
+
+    probabilidad científica
+
+    predicción garantizada
+
+    certeza de aparición
+
+A menos que posteriormente exista un dataset real que permita calibrarlo estadísticamente.
+
+La interfaz debe poder mostrar:
+
+    puntuación global 0–100
+
+    nivel cualitativo
+
+    factores favorables
+
+    factores desfavorables
+
+    ventana temporal estimada
+
+    desglose por componentes
+
+    especie seleccionada
+
+    datos ambientales utilizados
+
+    advertencia de que es una estimación ecológica
+
+Ejemplo:
+
+Potencial de fructificación: 78/100
+
+Nivel: ALTO
+
+Factores:
+
+    Humedad reciente: favorable
+
+    Temperatura del suelo: favorable
+
+    Lluvia acumulada: favorable
+
+    Temperatura del aire: moderadamente favorable
+
+    Suelo: favorable
+
+Ventana estimada:
+3–7 días
+==================================================
+3. ESPECIES
+
+Implementa perfiles independientes para:
+
+    Boletus edulis
+
+    Lactarius deliciosus
+
+    Cantharellus cibarius
+
+    Boletus pinophilus
+
+    Boletus reticulatus
+
+    Boletus aereus
+
+    Amanita caesarea
+
+    Craterellus cornucopioides
+
+    Craterellus lutescens
+
+    Russula vesca
+
+    Tricholoma portentosum
+
+    Pleurotus ostreatus
+
+    Morchella esculenta
+
+    Marasmius oreades
+
+    Macrolepiota procera
+
+    Calocybe gambosa
+
+    Agaricus campestris
+
+    Pleurotus eryngii
+
+"Seta de cardo" debe utilizarse como nombre común asociado a Pleurotus eryngii.
+
+"Boleto bronce / Hongo negro" corresponde a Boletus aereus.
+
+La aplicación debe mostrar nombre científico y nombre común cuando exista.
+==================================================
+4. ARQUITECTURA DEL MOTOR
+
+Crear una arquitectura modular.
+
+Por ejemplo:
+
+mushroomPrediction/
+speciesProfiles
+featureEngineering
+environmentalScores
+predictionEngine
+explanations
+types
+
+NO mezclar toda la lógica en el componente de UI.
+
+Crear una función principal similar a:
+
+calculateFructificationPotential(
+weatherData,
+soilData,
+species
+)
+
+que devuelva una estructura similar a:
+
+{
+score: 0-100,
+level: "very_low" | "low" | "moderate" | "high" | "very_high",
+species: "...",
+components: {
+moisture: 0-100,
+rainfall: 0-100,
+airTemperature: 0-100,
+soilTemperature: 0-100,
+stability: 0-100,
+soil: 0-100
+},
+timing: {
+estimatedWindow: "...",
+estimatedPeak: "..."
+},
+positiveFactors: [],
+negativeFactors: [],
+confidence: "...",
+limitations: []
+}
+==================================================
+5. FEATURE ENGINEERING
+
+No utilizar únicamente el valor del día actual.
+
+Utilizar los 30 días históricos para calcular variables derivadas.
+
+Implementar como mínimo:
+
+PRECIPITACIÓN:
+
+    lluvia 1 día
+
+    lluvia 3 días
+
+    lluvia 5 días
+
+    lluvia 7 días
+
+    lluvia 10 días
+
+    lluvia 14 días
+
+    lluvia 21 días
+
+    lluvia 30 días
+
+También:
+
+    número de días con lluvia significativa en últimos 7 días
+
+    número de días con lluvia significativa en últimos 14 días
+
+    número de días con lluvia significativa en últimos 30 días
+
+    días desde última lluvia significativa
+
+    intensidad media de lluvia
+
+    tendencia de precipitación
+
+TEMPERATURA DEL AIRE:
+
+    media 3 días
+
+    media 7 días
+
+    media 14 días
+
+    media 30 días
+
+    mínima media 7 días
+
+    máxima media 7 días
+
+    amplitud térmica
+
+    tendencia térmica
+
+HUMEDAD:
+
+    humedad media 3 días
+
+    humedad media 7 días
+
+    humedad media 14 días
+
+    humedad media 30 días
+
+    humedad reciente
+
+    tendencia de humedad
+
+TEMPERATURA DEL SUELO A 18 CM:
+
+    media 3 días
+
+    media 7 días
+
+    media 14 días
+
+    media 30 días
+
+    tendencia
+
+    diferencia entre temperatura del suelo y temperatura del aire
+
+También calcular:
+
+    estabilidad ambiental
+
+    cambios bruscos
+
+    secuencias de días secos/húmedos
+
+Todas las ventanas deben manejar correctamente datos faltantes.
+==================================================
+6. RETRASO BIOLÓGICO
+
+MUY IMPORTANTE.
+
+No asumir:
+
+lluvia de hoy = seta mañana.
+
+Crear perfiles de especie con una "respuesta temporal" a la precipitación.
+
+Cada especie tendrá una ventana aproximada de respuesta:
+
+rainLag:
+{
+minDays,
+optimumDays,
+maxDays
+}
+
+El motor debe analizar las lluvias recientes y determinar si existe una secuencia compatible con el perfil de la especie.
+
+Por ejemplo conceptualmente:
+
+lluvia reciente
++
+periodo de humedad
++
+temperatura adecuada
++
+ventana temporal compatible
+
+debe producir mayor puntuación.
+
+NO presentar estos retrasos como valores científicamente exactos.
+
+Deben estar centralizados en los perfiles para poder calibrarlos posteriormente.
+==================================================
+7. COMPONENTES DEL ÍNDICE
+
+Crear como mínimo estos subíndices:
+
+A) HUMEDAD
+
+Combinar:
+
+    precipitación acumulada
+
+    humedad relativa
+
+    persistencia de humedad
+
+    días desde última lluvia
+
+Resultado 0–100.
+
+B) PRECIPITACIÓN
+
+Evaluar las distintas ventanas:
+3, 7, 14, 21 y 30 días.
+
+No asumir que más lluvia siempre es mejor.
+
+Debe existir:
+
+    insuficiencia de lluvia
+
+    rango favorable
+
+    exceso/saturación
+
+C) TEMPERATURA DEL AIRE
+
+Cada especie debe tener:
+
+    rango mínimo
+
+    rango óptimo
+
+    rango máximo
+
+Utilizar una función suave, preferiblemente triangular/trapezoidal o gaussiana, evitando cambios bruscos.
+
+D) TEMPERATURA DEL SUELO
+
+Utilizar específicamente la temperatura del suelo a 18 cm.
+
+Crear un perfil térmico para cada especie.
+
+No afirmar que 18 cm es exactamente la profundidad de la micorriza. Tratarla como indicador/proxy del estado térmico del suelo.
+
+E) ESTABILIDAD
+
+Penalizar:
+
+    cambios térmicos extremos
+
+    cambios bruscos de humedad
+
+    condiciones ambientales muy inestables
+
+F) SUELO
+
+Utilizar SoilGrids:
+
+    pH
+
+    carbono orgánico
+
+    textura
+
+Cada especie tendrá preferencias de suelo configurables.
+
+IMPORTANTE:
+SoilGrids es un mapa interpolado. La aplicación debe indicarlo en la explicación.
+==================================================
+8. FUNCIÓN DE PREFERENCIA
+
+Crear funciones reutilizables como:
+
+scoreRange(value, min, optimalMin, optimalMax, max)
+
+o una función trapezoidal equivalente.
+
+Debe devolver 0–100.
+
+Ejemplo conceptual:
+
+fuera del rango -> puntuación baja
+
+entrando en rango -> aumenta
+
+rango óptimo -> 100
+
+saliendo del rango -> disminuye
+
+Esto debe evitar if/else gigantes.
+==================================================
+9. PERFILES DE ESPECIES
+
+Crear una estructura de configuración como:
+
+{
+id: "boletus_edulis",
+scientificName: "Boletus edulis",
+commonNames: [...],
+
+temperature: {
+air: {...},
+soil: {...}
+},
+
+rainfall: {
+windows: {...},
+lag: {...}
+},
+
+humidity: {...},
+
+soil: {
+ph: {...},
+organicCarbon: {...},
+texture: {...}
+},
+
+weights: {
+rainfall: ...,
+moisture: ...,
+airTemperature: ...,
+soilTemperature: ...,
+stability: ...,
+soil: ...
+}
+}
+
+IMPORTANTE:
+No inventar una precisión falsa.
+
+Los rangos iniciales deben considerarse PARAMETROS HEURÍSTICOS y quedar documentados claramente.
+
+Centraliza todos los parámetros en un solo archivo para poder modificarlos posteriormente.
+==================================================
+10. PONDERACIÓN
+
+No utilizar necesariamente los mismos pesos para todas las especies.
+
+Cada perfil puede tener:
+
+    rainfallWeight
+
+    moistureWeight
+
+    airTemperatureWeight
+
+    soilTemperatureWeight
+
+    stabilityWeight
+
+    soilWeight
+
+Normalizar siempre los pesos para que el resultado final sea 0–100.
+
+Si los datos de SoilGrids no están disponibles:
+
+    no fallar
+
+    recalcular los pesos disponibles
+
+    indicar "datos edáficos no disponibles"
+
+Si falta algún dato meteorológico:
+
+    calcular con las variables disponibles
+
+    reducir la confianza
+
+    nunca inventar datos.
+
+==================================================
+11. NIVEL FINAL
+
+Convertir 0–100 a:
+
+0–19:
+MUY BAJO
+
+20–39:
+BAJO
+
+40–59:
+MODERADO
+
+60–79:
+ALTO
+
+80–100:
+MUY ALTO
+
+Esto es únicamente una clasificación del índice, no una garantía de aparición.
+==================================================
+12. VENTANA TEMPORAL
+
+Crear una estimación de ventana temporal basándose en:
+
+    días desde lluvia
+
+    lluvia reciente
+
+    perfil de lag de la especie
+
+    temperatura
+
+    humedad
+
+Por ejemplo:
+
+"condiciones actuales compatibles con una ventana de fructificación de 3–7 días"
+
+NO decir:
+
+"habrá setas en 3–7 días"
+
+La redacción debe ser probabilística/cautelosa.
+==================================================
+13. EXPLICABILIDAD
+
+El resultado debe explicar POR QUÉ se obtiene la puntuación.
+
+Ejemplo:
+
+positiveFactors:
+[
+"La precipitación acumulada de los últimos 7 días está dentro del rango favorable.",
+"La temperatura del suelo a 18 cm es compatible con el perfil de la especie."
+]
+
+negativeFactors:
+[
+"La humedad ha disminuido durante los últimos días.",
+"La temperatura máxima reciente se encuentra fuera del rango óptimo."
+]
+
+No generar explicaciones genéricas.
+
+Las explicaciones deben derivarse realmente de las variables calculadas.
+==================================================
+14. CONFIANZA
+
+Añadir un indicador de confianza separado del score.
+
+MUY IMPORTANTE:
+
+"score" NO significa "confianza".
+
+La confianza debe depender de:
+
+    cantidad de datos disponibles
+
+    continuidad de los 30 días
+
+    disponibilidad de SoilGrids
+
+    calidad de las variables
+
+Ejemplo:
+
+score = 76
+confidence = "media"
+
+NO hacer:
+
+score = 76%
+confidence = 76%
+
+Son conceptos distintos.
+==================================================
+15. NO HACER MACHINE LEARNING FALSO
+
+NO utilizar Random Forest, XGBoost, redes neuronales ni regresión entrenada con datos inexistentes.
+
+El primer sistema será un:
+
+MODELO HEURÍSTICO ECOFISIOLÓGICO EXPLICABLE.
+
+Dejar preparada una interfaz:
+
+PredictionEngine
+
+para que posteriormente pueda existir:
+
+HeuristicPredictionEngine
+MLPredictionEngine
+
+sin modificar el frontend.
+==================================================
+16. CONTROL DE VERSIONES DEL MODELO
+
+Añadir:
+
+MODEL_VERSION = "0.1.0"
+
+Y devolverlo en la respuesta:
+
+{
+...
+"modelVersion": "0.1.0"
+}
+
+Así podremos saber qué versión produjo cada estimación.
+==================================================
+17. DATOS HISTÓRICOS
+
+Asumir que Open-Meteo devuelve datos diarios.
+
+No hacer peticiones adicionales innecesarias si la aplicación ya tiene los 30 días.
+
+Trabajar sobre los datos que ya están disponibles en el estado/props/API existente.
+
+Primero inspecciona el proyecto para descubrir:
+
+    framework
+
+    estructura
+
+    nombres de los componentes
+
+    dónde se almacenan los datos Open-Meteo
+
+    dónde se almacenan los datos SoilGrids
+
+    formato real de esos datos
+
+NO inventes interfaces si ya existen.
+
+Adapta el motor a la estructura real del proyecto.
+==================================================
+18. SEGURIDAD Y ROBUSTEZ
+
+Manejar:
+
+    null
+
+    undefined
+
+    NaN
+
+    arrays vacíos
+
+    días faltantes
+
+    SoilGrids sin respuesta
+
+    Open-Meteo sin respuesta
+
+    valores fuera de rango
+
+    especies desconocidas
+
+Una especie desconocida debe producir un error controlado, no romper la aplicación.
+==================================================
+19. UI
+
+Integra el resultado en la interfaz existente sin rehacer toda la aplicación.
+
+Mostrar:
+
+    nombre de especie
+
+    score 0–100
+
+    nivel
+
+    confianza
+
+    ventana temporal
+
+    factores favorables
+
+    factores desfavorables
+
+Añadir una sección:
+
+"Cómo se calcula"
+
+explicando:
+
+    Datos meteorológicos de Open-Meteo.
+
+    Datos edáficos de SoilGrids.
+
+    Análisis de los últimos 30 días.
+
+    Perfil ecológico de la especie.
+
+    Cálculo del índice.
+
+Añadir claramente:
+
+"Estimación orientativa basada en condiciones ambientales. No garantiza la aparición de cuerpos fructíferos."
+
+Y:
+
+"Los datos de SoilGrids representan estimaciones interpoladas del suelo a escala de rejilla y no una medición directa del punto."
+==================================================
+20. TESTS
+
+Crear tests unitarios para:
+
+    scoreRange
+
+    rainfall features
+
+    humidity features
+
+    temperature score
+
+    soil temperature score
+
+    soil score
+
+    temporal lag
+
+    cálculo final
+
+    datos incompletos
+
+    SoilGrids ausente
+
+    especie desconocida
+
+Crear además al menos 5 escenarios sintéticos:
+
+    30 días secos
+
+    lluvia intensa reciente
+
+    lluvia moderada + temperaturas favorables
+
+    lluvia + temperaturas demasiado altas
+
+    condiciones variables
+
+Comprobar que los resultados son coherentes y que el sistema no produce NaN.
+==================================================
+21. MUY IMPORTANTE SOBRE LAS ESPECIES
+
+No trates todas las especies como si fueran ecológicamente iguales.
+
+Como mínimo deben poder diferenciarse por:
+
+    temperatura
+
+    temperatura del suelo
+
+    humedad
+
+    respuesta a precipitación
+
+    retraso temporal
+
+    pH
+
+    materia orgánica/carbono
+
+    textura
+
+Las especies micorrícicas y saprófitas deben poder tener perfiles diferentes.
+
+No afirmar relaciones ecológicas concretas como hechos si son solamente aproximaciones utilizadas por el modelo.
+
+Documentar los parámetros con comentarios:
+
+"HEURÍSTICO — pendiente de calibración con observaciones reales."
+==================================================
+22. RESULTADO ESPERADO
+
+Quiero que hagas el trabajo directamente sobre el proyecto existente.
+
+PRIMERO:
+Inspecciona el código y dime qué arquitectura tiene y dónde están actualmente los datos Open-Meteo y SoilGrids.
+
+DESPUÉS:
+Implementa el motor.
+
+DESPUÉS:
+Integra el resultado en la UI existente.
+
+DESPUÉS:
+Ejecuta los tests/lint/typecheck disponibles.
+
+AL FINAL:
+Dame un resumen de:
+
+    archivos creados
+
+    archivos modificados
+
+    cómo funciona el cálculo
+
+    parámetros principales
+
+    cómo cambiar los perfiles de especies
+
+    tests realizados
+
+    limitaciones científicas actuales
+
+NO borres funcionalidades existentes.
+
+NO cambies las llamadas actuales a Open-Meteo o SoilGrids salvo que sea estrictamente necesario.
+
+NO añadas dependencias pesadas si el proyecto no las necesita.
+
+Prioriza código sencillo, modular, tipado y mantenible.
+==================================================
+23. PRINCIPIO CIENTÍFICO
+
+El objetivo del sistema NO es afirmar:
+
+"va a salir esta seta".
+
+El objetivo es:
+
+"Dadas las condiciones ambientales observadas durante los últimos 30 días, ¿hasta qué punto son compatibles con las condiciones que el perfil ecológico de esta especie necesita para fructificar?"
+
+La salida es un ÍNDICE DE POTENCIAL DE FRUCTIFICACIÓN.
+
+Debe quedar claramente separado:
+
+    datos observados
+
+    parámetros heurísticos
+
+    cálculo
+
+    estimación
+
+    incertidumbre
+
+No presentar el índice como una probabilidad estadística calibrada hasta que exista un dataset real de observaciones.
+
+Empieza inspeccionando el proyecto y luego implementa todo lo anterior.
+
+=== #109  10-02 19:04 ===
+no cambies nada, Lo de usar la temperatura del aire, la textura y el carbono orgánico sí cambiaría el índice, y con ello los números que has visto en pantalla durante meses.  crees que es bueno o malo
+
+=== #110  10-02 19:10 ===
+arreglar el cap del pH, arreglar el reinicio del GDD, añadir los tests para poder demostrarlo,  la textura y el carbono se vean en la tarjeta y no cuenten en la cifra
+
+=== #111  10-02 19:31 ===
+creo que hay un error grave en el algoritmo en Faltitud · Factor altitudinal, segun leo en la metodologia se esta usando los parametros de altitutd optima en base al la altura idonea del boletis, esto es asi? o se usa la altitud de cada especie?
+
+=== #112  10-02 19:37 ===
+usa el conservador para que cada especie use su altitud idonea y no la del boletus
+
+=== #113  10-02 19:51 ===
+En la metodologia no debes poner las correcciones que se han hecho solo la explicacion extremadamente detallada de donde sale cada parametro
+
+=== #114  10-02 20:04 ===
+puedes buscar parametros publicados para todas las setas?
+
+=== #115  10-02 20:13 ===
+en las fichas por especie quiero que salgan en bloques de 3 como en dashboard
+
+=== #116  10-02 20:19 ===
+en la pestaña analisis quiero que la tarjeta meteorologia de la zona este arriba de la tarjeta del ranking y que la separacion entre tarjetas se la misma que la separación de tarjetas del dashboard y en la pestaña especies quiero que quietes esta informacion La lista es sólo de setas comestibles. Se han dejado fuera las tóxicas y las alucinógenas, también las que se consumen después de cocer: el modelo predice cuándo fructifican, y eso no es una garantía de seguridad. El marzuelo, por ejemplo, es tóxico en crudo. En campo, la identificación la hace una persona con experiencia, no una app.
+
+=== #117  10-02 20:26 ===
+creo que hay otro error en el motor de prediccion pero no lo tengo claro Una helada no debería hacer que el algoritmo ponga la fructificación automáticamente a 0.
+
+Depende mucho de la especie, de la intensidad/duración de la helada y de qué parte del ciclo esté ocurriendo. Para nuestro algoritmo sería mejor tratarla como un evento que modifica el estado, no como un botón de reset.
+
+Por ejemplo:
+
+    Helada ligera → penalización pequeña o incluso prácticamente ninguna en algunas especies.
+
+    Helada moderada → ralentización del desarrollo.
+
+    Helada fuerte/prolongada → penalización importante.
+
+    Helada después de condiciones ya favorables → puede retrasar la aparición, pero no necesariamente elimina el potencial.
+
+    Deshielo posterior + humedad + temperaturas adecuadas → el índice puede recuperarse progresivamente.
+
+Además, distinguiría entre helada del aire y helada del suelo. Para nuestro modelo, la temperatura del suelo a 18 cm es especialmente útil porque puede permanecer relativamente estable mientras la superficie experimenta una helada.
+Yo lo implementaría así
+
+ calcularía el estrés utilizando, por ejemplo:
+
+temperatura mínima
+duración/intensidad estimada de la helada
+temperatura del suelo
+número de noches de helada consecutivas
+temperatura posterior al episodio
+
+ambién añadiría una memoria de la helada:
+
+día -3  → -2 °C
+día -2  → -3 °C
+día -1  → +1 °C
+hoy     → +7 °C
+
+No debería interpretarse igual que:
+
+día -3  → +8 °C
+día -2  → +7 °C
+día -1  → -2 °C
+hoy     → +7 °C
+
+En el primer caso hay un episodio frío prolongado; en el segundo, un evento aislado.
+
+Para el algoritmo que estamos construyendo, añadiría por especie:
+
+frostTolerance
+frostPenalty
+frostRecoveryDays
+soilFrostSensitivity
+
+y, muy importante, la recuperación después de la helada.
+
+Así el modelo podría representar algo como:
+
+condiciones buenas → helada → potencial reducido → deshielo → recuperación progresiva → nueva ventana favorable
+
+en lugar de empezar de cero.
+
+=== #118  10-02 20:53 ===
+quiero que limpies el archivo algoritmo.js quitando los comentarios de fallos del motor anteriores y solo dejes los comentarios del funcionamiento
+
+=== #119  10-02 21:01 ===
+creo que he visto otro problema, la api no devuelva el habitat del punto elegido, por ejemplo puede dar un falso positivo una especie que crezca en pinares y el punto no sea un pinar, no crees?
+
+=== #120  10-02 21:16 ===
+leafleet no da informacion de la flora?
+
+=== #121  10-02 21:20 ===
+ninguna de momento
+
+=== #122  10-02 21:21 ===
+necesitamos la informacion de la vegetacion, has probado en ign de españa ?
+
+=== #123  10-02 21:33 ===
+mejor prueba esto Hay varias opciones, según qué tipo de dato de vegetación necesites.
+
+Cobertura y tipo de vegetación (bosque, matorral, cultivo...)
+
+Mapa Forestal de España (MFE25/MFE50), del MITECO. Es el más detallado para bosques: indica especies dominantes (pinar, encinar, hayedo...). Se ofrece como servicio WMS/WFS y descarga en shapefile, en el Banco de Datos de la Naturaleza.
+SIOSE (IGN/CNIG). Es el mapa de ocupación del suelo de España, con servicios WMS/WFS en el Centro de Descargas del CNIG.
+CORINE Land Cover (Copernicus). Es más grueso (unidades de 25 ha), pero cubre toda Europa y tiene API y WMS.
+
+=== #124  10-02 21:52 ===
+que opinas de esto https://www.datosabiertos.miteco.gob.es/en/acceso.html#
+
+=== #125  10-02 21:57 ===
+aqui puedo entrar https://iepnb.gob.es/visor-bdn/
+
+=== #126  10-02 22:00 ===
+aqui he encontrado algo https://catalogo.datosabiertos.miteco.gob.es/catalogo/openapi/datastore/
+
+=== #127  10-02 22:10 ===
+si
