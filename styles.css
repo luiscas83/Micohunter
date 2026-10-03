@@ -2687,6 +2687,19 @@ body {
     margin-top: 16px;
 }
 
+/* Los h5 son un nivel más dentro de un h4: sirven para partir un factor en
+   dos, como «cómo se aplica» dentro de «compatibilidad de hábitat». Un poco más
+   pequeños y sin el color de los h4, que son títulos de factor y ya llevan
+   color. */
+#guia .card > h5,
+#leyenda .card > h5 {
+    margin: 18px 0 6px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text);
+    opacity: 0.85;
+}
+
 #guia .card > p,
 #leyenda .card > p {
     margin: 0 0 12px;
@@ -3197,3 +3210,256 @@ ul.method-list {
     }
 }
 
+/* ============================================================
+   ETIQUETAS DE HÁBITAT EN LAS TARJETAS
+   ============================================================
+   Cada hábitat de la especie es una etiqueta propia en vez de una línea de
+   texto seguido. El motivo es que las listas son largas: el boleto declara
+   ocho hábitats y la seta de ostra diez, y con guiones sueltos la fila se
+   convertía en un bloque de texto que empujaba el alto de la tarjeta y
+   descuadraba la rejilla de tres columnas.
+
+   Las que coinciden con el punto van destacadas; las demás se atenúan, para
+   que se lea de un vistazo si la especie tiene dónde crecer aquí. */
+.mushroom-cards-grid .condition-item-wrap {
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.mushroom-cards-grid .condition-item-wrap > span:first-child {
+    flex: 0 0 auto;
+    padding-top: 2px;
+}
+
+.mushroom-cards-grid .condition-item-wrap .condition-value {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-end;
+    line-height: 1.7;
+}
+
+.hab-tag {
+    display: inline-block;
+    padding: 1px 7px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.03);
+    font-size: 0.72rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    cursor: help;
+    opacity: 0.62;
+}
+
+/* El que está presente en el punto. El color de fondo es el mismo marrón de
+   la paleta otoñal del sitio, no un color nuevo. */
+.hab-tag.hab-hit {
+    border-color: var(--accent, #8b4513);
+    background: rgba(139, 69, 19, 0.12);
+    font-weight: 600;
+    opacity: 1;
+}
+
+/* En oscuro, el relleno del acierto necesita más contraste para que no se
+   funda con el fondo de la tarjeta. */
+@media (prefers-color-scheme: dark) {
+    .hab-tag {
+        background: rgba(255, 255, 255, 0.05);
+        opacity: 0.55;
+    }
+
+    .hab-tag.hab-hit {
+        background: rgba(230, 160, 90, 0.2);
+        opacity: 1;
+    }
+}
+
+/* ============================================================
+   ESPERA DE CARGA
+   ============================================================
+   Sustituye a las tarjetas mientras llegan las tres fuentes. No se pinta un
+   ranking con ceros porque un 0 % de Precaución se lee como "aquí no hay
+   boleto", que es lo contrario de "todavía no lo sé". */
+.loading-tarjetas {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+    padding: 48px 24px;
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border);
+    border-radius: var(--radius, 12px);
+    color: var(--text, #333);
+}
+
+.loading-spinner {
+    width: 34px;
+    height: 34px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent, #8b4513);
+    border-radius: 50%;
+    animation: loading-giro 900ms linear infinite;
+}
+
+@keyframes loading-giro {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .loading-spinner {
+        animation-duration: 3s;
+    }
+}
+
+.loading-error {
+    font-size: 2rem;
+}
+
+.loading-titulo {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.loading-detalle {
+    margin: 0;
+    max-width: 46ch;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    opacity: 0.85;
+}
+
+.loading-nota {
+    margin: 0;
+    max-width: 52ch;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    opacity: 0.6;
+}
+
+.loading-tarjetas .btn {
+    margin-top: 6px;
+}
+/* ============================================================
+   EJEMPLO NUMÉRICO DE LA METODOLOGÍA
+   ============================================================
+   Tabla de la multiplicación paso a paso. Va como rejilla de cuatro columnas
+   en vez de <table> porque así el CSS de móvil es trivial: se aplila a una
+   columna sin tocar el HTML. El contenido es texto corto, así que no se pierde
+   semántica. */
+.ejemplo-tabla {
+    display: grid;
+    grid-template-columns: 3.2rem 1fr 4rem 5.5rem;
+    gap: 2px 10px;
+    margin: 14px 0;
+    padding: 12px 14px;
+    background: rgba(139, 69, 19, 0.06);
+    border: 1px solid var(--border);
+    border-radius: var(--radius, 10px);
+    font-size: 0.86rem;
+    line-height: 1.5;
+}
+
+.ejemplo-tabla > div {
+    display: contents;
+}
+
+.ejemplo-tabla > div > span {
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(139, 69, 19, 0.12);
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+/* La cabecera no lleva fila propia: se paints con el mismo sistema, pero sin
+   borde para que separe de golpe. */
+.ejemplo-cab > span {
+    font-weight: 700;
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    border-bottom: 1px solid rgba(139, 69, 19, 0.35);
+}
+
+/* El 100 de partida y la nota que arrastra. */
+.ej-n {
+    opacity: 0.6;
+}
+
+/* La nota del factor: es el dato clave, se lee en tabular para que las
+   columnas de números queden alineadas. */
+.ej-v {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+/* El parcial: el resultado de la multiplicación hasta ese momento. */
+.ej-p {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.8;
+}
+
+.ej-total > span {
+    font-weight: 700;
+    border-bottom: none;
+    padding-top: 9px;
+    border-top: 2px solid rgba(139, 69, 19, 0.35);
+}
+
+.ej-total > .ej-p {
+    opacity: 1;
+    color: var(--accent, #8b4513);
+    font-size: 0.95rem;
+}
+
+.ejemplo-tabla sup {
+    font-size: 0.7em;
+}
+
+@media (max-width: 640px) {
+    .ejemplo-tabla {
+        grid-template-columns: 2.6rem 1fr 3.6rem;
+        font-size: 0.8rem;
+    }
+
+    /* En móvil la cuarta columna (parcial) estorba más de lo que aporta: el
+       parcial se deduce de la nota. Se oculta y queda el resto. */
+    .ejemplo-cab > span:last-child,
+    .ej-total > .ej-p {
+        display: none;
+    }
+
+    .ej-total > span:nth-child(2) {
+        font-weight: 700;
+        text-align: right;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .ejemplo-tabla {
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    .ejemplo-tabla > div > span {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .ejemplo-cab > span {
+        border-bottom-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .ej-total > span {
+        border-top-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .ej-total > .ej-p {
+        color: #e6a05a;
+    }
+}

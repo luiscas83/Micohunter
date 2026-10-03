@@ -191,13 +191,24 @@ async function setLocation(lat, lng) {
 }
 
 /**
- * Carga los datos del punto elegido y repinta, en dos fases.
+ * Carga los datos del punto elegido y los pinta de una sola vez.
  *
- * La meteorología de Open-Meteo tarda unos 40 ms, así que se pinta de
- * inmediato. SoilGrids (ISRIC) es otra cosa: se han medido respuestas de más
- * de 40 segundos para un solo píxel, además de su límite de 5 consultas por
- * minuto. Por eso el suelo NO bloquea: la primera pasada usa el suelo vacío,
- * y cuando llega se vuelve a pintar todo.
+ * ANTES: tres pasadas. La primera pintaba las tarjetas con la meteorología y
+ * sin suelo, y el suelo y el hábitat llegaban después y las retocaban. Eso
+ * significaba que el usuario veía un número y, un segundo después, otro
+ * distinto para el mismo sitio, sin explicación. Con el MFE añadido el efecto
+ * era más brutal todavía: un boleto aparecía con el hábitat al 100 % y bajaba a
+ * 5 % cuando se descubría que el punto era una plaza.
+ *
+ * AHORA: las tres peticiones salen a la vez y no se pinta nada hasta que todas
+ * han resuelto o fallen. Mientras se espera, las tarjetas muestran qué falta
+ * por llegar.
+ *
+ * El peaje es el tiempo: SoilGrids puede tardar 30-50 s y es el más lento de
+ * los tres. Se acepta porque el usuario ha pedido número único sobre
+ * rapidez, y porque con los otros servicios en paralelo la espera es la del
+ * más lento, no la suma. Los tres tienen su propio tope (20 s, 15 s, 90 s), así
+ * que un servicio colgado no bloquea la pantalla más que su tope.
  */
 async function refresh() {
   // Testigo de petición. Antes se comparaban las coordenadas de la respuesta
@@ -207,160 +218,121 @@ async function refresh() {
   // testigo no depende de nombres de propiedades.
   const testigo = ++peticionActual;
 
+  // Las coordenadas se fijan aquí. Si el usuario se mueve mientras esperan las
+  // tres, cada una tiene que seguir preguntando por el punto que se pidió, no
+  // por el que hay ahora en selectedLat.
+  const lat = selectedLat;
+  const lng = selectedLng;
+
   showLoading(true);
-  let m;
-  try {
-    m = await conTiempoLimite(
-      meteo(selectedLat, selectedLng, 30),
-      20000,
-      'Open-Meteo no respondió en 20 s'
-    );
-  } catch (e) {
-    console.error(e);
-    if (testigo === peticionActual) {
-      notify(String(e.message || e), 'error');
-      showLoading(false);
-    }
-    return;
-  }
+  renderCargando();
+
+  const pMeteo = conTiempoLimite(
+    meteo(lat, lng, 30), 20000, 'Open-Meteo no respondió en 20 s');
+  const pHabitat = consultarHabitat(lat, lng);
+  const pSuelo = conTiempoLimite(
+    suelo(lat, lng), 90000, 'SoilGrids no respondió en 90 s');
+
+  // Promise.allSettled y no Promise.all: una fuente caída no puede tirar el
+  // punto entero. Cada una trae su estado y su motivo.
+  const [rm, rh, rs] = await Promise.allSettled([pMeteo, pHabitat, pSuelo]);
 
   if (testigo !== peticionActual) return;   // el usuario ya se movió
 
   // A partir de aquí hay datos de este punto en pantalla, así que un clic
   // sobre el mismo sitio ya no tiene que volver a pedir nada.
-  puntoCargado = { lat: selectedLat, lng: selectedLng };
+  puntoCargado = { lat, lng };
 
-  // El hábitat se invalida siempre antes de pedirlo. Si no, al moverse a un
-  // pueblo se pintaría primero con el pinar del punto anterior, que es
-  // exactamente el error que este servicio viene a arreglar.
-  currentHabitat = null;
-  renderVegetacion();
-
-  // Primera pasada: meteorología sí, suelo todavía no.
-  aplicarDatos(m, SIN_SUELO);
-  showLoading(false);
-
-  // Tercera fase: el hábitat. Lanza antes de esperar al suelo porque es mucho
-  // más rápido (~0.4 s) y toca un factor que pesa en el índice. Como el suelo,
-  // no bloquea ni salta el scroll.
-  aplicarHabitat(testigo);
-
-  // Segunda pasada: el suelo, cuando llegue. No bloquea nada.
-  try {
-    const s = await conTiempoLimite(
-      suelo(selectedLat, selectedLng),
-      90000,
-      'SoilGrids no respondió en 90 s'
-    );
-    if (testigo !== peticionActual) return;   // punto cambiado: se descarta
-
-    if (s.ok) {
-      // Repintado quirúrgico: sólo cambia lo que depende del suelo. La
-      // textura y el pH se escriben en sus campos y los factores de hábitat
-      // se recalculan, sin tocar el mapa ni reconstruir todas las tarjetas.
-      actualizarSoloSuelo(s);
-      if (s.parcial) {
-        setSoilHint('Faltan propiedades de SoilGrids: se muestran las disponibles');
-      }
-    } else {
-      marcarSueloFallido(s.error || 'SoilGrids no disponible');
-    }
-  } catch (e) {
-    console.warn(e);
-    if (testigo === peticionActual) marcarSueloFallido(String(e.message || e));
+  if (rm.status === 'rejected') {
+    notify(String(rm.reason?.message || rm.reason), 'error');
+    showLoading(false);
+    renderEstadoSinDatos();
+    return;
   }
-}
+  const m = rm.value;
 
-/**
- * Segunda fase: llega el suelo y sólo se actualiza lo que depende de él.
- *
- * Antes esto llamaba a aplicarDatos(), que rehacía todas las tarjetas con
- * innerHTML. Eso destruía el nodo que tenía el foco y, con ello, la posición
- * del scroll: si habías bajado a mirar las tarjetas, la página te volvía
- * arriba de golpe. Como ISRIC puede tardar 30-50 s, el salto era muy visible.
- */
-function actualizarSoloSuelo(s) {
-  const m = currentMeteo;
-  if (!m) return;
+  // El hábitat puede fallar sin que se caiga el resto. Si falla, se usa la
+  // heurística de coordenadas, que es peor pero no es inventar un bosque.
+  if (rh.status === 'fulfilled') {
+    currentHabitat = rh.value;
+  } else {
+    console.warn('Hábitat no disponible:', rh.reason);
+    currentHabitat = {
+      vegetacion: inferirVegetacion(lat, lng),
+      urbano: false,
+      fuente: 'sin_datos',
+      arboles: [],
+      detalles: {},
+      error: String(rh.reason?.message || rh.reason),
+    };
+  }
 
-  currentCtx.suelo = s;
-  currentCtx.terreno.ph = s.ok ? s.ph : null;
-  currentCtx.terreno.humedad = s.phGrupo === 'calizo' ? 'seco' : s.ok ? 'normal' : null;
-  currentRanking = ranking(currentCtx);
+  let s;
+  if (rs.status === 'fulfilled') {
+    s = rs.value;
+  } else {
+    console.warn('Suelo no disponible:', rs.reason);
+    s = { ...SIN_SUELO, pendiente: false, error: String(rs.reason?.message || rs.reason) };
+  }
 
-  set('soilTypeValue', s.textura ? capitalize(s.textura) : 'no disponible');
-  set('phValue', s.ph != null ? s.ph.toFixed(1) : '—');
-  renderTerreno(m, s);
-  renderAnalisis();
-  refrescarFactoresHabitat();
+  // Una sola pasada con todo ya dentro. Aquí es donde antes se pintaba y luego
+  // se corrigía tres veces.
+  aplicarDatos(m, s);
+
+  if (rs.status === 'rejected') {
+    marcarSueloFallido(s.error || 'SoilGrids no disponible');
+  } else if (s.ok) {
+    if (s.parcial) setSoilHint('Faltan propiedades de SoilGrids: se muestran las disponibles');
+  }
+
+  showLoading(false);
   ajustarMapa();
 }
 
-/** Reescribe sólo el factor de hábitat de las tarjetas ya pintadas. */
-function refrescarFactoresHabitat() {
-  document.querySelectorAll('.mushroom-cards-grid .mushroom-card').forEach(card => {
-    const nombre = card.querySelector('.mushroom-name');
-    if (!nombre) return;
-    const sp = SPECIES.find(x => x.es === nombre.textContent);
-    if (!sp) return;
-    const r = currentRanking.find(x => x.sp.key === sp.key);
-    if (!r) return;
-
-    // Factor de hábitat dentro de la rejilla de detalles
-    const items = [...card.querySelectorAll('.mushroom-detail-item')];
-    const itemHab = items.find(el => el.querySelector('.mushroom-detail-label')
-      ?.textContent.startsWith('Factor hábitat'));
-    if (itemHab) {
-      itemHab.querySelector('.mushroom-detail-value').textContent =
-        `${Math.round(r.detalle.habFactor * 100)}%${r.detalle.habConfuso ? ' (bajo)' : ''}`;
-    }
-
-    // El factor de suelo también cambia cuando llega SoilGrids, así que esta
-    // actualización quirúrgica tiene que reescribirlo o se quedaría con el
-    // "sin dato de pH" del primer pintado.
-    const itemSuelo = items.find(el => el.querySelector('.mushroom-detail-label')
-      ?.textContent.startsWith('Factor de suelo'));
-    if (itemSuelo) {
-      itemSuelo.querySelector('.mushroom-detail-value').textContent =
-        r.detalle.sueloConocido
-          ? `${Math.round(r.detalle.sueloFactor * 100)}% · ${r.detalle.sueloEtiqueta}`
-          : 'sin dato de pH';
-    }
-
-    // La helada se recalcula con el mismo refresco, así que también hay que
-    // reescribir su fila o se quedaría con lo del primer pintado.
-    const itemHelada = items.find(el => el.querySelector('.mushroom-detail-label')
-      ?.textContent.startsWith('Helada reciente'));
-    if (itemHelada) {
-      itemHelada.querySelector('.mushroom-detail-value').textContent =
-        textoHelada(r.detalle);
-    }
-
-    // Etiqueta de hábitat estimado
-    const cond = [...card.querySelectorAll('.condition-item')]
-      .find(el => el.textContent.includes('Hábitat estimado'));
-    if (cond) {
-      const v = cond.querySelector('.condition-value');
-      if (v) v.textContent = cap(r.detalle.habEtiqueta) || '—';
-    }
-
-    // El índice y el anillo cambian con el pH, así que también se actualizan
-    const pctEl = card.querySelector('.percentage');
-    if (pctEl) pctEl.textContent = Math.round(r.I);
-    const anillo = card.querySelector('.ring-fill');
-    if (anillo) {
-      const C = 2 * Math.PI * 45;
-      anillo.style.strokeDashoffset = C - (r.I / 100) * C;
-    }
-    const nivel = nivelTexto(r.I);
-    const banner = card.querySelector('.prediction-banner');
-    if (banner) {
-      banner.className = `prediction-banner ${nivel.clase}`;
-      const t = banner.querySelector('.prediction-text');
-      if (t) t.textContent = nivel.texto;
-    }
-  });
+/**
+ * Estado de espera: las tarjetas dicen qué falta por llegar en vez de enseñar
+ * un número que luego va a cambiar.
+ *
+ * Se sustituye el contenido del grid, no se pinta el ranking entero con ceros:
+ * un 0 % de Precaución se lee como "aquí no hay boleto", que es justo lo
+ * contrario de lo que significa "todavía no lo sé".
+ */
+function renderCargando() {
+  // Se escribe DENTRO de #mushroomCardsContainer, no sustituyendo el
+  // dashboard-grid entero. Al hacerlo bien, renderTarjetas() encuentra el
+  // contenedor que ya existe y sólo rellena su interior, así que el estado de
+  // espera desaparece solo cuando llegan los datos. Sustituyendo el grid
+  // entero se destruía el nodo, y renderTarjetas() lo recreaba como hermano,
+  // dejando los dos a la vez en pantalla.
+  const box = document.getElementById('mushroomCardsContainer');
+  if (!box) return;
+  const visibles = selectedMushrooms.length;
+  box.innerHTML = `<div class="loading-tarjetas">
+    <div class="loading-spinner"></div>
+    <p class="loading-titulo">Consultando el punto…</p>
+    <p class="loading-detalle">Meteorología, suelo y hábitat del bosque.
+      No se pinta ninguna predicción hasta tener los tres, para que el número
+      que veas sea el final y no uno provisional.</p>
+    <p class="loading-nota">El suelo (SoilGrids) suele ser el lento: puede
+      tardar 30-50 segundos. Los otros dos llegan en menos de un segundo.</p>
+    ${visibles ? `<p class="loading-nota">${visibles} especies seleccionadas</p>` : ''}
+  </div>`;
 }
+
+/** El punto se quedó sin datos: meteorología caída. */
+function renderEstadoSinDatos() {
+  const box = document.getElementById('mushroomCardsContainer');
+  if (!box) return;
+  box.innerHTML = `<div class="loading-tarjetas">
+    <div class="loading-error">⚠️</div>
+    <p class="loading-titulo">No se pudo consultar el punto</p>
+    <p class="loading-detalle">Open-Meteo no respondió. Los datos del terreno
+      quedan sin consultar, así que no se pinta ninguna predicción: sin la
+      meteorología no hay nada que estimar.</p>
+    <button class="btn" onclick="refresh()">Reintentar</button>
+  </div>`;
+}
+
 
 /** Placeholder de suelo mientras ISRIC responde. */
 const SIN_SUELO = {
@@ -523,6 +495,55 @@ const capitalize = s => s ? s[0].toUpperCase() + s.slice(1) : s;
  * capitaliza sólo al pintar; el valor interno no se toca, porque forma parte
  * de la comparación de compatibilidad.
  */
+/**
+ * Lista completa de hábitats de la especie, con los que han coincidido en el
+ * punto resaltados.
+ *
+ * ANTES aquí ponía una sola palabra: `habEtiqueta`, que es el primer hábitat de
+ * la lista que coincide con el punto, o "no corresponde" si no coincide. Eso
+ * era un recorte sin aviso: en una ficha con ocho hábitats de los que en un
+ * bosque de montaña encajan cuatro, la tarjeta enseñaba uno y el usuario no
+ * tenía forma de saber que había más.
+ *
+ * Ahora salen todos, y en el atributo `title` de cada uno está la especie
+ * arbórea que da el MFE cuando el punto está en un bosque de verdad, que es
+ * información que antes no se mostraba en la tarjeta.
+ *
+ * Los hábitats con coincidencia llevan la clase `hab-hit` y se leen en negrita
+ * a simple vista. Los que no, en tono suave. Con eso se ve de un vistazo si la
+ * especie tiene dónde crecer, en vez de tener que cruzarlo con el porcentaje.
+ */
+function listaHabitats(sp, ctx) {
+  const veg = (ctx?.terreno?.vegetacion) || [];
+  const arboles = new Map(
+    (currentHabitat?.arboles || []).map(a => [a.habitat, a.especie])
+  );
+
+  if (!sp.habitat || !sp.habitat.length) {
+    return '<span class="hab-texto">—</span>';
+  }
+
+  const partes = sp.habitat.map(h => {
+    const hit = veg.includes(h);
+    const especie = arboles.get(h);
+    const title = hit
+      ? (especie
+        ? `Aquí hay ${cap(h)}: ${especie}`
+        : `Aquí hay ${cap(h)}: coincide con el punto`)
+      : `Aquí no hay ${cap(h)}`;
+    return `<span class="hab-tag${hit ? ' hab-hit' : ''}" title="${escaparHtml(title)}">`
+      + `${escaparHtml(cap(h))}</span>`;
+  });
+
+  return partes.join('');
+}
+
+/** Cuántos de los hábitats de la especie están presentes en el punto. */
+function habitatsCoincidentes(sp, ctx) {
+  const veg = (ctx?.terreno?.vegetacion) || [];
+  return (sp.habitat || []).filter(h => veg.includes(h)).length;
+}
+
 function cap(s) {
   if (!s) return s;
   // Los hábitats son claves internas con guion bajo ("bosque_mixto",
@@ -531,50 +552,6 @@ function cap(s) {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-/**
- * Tercera fase: llega el hábitat real y sólo se actualiza lo que depende de él.
- *
- * El repintado es quirúrgico por el mismo motivo que el del suelo: si se
- * llamara a aplicarDatos(), las tarjetas se reconstruían con innerHTML y la
- * página volvía arriba, y el MFE contesta en cuanto contesta.
- *
- * Lo importante para el usuario es que este repintado CORRIGE lo que se había
- * pintado antes con la heurística: es normal que un boletus aparezca primero
- * con factor de hábitat del 100 % y baje a 5 % un segundo después, porque se
- * ha descubierto que ese punto es una plaza.
- */
-async function aplicarHabitat(testigo) {
-  const lat = selectedLat;
-  const lng = selectedLng;
-  let h;
-  try {
-    h = await consultarHabitat(lat, lng);
-  } catch (e) {
-    console.warn('Hábitat no disponible:', e);
-    return;
-  }
-  if (testigo !== peticionActual) return;   // el usuario ya se movió
-
-  currentHabitat = h;
-
-  // Si el MFE respondió y no encontró árbol, la heurística por coordenadas no
-  // puede aportar los bosques que soltaba: ahora sabemos que aquí no hay.
-  // Sólo se conservan sus hábitats abiertos, y sólo si el MFE no dijo nada.
-  const veg = h.vegetacion.length
-    ? h.vegetacion
-    : h.fuente.startsWith('MFE') && !h.urbano
-      ? []
-      : inferirVegetacion(lat, lng);
-
-  if (!currentCtx) return;
-  currentCtx.terreno.vegetacion = veg;
-  currentCtx.terreno.urbano = !!h.urbano;
-  currentRanking = ranking(currentCtx);
-
-  refrescarFactoresHabitat();
-  renderVegetacion();
-  renderAnalisis();
-}
 
 /**
  * Dónde crece lo que hay en el punto y de dónde sale el dato.
@@ -779,9 +756,11 @@ function tarjeta(r) {
         <span>🎯 T° óptima:</span>
         <span class="condition-value">${sp.tOpt}°C</span>
       </div>
-      <div class="condition-item">
-        <span>🌲 Hábitat estimado:</span>
-        <span class="condition-value">${cap(r.detalle.habEtiqueta) || '—'}</span>
+      <div class="condition-item condition-item-wrap">
+        <span>🌲 Hábitat:</span>
+        <span class="condition-value">
+          ${listaHabitats(sp, currentCtx)}
+        </span>
       </div>
       <div class="condition-item">
         <span>💧 Lluvia efectiva:</span>
@@ -1283,6 +1262,8 @@ function initMushroomSelector() {
           <p><strong>Grados día necesarios:</strong> ${sp.gddNeed}</p>
           <p><strong>Ventana hídrica:</strong> ${sp.L} días · óptima ${sp.Ro} mm</p>
           <p><strong>Hábitat:</strong> ${escaparHtml(sp.habitat.map(cap).join(', '))}</p>
+          ${sp.confusion ? `<p><strong>Con qué se confunde:</strong> ${escaparHtml(sp.confusion)}</p>` : ''}
+          ${sp.taxonomiaAviso ? `<p><strong>Taxonomía:</strong> ${escaparHtml(sp.taxonomiaAviso)}</p>` : ''}
         </div>
         <p class="card-evidencia">
           <span class="evidencia-badge ev-${sp.evidencia || 'estimado'}">${EVIDENCIA_LABELS[sp.evidencia] || EVIDENCIA_LABELS.estimado}</span>
@@ -1625,6 +1606,9 @@ const MUSHROOM_META = {
   hongo_verano: { icon: '🟨', color: '#c9a227' },
   boleto_bronce: { icon: '⚫', color: '#4e342e' },
   seta_cardo: { icon: '⚪', color: '#d7ccc8' },
+  // El violeta es lo que la distingue en el campo; el gris azulado del color
+  // mantiene la coherencia de las tarjetas con el resto de la paleta.
+  pie_azul: { icon: '🟣', color: '#7e57c2' },
 };
 // Lista completa, por si algún otro sitio la recorre entera.
 const ZONAS_REFERENCIA = [...ZONAS_MADRID, ...ZONAS_ESPANA];

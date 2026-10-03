@@ -172,6 +172,32 @@
       este suelo, la seta de pino va treinta puntos por delante que el rebozuelo, y
       que en noviembre lo es la trompetilla. Sirve para planificar la salida, no para
       prometer el hallazgo.</p>
+
+      <h4>El algoritmo en cinco pasos</h4>
+      <p>Si sólo te quedas con una cosa de este apartado, que sea esta. Cada vez que
+      pulsas el mapa ocurre exactamente esto, en este orden:</p>
+      <ol class="method-list">
+        <li><strong>Se pregunta al terreno qué hay en el punto.</strong> No se deduce
+          de las coordenadas: se consulta el Mapa Forestal de España para saber qué
+          bosque hay, y si no hay bosque, se mira si es una plaza o un campo. Y se
+          piden 31 días de meteorología real y el suelo a 18 cm.</li>
+        <li><strong>Cada una de las 19 especies recibe ocho notas</strong>, cada una
+          de 0 a 1. Una nota es «¿el suelo está a la temperatura que necesitas?»,
+          otra «¿ha llovido lo suficiente esta semana?», otra «¿hay aquí el árbol
+          con el que hacer la micorriza?».</li>
+        <li><strong>Las ocho notas se multiplican.</strong> No se suman. Si una sola
+          vale 0, el total es 0 aunque las otras siete sean perfectas.</li>
+        <li><strong>El producto se escala de 0 a 100</strong> y se traduce a cuatro
+          niveles: muy favorable, favorable, posible, desfavorable.</li>
+        <li><strong>Las especies se ordenan</strong> de mayor a menor, y se pinta una
+          tarjeta por cada una con el número, su nota de hábitat y el porqué.</li>
+      </ol>
+      <p class="hint">El paso 3 es el que más sorprende y el más importante.
+      Multiplicar significa que <strong>el peor factor manda</strong>, y es
+      deliberado: una seta no fructifica con una nota a cero aunque las otras siete
+      sean excelentes. Si sumáramos, un boleto en un descampado con una semana
+      perfecta de calor y lluvia saldría con buena nota, y eso no pasa: no tiene
+      árbol con el que hacer la micorriza.</p>
     </div>
 
     <!-- ───────────── 2. DATOS ───────────── -->
@@ -189,12 +215,35 @@
           del suelo en el horizonte de 5-15 cm, rejilla de 250 m. Es un mapa
           interpolado, no una medición de campo: el valor es el estimado para el
           píxel, no el del suelo que tienes delante de la bota.</li>
+        <li><strong>Mapa Forestal de España (MFE, MITECO)</strong> — dice qué
+          <em>tipo de bosque</em> hay en el punto y qué árboles lo forman. Es la
+          fuente más importante de las cinco, y la que hace que el factor de
+          hábitat signifique algo. Se consulta capa por capa («¿hay hayedo aquí?»,
+          «¿hay pinar de pinaster aquí?», unas 30 a la vez) y una puede devolver
+          varias a la vez cuando el bosque es mixto: pinar más hayedo en la misma
+          parcela. Devuelve además el nombre científico del árbol dominante, que es
+          lo que aparece al pasar el ratón por una etiqueta de hábitat de la tarjeta.</li>
+        <li><strong>OpenStreetMap vía Overpass</strong> — sólo para un caso: cuando el
+          MFE dice que en el punto no hay bosque, hace falta distinguir entre un
+          campo y una plaza. Se cuenta cuántos edificios hay en 150 m a la redonda.
+          Diez o más significa núcleo urbano. Deliberadamente no se usa para el
+          bosque, porque donde OSM es excelente —las ciudades— es justo donde no
+          hay setas, y donde hay pinares casi no tiene nada cartografiado.</li>
         <li><strong>OpenStreetMap / Nominatim</strong> — toponimia y mapa. Si el
           servicio no responde, la app sigue funcionando y muestra coordenadas en
           lugar del nombre del pueblo.</li>
         <li><strong>Bibliografía micológica</strong> — temporada de fructificación,
-          árboles hospedantes, sustrato y comestibilidad de cada especie.</li>
+          árboles hospedantes, sustrato y comestibilidad de cada especie. La fuente
+          primaria es el libro <em>Setas de España y Europa</em> de Hans E. E. Laux
+          (TIKAL, 2012); cada ficha cita también el contraste con Waldschatzfinder y
+          Wikipedia. Está todo detalhado en el <a href="#">apartado 4</a>.</li>
       </ul>
+      <p class="hint">Las tres primeras son medidas o cartografía real. La cuarta es
+      una fuente secundaria: el GeoServer del IEPNB que sirve el MFE tiene un
+      problema conocido —el parámetro <code>bbox</code> de WFS no filtra y hay que
+      usar <code>CQL_FILTER=BBOX(geom, …)</code>—, así que la consulta está escrita
+      a mano y cada capa tiene un tope de 12 segundos para que una que se cuelgue
+      no tumbe a las otras treinta.</p>
       <p class="hint">Open-Meteo ya corrige la temperatura por la elevación del punto
       de la rejilla (gradiente de 0,0065 °C/m). Aplicar ese gradiente otra vez sería
       contarlo dos veces y, en un punto de 2400 m, restar 12 °C de más, así que el
@@ -271,22 +320,53 @@
       robledales de León, donde sí sale hasta febrero.</p>
 
       <h4>🌲 F<sub>hábitat</sub> · Compatibilidad de hábitat</h4>
-      <p>Compara la cobertura vegetal estimada del punto con los hábitats de la
-      especie. Los hábitats están ordenados por frecuencia, así que los dos primeros
-      son los principales.</p>
+      <p>Es el factor que más ha cambiado de los ocho, y el que más pesa. Antes se
+     respondía a la pregunta «¿qué bosque debería haber aquí?» a partir de la
+      latitud y la longitud, con seis condicionales: toda la franja entre los 40,5
+      y los 42,5 grados devolvía «pinar, robledal, bosque mixto». Eso hacía que un
+      boleto Puntara con el 100 % de compatibilidad en la Plaza Mayor, porque las
+      coordenadas no distinguen un pinar de una calle.</p>
+      <p>Ahora se pregunta al <strong>Mapa Forestal de España</strong>. La consulta
+      funciona así, y conviene entenderlo porque explica lo que ves en la tarjeta:
+      se mandan a la vez unas treinta preguntas del tipo «¿cubre un hayedo el punto
+      que estoy mirando, en un radio de 120 metros?», una por cada tipo de bosque que
+      distingue el MFE. Las que reciben respuesta son las que están ahí. Si dos
+      coinciden a la vez —un pinar con hayedos entre medias— la tarjeta enseña las
+      dos, y al pasar el ratón por cada una aparece el árbol que las forma.</p>
+      <p>Cuando ninguna coincide, el MFE ha dicho que allí no hay árbol, y eso ya es
+      información. Sólo entonces se consulta OpenStreetMap para decidir entre dos
+      cosas muy distintas: un campo de cereal, donde la seta de pradera sí sale, y
+      una plaza, donde no sale nada. Diez o más edificios en 150 metros es núcleo
+      urbano.</p>
+      <p class="hint">Esto no es perfecto. El MFE es una parcelaria: mide lo que había
+      cuando se levantó, y no recoge un pinar joven ni una repoblación de diez años.
+      Y cuando los servicios se caen, la aplicación vuelve a la heurística de
+      coordenadas y lo dice en la tarjeta con «(estimada)».</p>
+
+      <h5>Cómo se aplica</h5>
+      <p>Compara lo que hay en el punto con los hábitats de la especie. Los hábitats
+      están ordenados por frecuencia, así que los dos primeros son los principales.</p>
       <ul class="method-list">
         <li>coincide con un hábitat principal → 100 %</li>
         <li>coincide con uno secundario → 60 %</li>
         <li>no coincide y la especie no está confinada → 25 %</li>
         <li>no coincide y está confinada (níscalo a pino, hongo de verano al roble) → 5 %</li>
       </ul>
-      <p>Encima se aplican cuatro correcciones por grupo, todas multiplicativas:</p>
+      <p>Encima se aplican las siguientes correcciones por grupo, todas
+      multiplicativas salvo la última:</p>
       <ul class="method-list">
         <li>Sin dato de cobertura → <strong>0,70</strong> fijo, y la tarjeta lo dice con
           «sin datos de cobertura». No es un castigo: es la ausencia de información, y se
           trata distinto del desacuerdo.</li>
         <li>Especie pratense en bosque de montaña → ×0,45. La seta de pradera no sube al
-          hayedo, ni aunque el punto esté dentro de la banda de la seta de ostra.</li>
+          hayedo, ni aunque el punto esté dentro de la banda de la seta de ostra. El
+          criterio es <em>de qué se alimenta</em>, no si es saprofita: la seta de pie
+          azul descompone hojarasca, o sea que es saprofita y vive en el bosque, así que
+          esta penalización <strong>no</strong> se le aplica.</li>
+        <li>Entorno urbano → <strong>0</strong>, no una corrección. Una micorrícica o una
+          descomponedora de hojarasca necesitan un árbol o un suelo con restos vegetales que
+          no hay en una plaza. Es el único caso donde el hábitat anula en lugar de
+          degradar, y se marca consultando la densidad de edificios en OpenStreetMap.</li>
         <li>Ectomicorrízico en pradera abierta → ×0,50. Un boleto necesita un árbol con el
           que hacer la micorriza; en un descampado no hay hospedante aunque el suelo y la
           temperatura sean clavados.</li>
@@ -295,12 +375,16 @@
         <li>Especie lignícola sin madera muerta en el punto → ×0,15. Solo le afecta a la
           seta de ostra, la única con el distintivo <code>substrate: madera</code>.</li>
       </ul>
+      <p class="hint">Las correcciones existen porque el modelo toma una decisión de
+      diseño que conviene no pasar por alto: el factor de hábitat <strong>degrada,
+      no veta</strong>. Salvo en núcleo urbano, una especie que no encaja no llega
+      nunca a cero; baja a 25 % o a 5 %, pero puede seguir apareciendo. Es
+      deliberado, porque «no crece en un hayedo» es una regla y «es más raro en un
+      hayedo» es una observación. Si fuera un veto duro, un solo dato equivocado
+      borraría la especie entera de la pantalla.</p>
       <p>El pH no interviene aquí: se trata por separado, en
       <a href="#">F<sub>suelo</sub></a>, porque es una variable continua y no un
       condicionante de hábitat.</p>
-      <p class="hint">Deliberadamente <strong>degrada</strong> en vez de vetar. La
-      vegetación se infiere por tablas de coordenadas, así que un 0 duro produciría
-      «gírgola: requiere tronco» en cualquier punto que no caiga en la tabla.</p>
 
       <h4>🪨 F<sub>suelo</sub> · Factor de suelo por pH</h4>
       <p>Compara el <em>pH</em> del SoilGrids con el que prefiere la especie. No es un
@@ -309,17 +393,24 @@
       especializados y del 70 % en las indiferentes. Nunca llega a cero: un pH
       equivocado penaliza, no anula.</p>
       <ul class="method-list">
-        <li>Acidófilas — óptimo 5,2 con meseta de ±1,5.</li>
-        <li>Alcalinófilas — óptimo 7,6 con meseta de ±1,4. Solo hay una especie con
-          este distintivo: el marzuelo, que vive sobre fresnedal, olmedal y frutal, y en
-          España sobre las Marguerides y las riberas con suelo calizo.</li>
-        <li>Indiferentes — óptimo 6,8 con meseta de ±1,8. Son las once restantes: cinco
-          ectomicorrízicas y seis saprofitas de distintos tipos.</li>
+        <li>Acidófilas — óptimo 5,2 con meseta de ±1,5, suelo 0,60. Son cinco:
+          boleto, capuchina, rúsula comestible, boleto de pino y boleto bronce. Las
+          cinco son ectomicorrízicas de pinar o de suelo silíceo.</li>
+        <li>Alcalinófilas — óptimo 7,6 con meseta de ±1,4, suelo 0,60. Son dos: el
+          marzuelo, que en España vive sobre las Marguerides y las riberas con suelo
+          calizo, y el <strong>perrechico</strong>, que Wikipedia describe como
+          «common in grasslands in Europe, often in areas rich in limestone».</li>
+        <li>Indiferentes — óptimo 6,8 con meseta de ±1,8, suelo 0,70. Son las once
+          restantes, entre ectomicorrízicas y saprofitas de distintos tipos.</li>
+        <li><strong>De pH tolerante</strong> — óptimo 5,6 pero con meseta ancha de
+          ±3,4 y suelo 0,85. <strong>Solo el níscalo</strong>, y existe por un
+          motivo concreto: Laux lo sitúa «sobre suelos neutros o calizos», pero en
+          los pinares ácidos de montaña se da mejor que en ninguna parte. Con los
+          otros tres perfiles había que elegir entre dos cosas que son las dos
+          ciertas: marcarlo acidófilo le restaba puntos en un pH 7,8 donde crece
+          bien, y marcarlo indiferente perdía la preferencia. La meseta ancha
+          mantiene el óptimo ácido y hace que de pH 2,2 a 9,0 no penalice.</li>
       </ul>
-      <p>Las seis acidófilas son las que la ficha marca con
-      <code>acidofilo</code>: boleto, níscalo, capuchina, rúsula comestible, boleto de
-      pino y boleto bronce. Las seis son ectomicorrízicas de pinar o de suelo silíceo, y
-      todas están citadas en la bibliografía sobre suelos ácidos.</p>
       <p>Si SoilGrids no responde, el factor vale 1 y la tarjeta lo dice con
       «sin dato de pH»: se pierde un dato, no se inventa.</p>
 
@@ -404,14 +495,14 @@
     <!-- ───────────── 4. PROCEDENCIA ───────────── -->
     <div class="card">
       <h3>4 · De dónde sale cada parámetro</h3>
-      <p>El modelo usa 18 especies y unas 220 constantes numéricas. Este apartado dice, una
+      <p>El modelo usa 19 especies y unas 230 constantes numéricas. Este apartado dice, una
       por una, de dónde sale cada grupo y <strong>cuál está medido y cuál está deducido</strong>.
       Es la parte menos atractiva del documento y la más importante: sin ella no se puede
       juzgar cuánto vale el índice.</p>
 
       <h4>4.1 · Umbrales térmicos · <code>tBase</code> <code>tOpt</code> <code>tMax</code> <code>tCrit</code></h4>
       <p>Son los cuatro números que definen el rango en que una especie puede fructificar, y
-      están en cada ficha. De los 144 umbrales de las 18 especies, <strong>uno solo está
+      están en cada ficha. De los 152 umbrales de las 19 especies, <strong>uno solo está
       medido</strong>: el óptimo del boleto.</p>
       <ul class="method-list">
         <li><em>Boletus edulis</em> — <code>tOpt</code> = 13,2 °C. Medido en campo con un
@@ -429,8 +520,14 @@
       <p>Los valores se reparten en tres bloques térmicos que se leen bien en la tabla:</p>
       <ul class="method-list">
         <li><strong>Especies de invierno</strong>, con <code>tBase</code> ≤ 7 y
-          <code>tCrit</code> ≤ 3: seta de ostra, perrechico, capuchina, gula de monte.
-          toleran el frío y la helada.</li>
+          <code>tCrit</code> ≤ 3: seta de ostra, capuchina, gula de monte y seta de
+          pie azul. toleran el frío y la helada.</li>
+        <li><strong>El perrechico ya no está en este grupo.</strong> Lo estaba porque
+          su <code>tBase</code> es 6, pero su temporada documentada es de primavera
+          (abril-junio en Laux, «April to June» en Wikipedia, mayo-junio en
+          Waldschatzfinder, y el <em>perretxiko</em> se come el 28 de abril en el
+          País Vasco). Es el caso más claro despecies con parámetros térmicos y
+          ventana de temporada desalineados, y está anotado en Limitaciones.</li>
         <li><strong>Especies de otoño</strong>, la mayoría, con <code>tBase</code> entre 7 y
           10 y <code>tCrit</code> entre 2 y 6.</li>
         <li><strong>Especies termófilas de verano</strong>, con <code>tBase</code> ≥ 11:
@@ -887,16 +984,20 @@
       funcional, no de mediciones de setas sobre suelos de pH conocido.</p>
       <ul class="method-list">
         <li><strong>Acidófilas</strong> — óptimo 5,2, meseta de ±1,5 (de 3,7 a 6,7 sin
-          penalización), suelo 0,60.</li>
-        <li><strong>Alcalinófilas</strong> — óptimo 7,6, meseta de ±1,4, suelo 0,60. Solo el
-          marzuelo.</li>
+          penalización), suelo 0,60. Cinco especies.</li>
+        <li><strong>Alcalinófilas</strong> — óptimo 7,6, meseta de ±1,4, suelo 0,60. Dos:
+          marzuelo y perrechico.</li>
         <li><strong>Indiferentes</strong> — óptimo 6,8, meseta de ±1,8 (de 5,0 a 8,6 sin
-          penalización), suelo 0,70.</li>
+          penalización), suelo 0,70. Once especies.</li>
+        <li><strong>De pH tolerante</strong> — óptimo 5,6, meseta de ±3,4 (de 2,2 a 9,0 sin
+          penalización), suelo 0,85. Solo el níscalo.</li>
       </ul>
       <p>Fuera de la meseta, el factor decae un punto por cada 2,2 unidades de pH. El suelo
       está en 0,60 para las especies especializadas y en 0,70 para las indiferentes, porque
       un error de pH en una acidófila especializada es mucho más determinante que en una
-      especie que no lo tiene en cuenta.</p>
+      especie que no lo tiene en cuenta. El níscalo baja a 0,85 porque la fuente dice que
+      tolera los suelos calizos: penalizarlo fuerte ahí sería inventarse una
+      restricción que no existe.</p>
 
       <h4>4.7 · Los pesos de compatibilidad de hábitat</h4>
       <p>El factor de hábitat compara la cobertura vegetal estimada del punto con la lista de
@@ -961,25 +1062,85 @@
       clasificación.</p>
       <p class="hint">El único <em>anular</em> del modelo es la helada reciente en el
       suelo. Todo lo demás pondera.</p>
+
+      <h4>Un caso real, paso a paso</h4>
+      <p>Números sacados de una ejecución real del modelo, no inventados para
+      ilustrar. <em>Boletus edulis</em> en un hayedo con pinar a 1100 m, un día de
+      octubre: suelo a 17,5 °C, pH 6,1, 30,2 mm de lluvia efectiva en los últimos
+      11 días y 239 grados-día acumulados desde que el suelo pasó de 8 °C.</p>
+      <div class="ejemplo-tabla">
+        <div class="ejemplo-cab">
+          <span>Factor</span><span>Lo que mide</span><span>Nota</span><span>Parcial</span>
+        </div>
+        <div><span class="ej-n">100</span><span>se parte de 100</span><span>—</span><span class="ej-p">100</span></div>
+        <div><span>S</span><span>suelo a 17,5 °C, dentro de su rango</span><span class="ej-v">0,930</span><span class="ej-p">93,0</span></div>
+        <div><span>H<sup>0,5</sup></span><span>30,2 mm de lluvia efectiva de 40 posibles</span><span class="ej-v">0,868</span><span class="ej-p">80,7</span></div>
+        <div><span>A</span><span>239 de 180 grados-día: calor más que suficiente</span><span class="ej-v">1,000</span><span class="ej-p">80,7</span></div>
+        <div><span>T</span><span>octubre está dentro de su temporada</span><span class="ej-v">1,000</span><span class="ej-p">80,7</span></div>
+        <div><span>F<sub>hábitat</sub></span><span>el punto es hayedo + pinar, y son hábitats suyos</span><span class="ej-v">1,000</span><span class="ej-p">80,7</span></div>
+        <div><span>F<sub>suelo</sub></span><span>pH 6,1 dentro de su meseta</span><span class="ej-v">1,000</span><span class="ej-p">80,7</span></div>
+        <div><span>F<sub>altitud</sub></span><span>1100 m dentro de su banda de 800 a 2200</span><span class="ej-v">1,000</span><span class="ej-p">80,7</span></div>
+        <div><span>F<sub>helada</sub></span><span>sin heladas recientes</span><span class="ej-v">1,000</span><span class="ej-p">80,7</span></div>
+        <div class="ej-total"><span>I</span><span>resultado</span><span>—</span><span class="ej-p">80,7 · Muy favorable</span></div>
+      </div>
+      <p>La columna de la derecha es la que explica el modelo: cada nota multiplica
+      la que había. La nota S bajó el 100 a 93, la de lluvia lo bajó a 81, y las
+      otras cinco no tocaron nada porque estaban perfectas.</p>
+
+      <h4>Por qué se multiplica y no se suma</h4>
+      <p>El mismo día, con la misma meteorología y en el mismo metro cuadrado de
+      España, cambiando sólo lo que hay plantado:</p>
+      <div class="ejemplo-tabla">
+        <div class="ejemplo-cab"><span>Dónde</span><span>F<sub>hábitat</sub></span><span>Índice</span><span>Nivel</span></div>
+        <div><span>Boleto, en hayedo + pinar</span><span class="ej-v">1,00</span><span class="ej-p">80,7</span><span>Muy favorable</span></div>
+        <div><span>Rebozuelo, en hayedo + pinar</span><span class="ej-v">1,00</span><span class="ej-p">98,4</span><span>Muy favorable</span></div>
+        <div><span>Boleto, en pradera</span><span class="ej-v">0,13</span><span class="ej-p">10,1</span><span>Desfavorable</span></div>
+        <div><span>Rebozuelo, en pradera</span><span class="ej-v">0,13</span><span class="ej-p">12,3</span><span>Desfavorable</span></div>
+        <div><span>Boleto, en núcleo urbano</span><span class="ej-v">0,00</span><span class="ej-p">0,0</span><span>Desfavorable</span></div>
+      </div>
+      <p>Cuatro de esas cinco filas son desfavorables con un cielo perfecto. No les
+      falta calor ni les falta agua: les falta el árbol. Si los factores se sumaran,
+      la nota de hábitat apenas pesaría y las cinco filas saldrían parecidas.</p>
+      <p class="hint">Fíjate en que el rebozuelo puntúa <em>más</em> que el boleto en
+      ese hayedo (98 contra 81). No es un error: el rebozuelo tiene su óptimo térmico
+      más bajo y su reserva hídrica más fácil de llenar, así que con esa semana
+      concreta le va mejor. Es exactamente el tipo de ordenación que el modelo
+      pretende resolver.</p>
     </div>
 
     <!-- ───────────── 5. PROCEDENCIA ───────────── -->
     <div class="card">
       <h3>6 · Cómo se ejecuta</h3>
+      <p>Todo lo que sigue ocurre en cada pulsación del mapa. Lo importante es que
+      <strong>las tres peticiones salen a la vez y no se pinta nada hasta que las
+      tres han terminado</strong>: el número que ves es el final, no uno provisional
+      que luego se corrige.</p>
       <ol class="method-list">
-        <li>Se piden 31 días a Open-Meteo con <code>past_days=30</code> y
-          <code>forecast_days=1</code>, de modo que la ventana es observación y no
-          predicción.</li>
-        <li>La temperatura del suelo se resume a un valor diario por el promedio de sus
-          24 horas. La lluvia se invierte para que el índice 0 sea hoy.</li>
-        <li>Se consulta SoilGrids en el horizonte de 5-15 cm. Los resultados se
-          cachean 180 días en <code>localStorage</code>, porque ISRIC limita a 5
-          consultas por minuto.</li>
-        <li>Se calculan los ocho factores para cada especie y se ordenan de mayor a
-          menor índice.</li>
-        <li>Las especies marcadas como seleccionadas se pinta como tarjetas; todas
-          aparecen en la tabla de Análisis.</li>
+        <li><strong>Las tres peticiones, en paralelo.</strong> Los 31 días de
+          Open-Meteo (<code>past_days=30</code> y <code>forecast_days=1</code>, de modo
+          que la ventana es observación y no previsión); el suelo de SoilGrids en el
+          horizonte de 5-15 cm; y el bosque del MFE. Cada una con su propio tope:
+          20 s, 90 s y 12 s. Una que se caiga no tira el punto entero —se muestra el
+          resto con un aviso— salvo la meteorología, que sin ella no hay nada que
+          estimar.</li>
+        <li><strong>Mientras tanto, la pantalla dice qué está esperando</strong>, y no
+          enseña índices con ceros: un 0 % de desfavorable se lee como «aquí no hay
+          boleto», que es lo contrario de «todavía no lo sé». SoilGrids es el lento y
+          puede tardar 30-50 segundos; los otros dos llegan en menos de uno.</li>
+        <li><strong>Se resume el día.</strong> La temperatura del suelo se promedia a
+          un valor único de sus 24 horas. La lluvia se guarda con el índice 0 siendo
+          hoy, para que la ventana de decaimiento sea hacia atrás.</li>
+        <li><strong>Se calculan los ocho factores para las 19 especies</strong> y se
+          ordenan de mayor a menor índice. Es instantáneo: el cálculo entero tarda
+          menos de un milisegundo.</li>
+        <li><strong>Se pinta una sola vez</strong>, con la meteorología, el suelo y el
+          hábitat ya dentro. Antes se pintaba tres veces y el usuario veía el mismo
+          sitio con tres números distintos; por eso el punto se pide de una vez.</li>
       </ol>
+      <p class="hint">Lo que cachea la aplicación, para no machacar servicios
+      gratuitos: el suelo 180 días por la rejilla de 250 m de SoilGrids, el bosque
+      un año por celda de unos 110 m, porque el MFE cambia cada pocos años, y el
+      punto entero si pulsas dos veces en el mismo sitio a menos de 500 m.</p>
     </div>
 
     <!-- ───────────── 6. PROCEDENCIA DE DATOS ───────────── -->
@@ -1011,8 +1172,13 @@
       <ul class="method-list">
         <li>La producción real ocurre en <strong>pulsos</strong>, no de forma continua.
           Un índice no puede situar el pulso.</li>
-        <li>La vegetación y la exposición se infieren por heurística de coordenadas,
-          no por un mapa de uso del suelo. Es la fuente de error más probable.</li>
+        <li>La vegetación <strong>sí</strong> se consulta: el punto se pasa por el Mapa
+          Forestal de España (MFE) del MITECO, servido por el GeoServer del IEPNB, y
+          solo cuando el MFE no devuelve bosque se mira la densidad de edificios en
+          OpenStreetMap para distinguir una plaza de un campo. Antes de esto la
+          vegetación se sacaba de la latitud y la longitud, que era la fuente de
+          error más grave del modelo. Lo que no hay es resolvedor de exposición ni
+          de micrositio: eso sigue sin dato.</li>
         <li>No se modela la fotosíntesis del hospedante, que en ectomicorrícicos explica
           parte importante de la respuesta a la precipitación.</li>
         <li>No se modela la competencia con otros hongos ni el daño porenangiosperma.</li>
@@ -1020,11 +1186,71 @@
           distinto del que hay bajo tus pies.</li>
         <li>Sin observaciones propias el índice no está validado. Úsalo como
           orientación, nunca como garantía.</li>
-        <li>De las 18 bandas altitudinales, <strong>8 están estimadas</strong>
+        <li>De las 19 bandas altitudinales, <strong>9 están estimadas</strong>
           por deducción del hábitat, no por una fuente con el rango en metros. La
           tarjeta las marca con «(estimada)». Las otras 10 sí tienen fuente, pero
           casi ninguna es una medición de productividad: son rangos de
           distribución.</li>
+        <li><strong>Pleurotus eryngii</strong> (seta de cardo) es la única especie
+          cuya ficha <strong>no está en el libro de Laux</strong>, que es la fuente
+          primaria del resto. Sus datos vienen de Carlavilla &amp; Manjón, Italian
+          Mycology 2023, sobre <em>Eryngium campestre</em>.</li>
+        <li><strong>Craterellus lutescens</strong> no tiene ficha propia en Laux:
+          aparece como sinónimo de <em>Cantharellus xanthopus</em> (Pers.) Duby, y
+          su hábitat, época y comestibilidad se han tomado de esa entrada. Hoy se
+          consideran dos especies distintas, así que ese dato es discutible.</li>
+        <li>En <em>Lepista nuda</em> (seta de pie azul), el cartel rojo recoge lo
+          que dice Laux —«puede presentarse alguna reacción de intolerancia» y la
+          confusión con dos <em>Cortinarius</em> venenosos—. <strong>Lo que no se
+          muestra</strong>, porque la fuente primaria del proyecto no lo menciona y
+          la decisión fue ceñirse a ella: otros estudios sí documentan muscarina en
+          esta especie (informe del Comité de Toxicología de la NAMA, 2014: rubor,
+          sudoración, vómitos, náuseas y visión borrosa tras comerla cruda) y
+          señalan que «<em>Lepista nuda</em>» es un complejo de especies
+          indistinguibles a simple vista, algunas sin describir, con contenidos de
+          toxina distintos (Fundación Fungi, 2024). Queda aquí anotado para que el
+          dato no se pierda.</li>
+        <li>La <strong>seta de pie azul</strong> y el <strong>perrechico</strong>
+          tienen una incoherencia conocida: su ventana de temporada viene del libro
+          y su ventana térmica no, porque los números no se han tocado. El perrechico
+          figura en abril-junio según Laux pero conserva parámetros térmicos de
+          otoño-frío, así que su pico real puede no caer donde la temporada lo sitúa.</li>
+        <li><strong>Las fuentes no siempre coinciden entre sí.</strong> Además del
+          libro, cada ficha contrasta con <a href="https://waldschatzfinder.de/pilze?lang=es"
+          target="_blank" rel="noopener">Waldschatzfinder</a> y con Wikipedia en
+          inglés. Mandan sobre el libro solo cuando así se ha decidido, y el
+          desacuerdo queda escrito en la ficha en lugar de promediarse. Los
+          casos:<br>
+          — <strong>Perrechico</strong>: Laux da abril-junio, Wikipedia
+          <em>«April to June»</em> en Gran Breñaña y «marzolino» (marzo) en Italia,
+          Waldschatzfinder mayo-junio. Los tres de acuerdo en primavera.<br>
+          — <strong>Senderuela</strong>: Laux y Wikipedia coinciden exactamente en
+          mayo-noviembre.<br>
+          — <strong>Pie azul</strong>: aquí <strong>no</strong> se sigue al libro.
+          Waldschatzfinder y Fungipedia dan septiembre-diciembre; Laux da julio-noviembre
+          y además en primavera. Se ha seguido a Waldschatzfinder por decisión
+          explícita, y el desacuerdo está anotado en la ficha.<br>
+          — <strong>Gula de monte</strong>: MushroomExpert e iNaturalist confirman que
+          <em>lutescens</em>, <em>xanthopus</em>, <em>aurora</em> y <em>luteocomus</em>
+          son la misma especie, lo que respalda al libro. Index Fungorum, en cambio,
+          mantiene los nombres por separado, así que el criterio no es universal.<br>
+          — <strong>Waldschatzfinder no tiene ficha</strong> de la amanita, la rúsula,
+          la capuchina, el boleto de pino, la gula de monte, el boleto reticulado,
+          el boleto bronce ni la senderuela. Donde no hay dato no se rellena nada.<br>
+          — Waldschatzfinder además acorta la temporada del rebozuelo a mayo-septiembre
+          y la de la seta de ostra la amplía a enero-abril y octubre-diciembre, frente
+          al junio-noviembre y octubre-marzo de Laux.</li>
+        <li><strong>Hay una contradicción que se ha dejado a propósito.</strong> La
+          regla de «entorno urbano = 0» choca con lo que dicen las fuentes: la
+          senderuela está documentada en <em>«public lawns and parks, often
+          surviving even where people walk quite frequently»</em>, Laux sitúa la
+          rúsula y el boleto reticulado <em>«también en parques»</em>, y Wikipedia
+          dice que en el boleto bronce <em>«roadsides and parks are common
+          habitats»</em>. Es decir: varias especies de la lista sí salen en zonas
+          verdes de ciudad. Se ha mantenido la regla por decisión propia, pero
+          conviene saber que es una simplificación y no un dato. Si algún día se
+          quiere afinar, el sitio es distinguir zona verde de zona edificada en
+          OpenStreetMap, no tocar los factores de hábitat.</li>
         <li>El factor hídrico <strong>no distingue lluvia normal de lluvia
           torrencial</strong>. Con 6 mm o con 9 mm diarios el resultado es el
           mismo, porque la reserva de humedad satura en 100 % y no hay penalización
@@ -1174,9 +1400,22 @@
           <em>Boletus edulis</em> medida en campo (13,2 °C); en el resto es una
           derivación de la temporada documentada.</dd>
 
-        <dt>Hábitat estimado</dt>
-        <dd>Vegetación que el modelo cree que hay en el punto, deducida de las
-          coordenadas. Es la variable menos fiable de todas.</dd>
+        <dt>Hábitat · etiquetas</dt>
+        <dd>La fila <strong>Hábitat</strong> de cada tarjeta lleva una etiqueta
+          por cada hábitat en el que puede aparecer esa seta: pinar, hayedo,
+          robledal, castañero, pradera, ribera… <strong>Las que están en negrita
+          con borde son las que hay en el punto donde has pulsado</strong>, y las
+          atenuadas son las que no. Al pasar el ratón por encima de cada
+          etiqueta se dice si coincide o no, y si el Mapa Forestal de España ha
+          identificado qué árbol la forma, se dice también el nombre.</dd>
+        <dd>El <strong>factor de hábitat</strong> de los detalles es el resultado
+          de comparar esa lista con lo que hay en el punto. Antes esta fila
+          enseñaba un solo hábitat, el primero de la lista que coincidía, y con
+          ocho o diez hábitats por especie eso no decía nada útil.</dd>
+        <dd>Los hábitats salen del Mapa Forestal de España (MFE) del MITECO
+          consultado en el punto, no de las coordenadas. Cuando el MFE dice que
+          no hay bosque, se mira la densidad de edificios en OpenStreetMap para
+          saber si es una plaza o un campo.</dd>
 
         <dt>GDD · grados día acumulados</dt>
         <dd>Columna de la tabla de Análisis: si el micelio ha juntado suficiente

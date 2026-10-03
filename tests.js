@@ -34,6 +34,18 @@ function prueba(nombre, fn) {
 
 const r2 = (x) => Math.round(x * 100) / 100;
 
+/**
+ * Número de especies, tomado de la lista y no escrito a mano.
+ *
+ * Estaba fijo en 18 y añadí una decinuevevespecie, el resultado fue que dos
+ * pruebas que no tienen nada que ver con la nueva especie fallaron. Eso no
+ * prueba que la especie esté mal: prueba que el test estaba mal, porque
+ * comprueba una constante en vez de una propiedad. Los nombres de las
+ * pruebas se construyen con este número para que no vuelvan a mentir.
+ */
+const TOTAL = A.SPECIES.length;
+const N = TOTAL + (TOTAL === 1 ? ' especie' : ' especies');
+
 /* ------------------------------------------------------------------ */
 /* Contextos sinteticos                                                 */
 /* ------------------------------------------------------------------ */
@@ -101,11 +113,23 @@ prueba('potencialEstacional cae por encima del techo', () => {
 });
 
 prueba('factorTemporada: 1.00 dentro, 0.45 a dos meses, 0.15 lejos', () => {
-  const sp = esp('boletus');   // temporada 6-11
+  // Especie de mentira, con temporada fija. Antes usaba el boleto y sus meses
+  // de verdad, así que al cambiar esos meses por los del libro el test empezó
+  // a fallar sin que hubiera cambiado la función. Un test que depende de los
+  // datos no mide la función, mide los datos.
+  const sp = { temporada: [6, 7, 8, 9, 10, 11] };
   assert.strictEqual(A.factorTemporada(sp, 9), 1.0);
   assert.strictEqual(A.factorTemporada(sp, 7), 1.0, 'el mes 7 esta dentro');
   assert.strictEqual(A.factorTemporada(sp, 4), 0.45);
   assert.strictEqual(A.factorTemporada(sp, 3), 0.15);
+});
+
+prueba('factorTemporada da 1.00 en el mes medio de la temporada real del boleto', () => {
+  // Aquí sí se comprueba contra una especie real, pero en su mes central.
+  const sp = esp('boletus');
+  const centro = sp.temporada[Math.floor(sp.temporada.length / 2)];
+  assert.strictEqual(A.factorTemporada(sp, centro), 1.0,
+    'fuera de temporada en su propio mes central: ' + sp.key);
 });
 
 prueba('factorTemporada con temporada vacia no penaliza', () => {
@@ -372,7 +396,7 @@ prueba('especie desconocida: error controlado', () => {
   assert.ok(Number.isFinite(r.S) && Number.isFinite(r.H) && Number.isFinite(r.A));
 });
 
-prueba('las 18 especies tienen los ocho parametros en orden', () => {
+prueba(`las ${N} tienen los ocho parametros en orden`, () => {
   for (const sp of A.SPECIES) {
     for (const k of ['tBase', 'tOpt', 'tMax', 'tCrit', 'gddNeed', 'L', 'Ro', 'diasMax']) {
       assert.ok(Number.isFinite(sp[k]), sp.key + ' sin ' + k);
@@ -399,8 +423,8 @@ prueba('toda especie tiene habitat y temporada no vacios', () => {
 
 grupo('7. Factor altitudinal por especie');
 
-prueba('las 18 especies tienen banda propia y coherente', () => {
-  assert.strictEqual(A.SPECIES.length, 18);
+prueba(`las ${N} tienen banda propia y coherente`, () => {
+  assert.ok(TOTAL > 15, 'la lista de especies se ha quedado vacía o rara');
   for (const sp of A.SPECIES) {
     assert.ok(Array.isArray(sp.alt), sp.key + ' sin banda');
     assert.strictEqual(sp.alt.length, 3, sp.key + ': banda de 3 numeros');
@@ -545,7 +569,7 @@ function ctxHel(noches, sueloHoy) {
 const PROLONGADO = [-2, -3, 1, 7];    // tres noches malas y una buena
 const AISLADO = [8, 7, -2, 7];        // una noche mala y tres buenas
 
-prueba('las 18 especies tienen los cuatro campos de helada en rango', () => {
+prueba(`las ${N} tienen los cuatro campos de helada en rango`, () => {
   for (const sp of A.SPECIES) {
     assert.ok(Number.isFinite(sp.frostTol), sp.key + ': sin frostTol');
     assert.ok(sp.frostPenalty > 0 && sp.frostPenalty <= 1,
@@ -582,7 +606,7 @@ prueba('un episodio prolongado pesa MÁS que uno aislado, en todas', () => {
       sp.key + ': prolongado ' + p.stress + ' < aislado ' + a.stress);
     comparadas++;
   }
-  assert.strictEqual(comparadas, 18);
+  assert.strictEqual(comparadas, TOTAL, 'no se compararon todas las especies');
 });
 
 prueba('la helada ya NO pone el índice a cero ni marca no viable', () => {
@@ -815,6 +839,155 @@ prueba('HABITATS_ARBOLADOS cubre todos los hábitats arbolados', () => {
 prueba('la clave de caché redondea a ~110 m y no a la precisión del click', () => {
   assert.strictEqual(H.habitatKey(40.41681, -3.70379), H.habitatKey(40.41682, -3.70378));
   assert.notStrictEqual(H.habitatKey(40.4168, -3.7038), H.habitatKey(41.9, -2.5));
+});
+
+grupo('11. Seta de pie azul (Lepista nuda)');
+
+const pie = A.SPECIES.find(s => s.key === 'pie_azul');
+
+prueba('la especie está dada de alta con nombre científico y común', () => {
+  assert.ok(pie, 'no existe la especie pie_azul');
+  assert.strictEqual(pie.lat, 'Lepista nuda');
+  assert.strictEqual(pie.es, 'Seta de pie azul');
+});
+
+prueba('está marcada y su aviso viene del libro', () => {
+  // Si alguien quita el cartel por limpieza de código, la app deja de avisar
+  // de una confusión con dos Cortinarius venenosos.
+  assert.strictEqual(pie.toxica, true);
+  assert.ok(pie.aviso && pie.aviso.length > 80, 'sin aviso');
+});
+
+prueba('advierte de la confusión con Cortinarius', () => {
+  assert.ok(pie.confusion && /cortinarius/i.test(pie.confusion),
+    'no menciona el Cortinarius, que es la confusión que mata');
+});
+
+prueba('es saprofita de hojarasca y NO cae en la penalización de pratense', () => {
+  // El error evitable: con guild `saprofita` el motor le bajaría el hábitat a
+  // 0,45 en el hayedo, que es donde vive. Se comprueba el resultado, no el
+  // nombre del guild, porque lo que importa es el número que sale.
+  assert.strictEqual(pie.guild, 'saprofita_humus');
+  const r = A.evaluarHabitat(pie, { vegetacion: ['hayedo'] });
+  assert.strictEqual(r.factor, 1, 'penalizada en su propio hábitat: ' + r.factor);
+});
+
+prueba('el grupo de hojarasca tiene etiqueta y no se confunde con las pratenses', () => {
+  assert.strictEqual(A.GUILD_LABELS.saprofita_humus, 'Saprofita de hojarasca');
+  for (const k of ['senderuela', 'parasol', 'champinon', 'san_jorge']) {
+    const sp = A.SPECIES.find(x => x.key === k);
+    // Estas cuatro sí son pratenses y sí deben seguir penalizadas en bosque.
+    const r = A.evaluarHabitat(sp, { vegetacion: ['hayedo'] });
+    assert.ok(r.factor < 1, k + ' dejó de penalizarse en bosque: ' + r.factor);
+  }
+});
+
+prueba('el óptimo térmico es frío, como dice la fuente', () => {
+  // "Sólo aparecen cuando la temperatura baja de 17 °C" (Woodland Trust).
+  assert.ok(pie.tOpt <= 12, 'tOpt demasiado cálido: ' + pie.tOpt);
+  assert.ok(pie.tMax <= 18, 'tMax por encima del techo documentado: ' + pie.tMax);
+  assert.ok(pie.tCrit <= 0, 'tCrit no refleja que tolera heladas: ' + pie.tCrit);
+  // Y tiene que ser más fría que un boletus de otoño.
+  const boletus = A.SPECIES.find(s => s.key === 'boletus');
+  assert.ok(pie.tOpt < boletus.tOpt,
+    'la seta de pie azul no puede tener óptimo más cálido que el boleto');
+});
+
+prueba('la ficha cita el libro y conserva la cita secundaria', () => {
+  // Comprobación de estilo: la fuente primaria es Laux, pero el contraste con
+  // Waldschatzfinder y Wikipedia queda escrito en la ficha, no se descarta.
+  assert.ok(/Laux/.test(pie.fuente), 'sin cita del libro');
+  assert.ok(/Fuentes secundarias/.test(pie.fuente), 'sin cita secundaria');
+});
+
+prueba('el hábitat declarado es de frondosas y pinar, no de pradera', () => {
+  assert.ok(pie.habitat.includes('hayedo'), 'sin hayedo');
+  assert.ok(pie.habitat.includes('robledal'), 'sin robledal');
+  for (const prad of ['pradera', 'pastizal', 'majadal', 'ganado']) {
+    assert.ok(!pie.habitat.includes(prad),
+      'no es una especie de pradera: ' + prad);
+  }
+});
+
+prueba('la ficha documenta la fuente y no se inventa la banda altitudinal', () => {
+  assert.ok(pie.fuente && pie.fuente.length > 100, 'fuente demasiado corta');
+  assert.strictEqual(pie.altEvidencia, 'indicado',
+    'sin banda altitudinal publicada debe decir "indicado", no "documentado"');
+});
+
+prueba('el ciclo completo no produce NaN con la especie nueva', () => {
+  const c = ctx({ tSuelo: 11, vegetacion: ['hayedo'] });
+  const r = A.indice(pie, { ...c, terreno: { ...c.terreno, vegetacion: ['hayedo'] } });
+  assert.ok(Number.isFinite(r.I), 'NaN: ' + r.I);
+  assert.ok(r.I >= 0 && r.I <= 100, 'fuera de rango: ' + r.I);
+  assert.strictEqual(r.viable, true);
+});
+
+prueba('el aviso sale del libro y el cartel se queda', () => {
+  // Decisión del usuario: el aviso muestra lo que dice la fuente primaria
+  // (Laux) y nada más. La advertencia de muscarina y el complejo de especies
+  // no van en la tarjeta; quedan en el apartado 8 de la Metodología.
+  assert.strictEqual(pie.toxica, true);
+  assert.ok(typeof pie.aviso === 'string' && pie.aviso.length > 80,
+    'sin texto en aviso: el cartel rojo saldría vacío');
+  assert.ok(/Laux/i.test(pie.aviso), 'el aviso debe citar el libro');
+  assert.ok(/intolerancia/i.test(pie.aviso), 'no recoge lo que dice el libro');
+  assert.ok(/cortinarius/i.test(pie.aviso),
+    'el aviso debe recoger la confusión que da el libro');
+  assert.ok(!/muscarina/i.test(pie.aviso),
+    'se pidió que el aviso fuera solo lo del libro');
+  assert.ok(/cortinarius/i.test(pie.confusion || ''), 'sin aviso de confusión');
+  assert.ok(/tricholomataceae/i.test(pie.taxonomiaAviso || ''), 'sin nota taxonómica');
+});
+
+prueba('la temporada es la de Waldschatzfinder, no la del libro', () => {
+  // Decisión del usuario: aquí manda la segunda fuente, contra Laux. El motivo
+  // está en CRUCE.pie_azul y la cita del libro sigue en LAUX.
+  assert.ok(pie.temporada.includes(9), 'no incluye septiembre');
+  assert.ok(pie.temporada.includes(12), 'no incluye diciembre');
+  assert.ok(!pie.temporada.includes(4), 'la ventana no es la del libro');
+  assert.ok(/Waldschatzfinder/.test(pie.temporadaTxt),
+    'la ficha debe decir de dónde sale la temporada');
+  assert.ok(/Laux la da más ancha/.test(pie.temporadaTxt),
+    'la ficha debe declarar el desacuerdo con el libro');
+});
+
+grupo('12. Contraste con Waldschatzfinder y Wikipedia');
+
+prueba('las 19 fichas citan las tres fuentes', () => {
+  const sinSecundaria = A.SPECIES.filter(s => !/Fuentes secundarias/.test(s.fuente || ''));
+  assert.strictEqual(sinSecundaria.length, 0,
+    'sin cita secundaria: ' + sinSecundaria.map(s => s.key).join(', '));
+});
+
+prueba('ninguna ficha se apoya solo en el libro cuando hay contraste', () => {
+  // Una cita secundaria sin decir que NO manda sobre el libro sería propaganda
+  // de fuente: el lector no distinguiría cuál de las dos vale.
+  for (const s of A.SPECIES) {
+    if (!/Fuentes secundarias/.test(s.fuente || '')) continue;
+    assert.ok(/no mandan sobre el libro/.test(s.fuente),
+      s.key + ': la cita secundaria no aclara su peso');
+  }
+});
+
+prueba('el perrechico es alcalinófilo y no ácido', () => {
+  // Wikipedia: "common in grasslands in Europe, often in areas rich in
+  // limestone".
+  const pj = A.SPECIES.find(s => s.key === 'san_jorge');
+  assert.strictEqual(pj.alcalinofila, true);
+  assert.strictEqual(pj.acidofilo, false);
+  assert.strictEqual(A.factorSuelo(7.6, pj).factor, 1, 'penaliza el suelo calizo');
+  assert.ok(A.factorSuelo(5.2, pj).factor < 1, 'no penaliza el suelo ácido');
+});
+
+prueba('el contraste documenta la regla de urbano = 0 que choca con los datos', () => {
+  // Varias especies están documentadas en parques y la regla las pone a 0. Se
+  // decidió mantener la regla, pero el desacuerdo queda escrito para que no
+  // se pierda: si algún día se cambia, está justificado y documentado.
+  const cr = A.fuenteCruce('senderuela');
+  assert.ok(/parques/i.test(cr), 'no documenta lo de los parques');
+  assert.ok(/choca con la regla de urbano/i.test(cr),
+    'no declara que la regla de urbano contradice a las fuentes');
 });
 
 console.log('\n' + '-'.repeat(58));

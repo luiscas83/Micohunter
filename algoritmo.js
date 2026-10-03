@@ -31,12 +31,401 @@
 //   - Hall et al. (2012) PLoS ONE, 30 años de censo en bosque de roble
 // ============================================================
 
+/**
+ * Perfiles de preferencia de pH.
+ *
+ * Cuatro, no tres. El cuarto es `pHTolerante`, y existe por el níscalo:
+ * prefiere los suelos ácidos, pero no le estorban los calizos ni los
+ * arenosos. Eso no es lo mismo que ser indiferente, y con los tres perfiles
+ * anteriores había que elegir entre las dos cosas y se elegía la falsa: o
+ * marcándolo acidófilo, que le restaba puntos en un suelo de pH 7,8 siendo
+ * que ahí crece bien, o marcándolo indiferente, que pierdía la preferencia.
+ *
+ * Se distinguen por las tres cifras, no por el nombre:
+ *
+ *              óptimo  meseta  suelo en el peor caso
+ *   ácido        5,2     1,5        0,60
+ *   alcalino     7,6     1,4        0,60
+ *   indiferente  6,8     1,8        0,70
+ *   tolerante    5,6     3,4        0,85
+ *
+ * El tolerante mantiene el óptimo ácido —que es la preferencia— pero ensancha
+ * la meseta hasta 3,4, de modo que pH 2,2 a 9,0 dan factor 1,00. En un suelo
+ * de pH 7,8 el níscalo deja de perder puntos, que es lo que pedía el caso.
+ */
+
 const API = {
   openMeteo: 'https://api.open-meteo.com/v1/forecast',
   openMeteoArchive: 'https://archive-api.open-meteo.com/v1/archive',
   nominatim: 'https://nominatim.openstreetmap.org/reverse',
   geocoding: 'https://geocoding-api.open-meteo.com/v1/search',
 };
+
+/**
+ * Datos descriptivos de cada especie, tomados de la FUENTE PRIMARIA del
+ * proyecto:
+ *
+ *   Hans E. E. Laux, "Setas de España y Europa", TIKAL, 2012 (ed. española
+ *   de su guía de campo).
+ *
+ * Por qué están aquí y no dentro de cada ficha: para poder cotejarlos de un
+ * vistazo. Cada texto es el campo "ÉPOCA Y LUGAR", "UTILIZACIÓN" o
+ * "CONFUSIÓN CON SETAS PELIGROSAS" de la ficha correspondiente del libro,
+ * sin reescribirlo. Las especies del modelo apuntan aquí con `ver`, así que
+ * cualquier duda de dónde salió un dato se resuelve mirando la cita.
+ *
+ * LO QUE EL LIBRO NO TIENE
+ *
+ * El libro es una guía de identificación: describe sombrero, pie, esporas y
+ * cuándo y dónde crece. No trae ningún número. Por eso los parámetros del
+ * modelo —tBase, tOpt, tMax, tCrit, gddNeed, L, Ro, tolerancias al frío,
+ * bandas altitudinales— NO salen de aquí: salen de los estudios científicos
+ * que ya estaban citados en cada ficha. La regla acordada es:
+ *
+ *   - los HECHOS (época, hábitat, suelo, comestibilidad, confusión) salen del
+ *     libro;
+ *   - los NÚMEROS del modelo salen de la literatura, y se dejan como estaban
+ *     porque son los que la aplicación lleva mostrando desde el principio.
+ *
+ * ÚNICA EXCEPCIÓN DOCUMENTADA
+ *
+ * Pleurotus eryngii (seta de cardo) NO tiene ficha en el libro: los Pleurotus
+ * que aparecen son cornucopiae, dryinus, mitis, ostreatus, pulmonarius,
+ * ulmarius y violaceofulvus. Sus datos salen de Carlavilla & Manjón, Italian
+ * Mycology 2023, y se marca como excepción en la propia ficha.
+ */
+const LAUX = {
+  boletus: {
+    epoca: 'de julio a octubre, en bosques de coníferas, alguna vez surgen '
+      + 'también en bosques caducifolios de toda Europa. Pueden aparecer en '
+      + 'masa en zonas de reciente repoblación de pinos',
+    util: 'comestible, muy apreciada en la cocina',
+  },
+  niscalos: {
+    epoca: 'de agosto a octubre, debajo de pinos (Pinus) en todas las zonas de '
+      + 'Europa de clima templado, sobre suelos neutros o calizos',
+    util: 'comestible',
+  },
+  amanita: {
+    epoca: 'de julio hasta octubre, aisladas o en grupos, en bosques caducifolios, '
+      + 'amantes del calor; en Europa muy escasas; en el sur de Europa es '
+      + 'apreciada como un delicado manjar. Especie protegida en muchos países',
+    util: 'comestible',
+    confusion: 'se puede confundir con la matamoscas o falsa oronja (Amanita '
+      + 'muscaria), que tiene restos de vélum en forma de copos blancos sobre '
+      + 'el sombrero, láminas blancas y un pie blanco',
+  },
+  rebozuelo: {
+    epoca: 'de junio a noviembre, aislada o en grupos, en bosques caducifolios y '
+      + 'de coníferas; en Europa está muy extendida, en muchos lugares está en '
+      + 'franco retroceso',
+    util: 'comestible, muy apreciada por su valor comercial como seta de '
+      + 'mercado debido a su resistencia y a que casi nunca presenta gusanos',
+    confusion: 'en la Europa meridional prolifera una seta muy similar a ella '
+      + 'aunque venenosa, la seta de olivo (Omphalotus olearius), que se '
+      + 'encuentra en el tronco y las raíces de viejos olivos',
+  },
+  senderuela: {
+    epoca: 'desde mayo hasta noviembre, en ocasiones en grandes cantidades, en '
+      + 'líneas o corros sobre prados, superficies de hierba, parques y en los '
+      + 'linderos de los bosques; ampliamente extendida',
+    util: 'comestible, muy apropiada como seta de aderezo; los pies son duros',
+    confusion: 'en los mismos lugares crece la Inocybe erubescens y otras setas '
+      + 'venenosas de los géneros Inocybe, Clitocybe, Entoloma y Panaeolus',
+    interesante: 'el micelio libera compuestos de nitrógeno, por lo que la '
+      + 'hierba primero presenta un jugoso color verde oscuro',
+  },
+  parasol: {
+    epoca: 'de julio hasta octubre, en bosques caducifolios y de coníferas, '
+      + 'sobre prados; muy extendida en el centro de Europa',
+    util: 'comestible; fácilmente reconocible',
+    confusion: 'más pequeña es la lepiota de escamas puntiagudas '
+      + '(Echinoderma asperum). La muy poco común Macrolepiota venenata causa '
+      + 'fuertes afecciones gastrointestinales',
+  },
+  champinon: {
+    epoca: 'de junio a octubre, en prados, campos y tierras de cultivo; muy '
+      + 'extendida en Europa',
+    util: 'comestible',
+    confusion: 'el agárico amarilleante (Agaricus xanthoderma) se reconoce por '
+      + 'el bulbo del pie amarillo que aparece al cortar y por su desagradable '
+      + 'aroma a fenol. Son válidas también las advertencias relativas a las '
+      + 'venenosas Amanita',
+  },
+  girola: {
+    epoca: 'desde octubre hasta marzo, de forma parasítica o saprofítica en '
+      + 'troncos o tocones de árboles caducifolios, muy raramente en coníferas',
+    util: 'comestible. Buena seta para comer, puede ser criada en distintos '
+      + 'sustratos',
+    confusion: 'puede ser confundida con la Sarcomyxa serotina, que crece en '
+      + 'la misma época en madera de árboles caducifolios o coníferas y es más '
+      + 'pequeña, con sombrero de verde oliva a amarillo oliva',
+  },
+  seta_pino: {
+    epoca: 'aparece a partir de septiembre y, después de la entrada del '
+      + 'invierno, puede durar hasta diciembre; se da en bosques caducifolios '
+      + 'y de coníferas, sobre suelos arenosos y barrosos, debajo de abetos '
+      + 'rojos (Picea abies) y pinos (Pinus)',
+    util: 'comestible',
+    confusion: 'es muy semejante por su aspecto al tricoloma atigrado '
+      + '(Tricholoma pardalotum) y también emite el mismo olor a harina. El '
+      + 'tricoloma saponáceo tiene olor a jabón',
+  },
+  rovello: {
+    epoca: 'desde junio a octubre, en bosques caducifolios y de coníferas, así '
+      + 'como en parques; en todas las zonas templadas de Europa; evita los '
+      + 'suelos de contenido calizo',
+    util: 'comestible',
+    confusion: 'son muy similares a ella algunos tipos de Russula de sabor acre '
+      + 'y sombrero rojo, como la Russula mairei',
+  },
+  trompeta: {
+    epoca: 'de agosto a noviembre, la mayoría de veces en grupos o corros '
+      + 'debajo de hayas (Fagus sylvatica) y robles (Quercus), preferentemente '
+      + 'en suelos calizos; está muy extendida en Europa; en la actualidad está '
+      + 'en franco retroceso',
+    util: 'comestible, es muy apreciada como seta para cocinar. Se utiliza como '
+      + 'sucedáneo de las colmenillas y las trufas; es muy apropiada para secar',
+    confusion: 'se le parece la trompeta negra (Cantharellus cinereus), pero '
+      + 'ésta es más pequeña y tiene unos marcados pliegues en la parte inferior '
+      + 'del sombrero. Debido a su forma y color casi no se pueden confundir '
+      + 'con setas venenosas',
+  },
+  morena: {
+    epoca: 'de abril a mayo, aislada o en grupos, en bosques caducifolios, '
+      + 'ribereños y de arbustos',
+    util: 'comestible; las personas más delicadas pueden cocer la colmenilla y '
+      + 'luego deshacerse del agua de cocción',
+    confusion: 'el bonete (Gyromitra esculenta) tiene una cutícula con forma '
+      + 'que se asemeja a un cerebro',
+  },
+  san_jorge: {
+    epoca: 'desde abril hasta junio, en lugares con hierba, en bosques '
+      + 'caducifolios, en los bordes de los bosques, en arbustos, sobre prados '
+      + 'y parques, en ocasiones en filas y corros',
+    util: 'comestible',
+    confusion: 'puede confundirse con una seta venenosa muy extendida en '
+      + 'Europa, la Inocybe erubescens, que al principio también posee un '
+      + 'sombrero blanco, pero no huele a harina. Además, si se la presiona o '
+      + 'con la maduración, adquiere una tonalidad rojo teja',
+  },
+  boleto_pino: {
+    epoca: 'de julio a octubre, sobre suelos ácidos, la mayoría de las veces '
+      + 'debajo de pinos (Pinus) en casi toda Europa; poco común, debe ser '
+      + 'protegida a causa de su rareza',
+    util: 'comestible',
+  },
+  gula_monte: {
+    // OJO: el libro NO da ficha de "Craterellus lutescens". Lo incluye como
+    // sinónimo de Cantharellus xanthopus (Pers.) Duby, que es como se cita
+    // aquí. Hay quien los considera dos especies distintas; se documenta en
+    // `taxonomiaAviso` y no sehidden.
+    fichaComo: 'Cantharellus xanthopus (Pers.) Duby, Cantharellus lutescens '
+      + '(Pers.) Fr. Cantharellaceae',
+    epoca: 'de agosto a noviembre, en grupos o corros, en bosques húmedos de '
+      + 'coníferas, en bosques pantanosos y caducifolios',
+    util: 'comestible; es muy apreciada para secar, buena seta de aderezo',
+    confusion: 'es muy semejante a ella el rebozuelo atrompetado '
+      + '(Cantharellus tubaeformis), pero éste tiene un sombrero amarillo '
+      + 'grisáceo y unos pliegues claramente marcados en la parte inferior',
+  },
+  hongo_verano: {
+    epoca: 'desde mayo hasta julio, en bosques de hayas y robles herbáceos, y '
+      + 'suelos ricos en cal, durante veranos calurosos. También en parques; '
+      + 'es una seta escasa',
+    util: 'comestible',
+    confusion: 'de joven se confunde fácil con otros boletos comestibles',
+  },
+  boleto_bronce: {
+    epoca: 'desde junio hasta octubre, en bosques caducifolios cálidos '
+      + '(predominantemente de robles); poco común y está fuertemente afectado '
+      + 'por el impacto medioambiental. En muchos lugares está en pleno '
+      + 'retroceso y debe ser protegido a causa de su rareza',
+    util: 'comestible',
+  },
+  pie_azul: {
+    epoca: 'desde julio hasta noviembre, en ocasiones también en primavera '
+      + '(desde abril hasta mayo), la mayoría de las veces en corros o grupos, '
+      + 'en bosques caducifolios y de coníferas, también en jardines; está muy '
+      + 'extendida en Europa',
+    util: 'es posible que se presente en ciertos casos individuales alguna '
+      + 'reacción de intolerancia: quien la padezca debe renunciar a consumir '
+      + 'estas setas',
+    confusion: 'entre los Cortinarius existen dos variedades de color '
+      + 'semejante que son algo venenosos: Cortinarius traganus y Cortinarius '
+      + 'camphoratus; se diferencian de la Lepista nuda tanto por su repugnante '
+      + 'olor como por su esporada marrón y, al menos cuando tienen más edad, '
+      + 'por unas láminas marrones',
+    interesante: 'los pies teñidos también en violeta y su aparición en '
+      + 'terrenos herbosos poco abonados',
+  },
+};
+
+/**
+ * Cómo se cita el libro en las fichas, con el contraste de las otras dos
+ * fuentes detrás.
+ *
+ * Se hace aquí y no en cada ficha para que no haya 19 sitios donde olvidarse de
+ * añadirlo: cualquier especie nueva lo lleva puesto por construcción.
+ *
+ * @param key     clave en LAUX
+ * @param numeros dónde salen los valores numéricos del modelo
+ * @returns       texto de fuente completo
+ */
+function fuenteLaux(key, numeros) {
+  const l = LAUX[key];
+  let t = 'Laux, "Setas de España y Europa" (TIKAL, 2012): "' + l.epoca + '"; '
+    + 'UTILIZACIÓN: "' + l.util + '"';
+  if (l.confusion) t += '. CONFUSIÓN: "' + l.confusion + '"';
+  if (numeros) t += '. Parámetros numéricos: ' + numeros;
+  return t + fuenteCruce(key);
+}
+
+/**
+ * CONTRASTE CON OTRAS DOS FUENTES
+ *
+ *   - Waldschatzfinder (waldschatzfinder.de/pilze): temporada y árboles
+ *     asociados por especie.
+ *   - Wikipedia en inglés: temporada, hábitat, ecología y nomenclatura.
+ *
+ * Van aquí y no dentro de las fichas por el mismo motivo que `LAUX`: para poder
+ * cotejar de un vistazo dónde coincide el libro y dónde no. Estas dos fuentes
+ * NO mandan sobre Laux; son la segunda voz, y cuando discrepan se dice en
+ * voz alta en vez de promediar.
+ *
+ * COBERTURA DESIGUAL
+ * Waldschatzfinder tiene ficha de 11 de las 19 especies. Faltan la amanita, la
+ * rúsula, la capuchina, el boleto de pino, la gula de monte, el boleto
+ * reticulado, el boleto bronce y la senderuela. Donde no hay dato se dice
+ * "sin ficha", no se rellena de memoria.
+ */
+const CRUCE = {
+  boletus: {
+    ws: 'Waldschatzfinder: temporada junio-octubre, árboles "Abeto rojo, Pino, '
+      + 'Abeto" (coincide con Laux en pinar; Laux además menciona caducifolios '
+      + 'y la repoblación reciente)',
+  },
+  niscalos: {
+    ws: 'Waldschatzfinder: temporada julio-octubre y árboles "Pino, Abeto rojo". '
+      + 'Coincide con Laux en que es_PINUS, pero se adelanta un mes.',
+  },
+  amanita: {
+    wiki: 'Wikipedia y Global Fungal Red List: "edible ectomycorrhizal '
+      + 'mushroom typically associating with oaks and other hardwood species". '
+      + 'Coincide con Laux en caducifolios cálidos.',
+  },
+  rebozuelo: {
+    ws: 'Waldschatzfinder: temporada mayo-septiembre, árboles "Abeto rojo, Haya, '
+      + 'Abeto". Laux da junio-noviembre: la web acorta la temporada por ambos '
+      + 'extremos. Waldschatzfinder menciona haya, donde Laux solo dice '
+      + '"caducifolios" sin nombrarlos.',
+  },
+  senderuela: {
+    wiki: 'Wikipedia: "summer and autumn (May–November in the UK)". Idéntico a '
+      + 'Laux. First Nature y MushroomExpert la documentan en "public lawns and '
+      + 'parks, often surviving even where people walk quite frequently", es '
+      + 'decir, en parques y césped donde pasa gente. Ojo: eso choca con la regla '
+      + 'de urbano = 0, que es una decisión del usuario y no de la fuente.',
+  },
+  parasol: {
+    ws: 'Waldschatzfinder: temporada junio-octubre, "no ligada a árboles". '
+      + 'Laux da julio-octubre y la sitúa "sobre prados". Coinciden en que no '
+      + 'depende de un árbol.',
+  },
+  champinon: {
+    ws: 'Waldschatzfinder: temporada mayo-octubre, "no ligada a árboles". '
+      + 'Laux da junio-octubre en "prados, campos y tierras de cultivo".',
+  },
+  girola: {
+    ws: 'Waldschatzfinder: temporada enero-abril y octubre-diciembre, árboles '
+      + '"Haya, otras especies de árboles, Abedul". Laux da octubre-marzo. '
+      + 'Coinciden en que es la más invernal de todas las de la app.',
+  },
+  seta_pino: {
+    wiki: 'FungiAtlas: "mycorrhizal with pine and mixed forests, especially on '
+      + 'sandy soils or soils with lime inclusions"; MushroomExpert: el género '
+      + 'Tricholoma es micorrícico. Coincide con el guild de la ficha y con '
+      + 'Laux en los suelos arenosos; la web añade matiz de cal que Laux no '
+      + 'menciona.',
+  },
+  rovello: {
+    wiki: 'Wikipedia: "appears in summer or autumn, grows primarily in '
+      + 'deciduous forests in Europe and North America". Coincide con Laux.',
+  },
+  trompeta: {
+    ws: 'Waldschatzfinder: temporada agosto-noviembre, árboles "Haya, Roble, '
+      + 'otras especies de árboles". Idéntico a Laux.',
+  },
+  morena: {
+    ws: 'Waldschatzfinder: temporada abril-mayo. Idéntico a Laux.',
+  },
+  san_jorge: {
+    ws: 'Waldschatzfinder: temporada mayo-junio, "no ligada a árboles".',
+    wiki: 'Wikipedia: "found from April to June in the United Kingdom"; en '
+      + 'Alemania "Maipilz, where it fruits in May"; en Italia "marzolino", '
+      + 'marzo. Y "common in grasslands in Europe, often in areas rich in '
+      + 'limestone", por lo que esta ficha pasa a alcalinófila. En España es muy '
+      + 'valrada: en el País Vasco el "perretxiko" se come el 28 de abril, San '
+      + 'Prudencio. TRES FUENTES DICEN PRIMAVERA.',
+  },
+  boleto_pino: { nota: 'Sin ficha en Waldschatzfinder ni contraste en Wikipedia.' },
+  gula_monte: {
+    wiki: 'MushroomExpert: "Cantharellus lutescens is a synonym, as are '
+      + 'Cantharellus/Craterellus xanthopus, luteocomus and aurora"; '
+      + 'iNaturalist los trata como una sola especie. CONFIRMA que el libro tiene '
+      + 'razón al dar la ficha bajo Cantharellus xanthopus. Index Fungorum, en '
+      + 'cambio, mantiene Craterellus lutescens (Fr.) Fr. (1838) con basionimo '
+      + 'Cantharellus lutescens Fr. 1821 como nombre aparte, así que el criterio '
+      + 'no es universal.',
+  },
+  hongo_verano: {
+    wiki: 'Wikipedia: "occurs in deciduous forests of Europe, where it forms a '
+      + 'relationship with species of oak (Quercus). The fungus produces '
+      + 'fruiting bodies in the summer months". Coincide con Laux en verano y '
+      + 'caducifolios, pero la web lo asocia al ROBLE mientras Laux nombra '
+      + 'haya y roble.',
+  },
+  boleto_bronce: {
+    wiki: 'Wikipedia: "The cork oak (Quercus suber) is a key host, showing a '
+      + 'preference for acidic soils. Roadsides and parks are common habitats". '
+      + 'Confirma el acidofilia de la ficha. Ojo: lo de los parques y cunetas '
+      + 'choca con la regla de urbano = 0.',
+  },
+  seta_cardo: {
+    ws: 'Waldschatzfinder: temporada abril-noviembre, "no ligada a árboles". '
+      + 'Único dato externo que tiene esta especie, que no está en el libro.',
+  },
+  pie_azul: {
+    ws: 'Waldschatzfinder: temporada SEPTIEMBRE-DICIEMBRE, árboles "Abeto rojo, '
+      + 'Abeto, Haya". ESTA FUENTE NO COINCIDE CON LAUX, que la da de julio a '
+      + 'noviembre y además en primavera. Fungipedia va con Waldschatzfinder '
+      + '("late autumn, into winter"). Se sigue a Waldschatzfinder por decisión '
+      + 'del usuario, contra el libro.',
+    wiki: 'Wikipedia usa el nombre Collybia nuda ("previously described as '
+      + 'Lepista nuda and Clitocybe nuda"): hay tres nombres en circulación. '
+      + 'Sobre toxicidad, Wikipedia NO menciona muscarina; sí confirma la '
+      + 'confusión: "can be confused with certain blue or purple species of '
+      + 'the genus Cortinarius, including the uncommon C. camphoratus, many of '
+      + 'which may be poisonous".',
+  },
+};
+
+/**
+ * Texto de la cita secundaria, listo para pegar detrás de `fuenteLaux()`.
+ * @param key clave de CRUCE
+ * @returns   cadena que empieza por ". " o '' si no hay contraste
+ */
+function fuenteCruce(key) {
+  const c = CRUCE[key];
+  if (!c) return '';
+  const partes = [];
+  if (c.ws) partes.push(c.ws);
+  if (c.wiki) partes.push(c.wiki);
+  if (c.nota) partes.push(c.nota);
+  if (!partes.length) return '';
+  return '. Fuentes secundarias — ' + partes.join(' ') +
+    ' (son contraste, no mandan sobre el libro)';
+}
 
 /**
  * Parámetros por especie.
@@ -83,18 +472,25 @@ const SPECIES = [
     altFuente: 'Martínez-Peña et al. (2012), gradiente de masa basal 0-38,5 kg/ha en Pinar Grande (Soria, ~1100 m); en España se cita hasta 3500 m',    // Respuesta a la helada: micelio resistente, pero el cuerpo fructífero es blando.
     frostTol: -2, frostPenalty: 0.4, frostRecovery: 4, frostSoil: 1.2,
 
+    // Laux: julio-octubre, coníferas y a veces caducifolios, y "en masa en
+    // zonas de reciente repoblación de pinos". El conopenedor va primero
+    // porque el libro lo menciona antes.
+    
     guild: 'ectomicorricico',
     prioridad: 10,
-    habitat: ['pinar', 'hayedo', 'robledal', 'castaneral', 'bosque_mixto'],
+    habitat: ['pinar', 'bosque_mixto', 'hayedo', 'robledal', 'castaneral'],
     avoidDrySW: true,           // no coloniza sotobosques secos de SO
-    temporada: [6, 7, 8, 9, 10, 11],
-    temporadaTxt: 'verano-otoño; el grueso entre septiembre y noviembre',
+    temporada: [7, 8, 9, 10],
+    temporadaTxt: LAUX.boletus.epoca,
     comestible: 'excelente',
     // Única especie con óptimo térmico medido en campo.
     evidencia: 'publicado',
-    fuente: 'Lamartiniere & Hoffman (2025), GLMM sobre Boletus edulis: óptimo '
-      + 'térmico del suelo 13,2 °C (bioRxiv 10.64898/2025.12.12.693895); '
-      + 'Martínez-Peña et al. (2012) sobre masa basal y altitud',
+    fuente: fuenteLaux('boletus',
+      'Los datos numéricos no están en el libro, que es una guía de '
+      + 'identificación y no publica valores. Proceden de: Lamartiniere & '
+      + 'Hoffman (2025), GLMM sobre Boletus edulis: óptimo térmico del suelo '
+      + '13,2 °C (bioRxiv 10.64898/2025.12.12.693895); Martínez-Peña et al. '
+      + '(2012) sobre masa basal y altitud'),
     acidofilo: true, confined: false,
     tBase: 8, tOpt: 13.2, tMax: 22, tCrit: 3,
     gddNeed: 180, L: 11, Ro: 40, diasMax: 45,
@@ -112,13 +508,24 @@ const SPECIES = [
     prioridad: 20,
     habitat: ['pinar'],          // casi exclusivamente Pinus
     avoidDrySW: false,
-    temporada: [9, 10, 11],
-    temporadaTxt: 'septiembre-noviembre con las lluvias del otoño; alguna florada en primavera',
+    // Laux lo sitúa de AGOSTO a OCTUBRE. Antes ponía septiembre-noviembre.
+    temporada: [8, 9, 10],
+    temporadaTxt: LAUX.niscalos.epoca,
     comestible: 'comestible buena o mejor',
     evidencia: 'estimado',
+    // pH: Laux dice "sobre suelos neutros o calizos", y lo dice de forma
+    // expresa. Pero el níscalo sigue siendo un acidófilo que en los pinares
+    // ácidos de montaña se da mejor, así que no cabe en ninguno de los tres
+    // perfiles de siempre: ni acidófilo (le penalizaría un pH 7,8 donde
+    // crece bien) ni indiferente (perdería la preferencia). Se usa el
+    // perfil `pHTolerante`: óptimo ácido, meseta ancha.
+    pHTolerante: true,
     acidofilo: true, confined: true,
     tBase: 7, tOpt: 11.5, tMax: 20, tCrit: 2,
     gddNeed: 200, L: 12, Ro: 40, diasMax: 50,
+    fuente: fuenteLaux('niscalos',
+      'altitud y helada de literatura ibérica sobre Pinus nigra y P. brutia; '
+      + 'el resto de parámetros son valores de partida sin calibrar'),
   },
   {
     key: 'amanita', lat: 'Amanita caesarea', es: 'Amanita caesarea',
@@ -134,13 +541,17 @@ const SPECIES = [
     prioridad: 50,
     habitat: ['robledal', 'castaneral', 'encinar', 'bosque_mixto'],
     avoidDrySW: false,
-    temporada: [6, 7, 8, 9, 10],
-    temporadaTxt: 'junio-octubre',
+    temporada: [7, 8, 9, 10],
+    temporadaTxt: LAUX.amanita.epoca,
+    fuente: fuenteLaux('amanita',
+      'banda altitudinal sin dato publicado, tomada del rango de las frondosas caducifolias con las que se asocia (HEURÍSTICO); el resto son valores de partida'),
     comestible: 'comestible',
     evidencia: 'estimado',
     acidofilo: false, confined: false,
     tBase: 12, tOpt: 20, tMax: 28, tCrit: 10,
     gddNeed: 150, L: 8, Ro: 30, diasMax: 35,
+
+    confusion: LAUX.amanita.confusion,
   },
   {
     key: 'rebozuelo', lat: 'Cantharellus cibarius', es: 'Rebozuelo / Chantarela',
@@ -152,17 +563,23 @@ const SPECIES = [
     altFuente: 'haya y robledal de media montaña; sin fuente con rango en metros',    // Respuesta a la helada: verano-otono tardio.
     frostTol: -1, frostPenalty: 0.35, frostRecovery: 4, frostSoil: 1.2,
 
+    // Laux incluye las coníferas: "en bosques caducifolios y de coníferas".
+    
     guild: 'ectomicorricico',
     prioridad: 30,
-    habitat: ['hayedo', 'robledal', 'castaneral', 'bosque_mixto'],
+    habitat: ['hayedo', 'robledal', 'castaneral', 'pinar', 'bosque_mixto'],
     avoidDrySW: false,
     temporada: [6, 7, 8, 9, 10, 11],
-    temporadaTxt: 'finales de primavera a otoño',
+    temporadaTxt: LAUX.rebozuelo.epoca,
+    fuente: fuenteLaux('rebozuelo',
+      'banda altitudinal sin dato publicado para la especie (HEURÍSTICO); el resto son valores de partida'),
     comestible: 'comestible',
     evidencia: 'estimado',
     acidofilo: false, confined: false,
     tBase: 10, tOpt: 16, tMax: 24, tCrit: 6,
     gddNeed: 160, L: 10, Ro: 30, diasMax: 40,
+
+    confusion: LAUX.rebozuelo.confusion,
   },
   {
     key: 'senderuela', lat: 'Marasmius oreades', es: 'Senderuela',
@@ -173,17 +590,24 @@ const SPECIES = [
     altFuente: 'praderas, cunetas y dunas costeras; sin fuente con rango en metros',    // Respuesta a la helada: pradera y cuneta; muy tolerante a la sequia y al frio, rebrota.
     frostTol: -2, frostPenalty: 0.55, frostRecovery: 3, frostSoil: 0.7,
 
+    // Laux: "sobre prados, superficies de hierba, parques y en los linderos de
+    // los bosques". De ahí el borde_bosque, que faltaba.
+    
     guild: 'saprofita',
     prioridad: 57,
-    habitat: ['pradera', 'pastizal', 'cesped', 'claro'],
+    habitat: ['pradera', 'pastizal', 'cesped', 'borde_bosque'],
     avoidDrySW: false,
-    temporada: [4, 5, 6, 7, 8, 9, 10],
-    temporadaTxt: 'abril-octubre, sobre todo tras lluvias',
+    temporada: [5, 6, 7, 8, 9, 10, 11],
+    temporadaTxt: LAUX.senderuela.epoca,
+    fuente: fuenteLaux('senderuela',
+      'sin dato numérico publicado para la especie; todos los parámetros son valores de partida sin calibrar'),
     comestible: 'comestible',
     evidencia: 'estimado',
     acidofilo: false, confined: false,
     tBase: 9, tOpt: 17, tMax: 28, tCrit: 3,
     gddNeed: 110, L: 7, Ro: 20, diasMax: 25,
+
+    confusion: LAUX.senderuela.confusion,
   },
   {
     key: 'parasol', lat: 'Macrolepiota procera', es: 'Parasol',
@@ -194,17 +618,23 @@ const SPECIES = [
     altFuente: 'praderas y claros, incluida ciudad baja; sin fuente con rango en metros',    // Respuesta a la helada: pradera de verano, muy delicate.
     frostTol: 1, frostPenalty: 0.25, frostRecovery: 6, frostSoil: 1.4,
 
+    // Laux: "en bosques caducifolios y de coníferas, sobre prados".
+    
     guild: 'saprofita',
     prioridad: 58,
-    habitat: ['claro', 'borde_bosque', 'pastizal', 'matorral'],
+    habitat: ['claro', 'borde_bosque', 'pastizal', 'matorral', 'pradera'],
     avoidDrySW: false,
-    temporada: [5, 6, 7, 8, 9, 10],
-    temporadaTxt: 'finales de primavera a otoño, tras lluvias',
+    temporada: [7, 8, 9, 10],
+    temporadaTxt: LAUX.parasol.epoca,
+    fuente: fuenteLaux('parasol',
+      'sin dato numérico publicado para la especie; todos los parámetros son valores de partida sin calibrar'),
     comestible: 'comestible',
     evidencia: 'estimado',
     acidofilo: false, confined: false,
     tBase: 11, tOpt: 18, tMax: 26, tCrit: 6,
     gddNeed: 150, L: 7, Ro: 25, diasMax: 35,
+
+    confusion: LAUX.parasol.confusion,
   },
   {
     key: 'champinon', lat: 'Agaricus campestris', es: 'Champiñón silvestre',
@@ -215,17 +645,23 @@ const SPECIES = [
     altFuente: 'pradera y pastizal de secano; sin fuente con rango en metros',    // Respuesta a la helada: pradera de secano, otono.
     frostTol: -1, frostPenalty: 0.35, frostRecovery: 4, frostSoil: 1.2,
 
+    // Laux: "en prados, campos y tierras de cultivo".
+    
     guild: 'saprofita',
     prioridad: 60,
     habitat: ['pradera', 'pastizal', 'majadal', 'ganado'],
     avoidDrySW: false,
-    temporada: [4, 5, 6, 7, 8, 9, 10],
-    temporadaTxt: 'abril-octubre, tras lluvias',
+    temporada: [6, 7, 8, 9, 10],
+    temporadaTxt: LAUX.champinon.epoca,
+    fuente: fuenteLaux('champinon',
+      'sin dato numérico publicado para la especie; todos los parámetros son valores de partida sin calibrar'),
     comestible: 'comestible',
     evidencia: 'estimado',
     acidofilo: false, confined: false,
     tBase: 9, tOpt: 16, tMax: 24, tCrit: 3,
     gddNeed: 120, L: 7, Ro: 20, diasMax: 25,
+
+    confusion: LAUX.champinon.confusion,
   },
   {
     key: 'girola', lat: 'Pleurotus ostreatus', es: 'Seta de ostra',
@@ -237,21 +673,28 @@ const SPECIES = [
     altFuente: 'el complejo P. ostreatus va del nivel del mar a 2000 m en Europa mediterránea (IMA Fungus 2020)',    // Respuesta a la helada: fructifica con la helada y seStimula con ella; la trehalosa le da antifreeze.
     frostTol: -6, frostPenalty: 0.75, frostRecovery: 2, frostSoil: 0.4,
 
+    // Laux: "en troncos o tocones de árboles caducifolios, muy raramente en
+    // coníferas". Por eso se quita el pinar de la lista.
+    
     guild: 'saprofita_lignum',
     prioridad: 55,
     substrate: 'madera',         // requiere sustrato leñoso
     // No se puede saber desde coordenadas si hay tronco o tocón. Se listan
     // también los bosques, para que el factor no colapse en todos ellos.
     habitat: ['tronco', 'tocon', 'madera_muerta', 'hayedo', 'robledal',
-              'pinar', 'castaneral', 'bosque_mixto', 'fresnedal', 'olmedal'],
+      'castaneral', 'fresnedal', 'olmedal'],
     avoidDrySW: false,
     temporada: [10, 11, 12, 1, 2, 3],
-    temporadaTxt: 'otoño a primavera; es la seta de madera de los meses fríos',
+    temporadaTxt: LAUX.girola.epoca,
+    fuente: fuenteLaux('girola',
+      'sin dato numérico publicado para la especie; todos los parámetros son valores de partida sin calibrar'),
     comestible: 'comestible',
     evidencia: 'estimado',
     acidofilo: false, confined: false,
     tBase: 6, tOpt: 14, tMax: 22, tCrit: -3,
     gddNeed: 130, L: 8, Ro: 25, diasMax: 35,
+
+    confusion: LAUX.girola.confusion,
   },
   {
     key: 'seta_pino', lat: 'Tricholoma portentosum', es: 'Capuchina',
@@ -263,17 +706,25 @@ const SPECIES = [
     altFuente: 'pino de montaña; sin fuente con rango en metros',    // Respuesta a la helada: especie de pino de montana, otoño tardio hasta invierno.
     frostTol: -5, frostPenalty: 0.6, frostRecovery: 3, frostSoil: 0.8,
 
+    // Laux: "se da en bosques caducifolios y de coníferas, sobre suelos
+    // arenosos y barrosos, debajo de abetos rojos (Picea abies) y pinos", y
+    // "después de la entrada del invierno, puede durar hasta diciembre".
+    
     guild: 'ectomicorricico',
     prioridad: 54,
-    habitat: ['pinar'],
+    habitat: ['pinar', 'hayedo', 'robledal', 'bosque_mixto'],
     avoidDrySW: false,
-    temporada: [9, 10, 11],
-    temporadaTxt: 'otoño, con las primeras lluvias',
+    temporada: [9, 10, 11, 12],
+    temporadaTxt: LAUX.seta_pino.epoca,
+    fuente: fuenteLaux('seta_pino',
+      'banda altitudinal sin dato publicado para la especie (HEURÍSTICO); el resto son valores de partida'),
     comestible: 'comestible',
     evidencia: 'estimado',
     acidofilo: true, confined: true,
     tBase: 4, tOpt: 10, tMax: 17, tCrit: 0,
     gddNeed: 140, L: 12, Ro: 35, diasMax: 50,
+
+    confusion: LAUX.seta_pino.confusion,
   },
   {
     key: 'rovello', lat: 'Russula vesca', es: 'Rúsula comestible',
@@ -284,17 +735,24 @@ const SPECIES = [
     altFuente: 'hayedo y robledal; sin fuente con rango en metros',    // Respuesta a la helada: miceliaruble.
     frostTol: -2, frostPenalty: 0.4, frostRecovery: 4, frostSoil: 1.2,
 
+    // Laux: "en bosques caducifolios y de coníferas, así como en parques", y
+    // "evita los suelos de contenido calizo": de ahí acidofilo.
+    
     guild: 'ectomicorricico',
     prioridad: 53,
-    habitat: ['hayedo', 'robledal', 'pinar', 'bosque_mixto'],
+    habitat: ['hayedo', 'robledal', 'pinar', 'castaneral', 'bosque_mixto'],
     avoidDrySW: false,
     temporada: [6, 7, 8, 9, 10],
-    temporadaTxt: 'verano-otoño',
+    temporadaTxt: LAUX.rovello.epoca,
+    fuente: fuenteLaux('rovello',
+      'banda altitudinal sin dato publicado para la especie (HEURÍSTICO); el resto son valores de partida'),
     comestible: 'comestible',
     evidencia: 'estimado',
     acidofilo: true, confined: false,
     tBase: 10, tOpt: 16, tMax: 25, tCrit: 5,
     gddNeed: 160, L: 9, Ro: 30, diasMax: 40,
+
+    confusion: LAUX.rovello.confusion,
   },
   {
     key: 'trompeta', lat: 'Craterellus cornucopioides', es: 'Trompeta de la muerte',
@@ -305,17 +763,24 @@ const SPECIES = [
     altFuente: 'haya y roble; registros a 400 m y en hayedo de montaña',    // Respuesta a la helada: haya y roble, otono tardio.
     frostTol: -2, frostPenalty: 0.5, frostRecovery: 4, frostSoil: 1,
 
+    // Laux: "debajo de hayas (Fagus sylvatica) y robles (Quercus),
+    // preferentemente en suelos calizos". No menciona castañar.
+    
     guild: 'ectomicorricico',
     prioridad: 51,
-    habitat: ['hayedo', 'robledal', 'castaneral'],
+    habitat: ['hayedo', 'robledal'],
     avoidDrySW: false,
-    temporada: [7, 8, 9, 10, 11],
-    temporadaTxt: 'verano-otoño',
+    temporada: [8, 9, 10, 11],
+    temporadaTxt: LAUX.trompeta.epoca,
+    fuente: fuenteLaux('trompeta',
+      'banda altitudinal sin dato publicado para la especie (HEURÍSTICO); el resto son valores de partida'),
     comestible: 'comestible',
     evidencia: 'estimado',
     acidofilo: false, confined: false,
     tBase: 7, tOpt: 13, tMax: 21, tCrit: 3,
     gddNeed: 190, L: 12, Ro: 35, diasMax: 50,
+
+    confusion: LAUX.trompeta.confusion,
   },
   {
     key: 'morena', lat: 'Morchella esculenta', es: 'Marzuelo / Seta de marzo',
@@ -327,19 +792,25 @@ const SPECIES = [
     altFuente: 'frutal y ribera; sin fuente con rango en metros',    // Respuesta a la helada: primavera temprana, tras el deshielo; las ascosporas necesitan suelo sobre 10 °C.
     frostTol: -4, frostPenalty: 0.5, frostRecovery: 3, frostSoil: 0.8,
 
+    // Laux: "de abril a mayo, en bosques caducifolios, ribereños y de
+    // arbustos". No menciona pinar, así que se quita.
+    
     guild: 'saprofita',
     prioridad: 56,
     // Hospedantes documentados en la península y el Mediterráneo (Morchella,
     // Wikipedia): Abies, Pinus, Populus, Ulmus, Quercus, Arbutus, Castanea,
     // Alnus, Olea, Malus, Fraxinus. También en suelos perturbados y tras incendios.
-    habitat: ['fresnedal', 'olmedal', 'frutal', 'perturbado', 'pinar', 'robledal', 'ribera'],
-    temporada: [3, 4, 5],
-    temporadaTxt: 'marzo-mayo (según meteorología; puede llegar a julio)',
+    habitat: ['fresnedal', 'olmedal', 'ribera', 'frutal', 'matorral', 'robledal'],
+    temporada: [4, 5],
+    temporadaTxt: LAUX.morena.epoca,
     comestible: 'comestible cocida',
     aviso: 'Tóxica en crudo. No confundir con el gurumelo (Gyromitra), mortal.',
     evidencia: 'derivado',
-    fuente: 'Wikipedia "Morchella esculenta" (hospedantes y.ecología); '
-      + 'Woodland Trust (temporada marzo-mayo); EnglishFungi (suelo calcáreo)',
+    fuente: fuenteLaux('morena',
+      'Los datos numéricos no están en el libro. Proceden de literatura '
+      + 'general sobre la colmenilla (Woodland Trust para la temporada, '
+      + 'EnglishFungi para el suelo calcáreo); se han sustituido las citas a '
+      + 'Wikipedia que tenía esta ficha'),
     avoidDrySW: false,
     acidofilo: false, confined: false,
     // Preferencia documentada por suelo de base calcárea (alcalino), aunque
@@ -347,6 +818,8 @@ const SPECIES = [
     alcalinofila: true,
     tBase: 7, tOpt: 12, tMax: 18, tCrit: 0,
     gddNeed: 120, L: 10, Ro: 20, diasMax: 30,
+
+    confusion: LAUX.morena.confusion,
   },
   {
     key: 'san_jorge', lat: 'Calocybe gambosa', es: 'Perrechico',
@@ -359,15 +832,35 @@ const SPECIES = [
 
     guild: 'saprofita',
     prioridad: 59,
-    habitat: ['pradera', 'claro', 'borde_bosque'],
-    temporada: [9, 10, 11],
-    temporadaTxt: 'septiembre-noviembre',
+    // Laux la sitúa en "lugares con hierba, bosques caducifolios, bordes de los
+    // bosques, arbustos, prados y parques": es más de pradera que de bosque,
+    // pero el borde y el matorral están en la ficha.
+    habitat: ['pradera', 'borde_bosque', 'matorral', 'claro'],
+    // Laux la da en PRIMAVERA: "desde abril hasta junio". Antes la app la
+    // tenía en septiembre-noviembre, que era lo contrario.
+    //
+    // Los números térmicos NO se tocan (tBase 6, tOpt 11, tMax 17), y son de
+    // otoño-frío. Queda una incoherencia conocida: la ventana de temporada T
+    // y la ventana térmica no apuntan a la misma estación. Se declara aquí en
+    // lugar de disimularla ajustando un número que llevas meses viendo; si se
+    // quisiera cerrar el desfase, el sitio es tOpt y no la temporada.
+    temporada: [4, 5, 6],
+    temporadaTxt: LAUX.san_jorge.epoca,
     comestible: 'excelente',
     evidencia: 'estimado',
+    // pH: Wikipedia dice que es "common in grasslands in Europe, often in areas
+    // rich in limestone", y en España es la seta de San Prudencio en un clima
+    // que no es ácido. Antes era indiferente; pasa a alcalinófila por decisión
+    // del usuario. Laux no dice nada del pH, así que la cita es secundaria.
+    alcalinofila: true,
     avoidDrySW: false,
     acidofilo: false, confined: false,
     tBase: 6, tOpt: 11, tMax: 17, tCrit: 1,
     gddNeed: 110, L: 9, Ro: 20, diasMax: 30,
+    confusion: LAUX.san_jorge.confusion,
+    fuente: fuenteLaux('san_jorge',
+      'banda altitudinal del cinturón norte (Álava, Navarra, Burgos, La '
+      + 'Rioja, Soria) entre 500 y 1200 m; el resto son valores de partida'),
   },
 
   // ══════════════════════════════════════════════════════════
@@ -383,20 +876,24 @@ const SPECIES = [
     altFuente: 'desde bosque de tierra baja hasta 1800 m',    // Respuesta a la helada: micelio resistente.
     frostTol: -2, frostPenalty: 0.4, frostRecovery: 4, frostSoil: 1.2,
 
+    // Laux: "de julio a octubre, sobre suelos ácidos, la mayoría de las veces
+    // debajo de pinos (Pinus)". Se retira la temporada larga de
+    // abril-octubre que tenía antes.
+    
     guild: 'ectomicorricico',
     prioridad: 40,
     // Hospedantes documentados: Pinus (muy detallado: P. sylvestris, pinea,
     // pinaster, radiata, nigra, uncinata), Abies alba, Picea abies y, de
     // forma secundaria, Castanea, Quercus, Fagus, Betula y Carpinus.
-    habitat: ['pinar', 'bosque_mixto', 'robledal', 'hayedo', 'castaneral'],
-    temporada: [4, 5, 6, 7, 8, 9, 10],
-    temporadaTxt: 'abril-octubre (en España aparece al inicio de la temporada '
-      + 'del marzuelo y se mantiene hasta otoño)',
+    habitat: ['pinar', 'bosque_mixto'],
+    temporada: [7, 8, 9, 10],
+    temporadaTxt: LAUX.boleto_pino.epoca,
     comestible: 'excelente',
     evidencia: 'derivado',
-    fuente: 'Wikipedia "Boletus pinophilus" (hospedantes, suelos ácidos arenosos, '
-      + 'verano y otoño); ficha "Boletus pinicola", La Casa de las Setas '
-      + '(primera seta comestible de primavera)',
+    fuente: fuenteLaux('boleto_pino',
+      'Los datos numéricos no están en el libro. Se han sustituido las citas '
+      + 'a Wikipedia y a un foro que tenía esta ficha, que además describían '
+      + 'una temporada de abril a octubre que el libro no sostiene'),
     // Suelos pobres, ácidos y arenosos de conífera.
     acidofilo: true, confined: false,
     avoidDrySW: false,
@@ -413,22 +910,31 @@ const SPECIES = [
     altFuente: 'citada a 600 m en el prelittoral mediterráneo y a 1400 m en los Pirineos; pinares de ribera y cerca del mar',    // Respuesta a la helada: pinar humedo de montana.
     frostTol: -3, frostPenalty: 0.5, frostRecovery: 4, frostSoil: 1,
 
+    // ATENCIÓN: el libro no tiene ficha de "Craterellus lutescens"; da estos
+    // datos en la ficha de Cantharellus xanthopus (Pers.) Duby, donde figura
+    // como sinónimo. Se documenta en taxonomiaAviso.
+    
     guild: 'ectomicorricico',
     prioridad: 52,
     // Micorrízico, en pinares y abetales, sobre musgo y suelos húmedos;
     // en grandes colonias, a menudo cerca del mar.
-    habitat: ['pinar', 'bosque_mixto'],
-    temporada: [10, 11, 12],
-    temporadaTxt: 'octubre-diciembre (fructifica tarde, a menudo tras las '
-      + 'primeras heladas)',
+    habitat: ['pinar', 'ribera', 'hayedo', 'robledal', 'bosque_mixto'],
+    temporada: [8, 9, 10, 11],
+    temporadaTxt: LAUX.gula_monte.epoca,
     comestible: 'buena',
     evidencia: 'derivado',
-    fuente: 'Wikipedia "Craterellus lutescens" (micorrízica, coníferas, '
-      + 'humedades); Mycology (otoño-invierno temprano)',
+    fuente: fuenteLaux('gula_monte',
+      'Los datos numéricos no están en el libro. Se han sustituido las citas a '
+      + 'Wikipedia que tenía esta ficha, que además describían un guild '
+      + 'micorrícico que el libro no menciona'),
     acidofilo: false, confined: false,
     avoidDrySW: false,
     tBase: 5, tOpt: 10, tMax: 17, tCrit: 0,
     gddNeed: 150, L: 14, Ro: 45, diasMax: 60,
+
+    taxonomiaAviso: LAUX.gula_monte.tax,
+
+    confusion: LAUX.gula_monte.confusion,
   },
   {
     key: 'hongo_verano', lat: 'Boletus reticulatus', es: 'Boleto Reticulado',
@@ -440,24 +946,30 @@ const SPECIES = [
     altFuente: 'termófilo de roble caducifolio; hasta 1500 m',    // Respuesta a la helada: boleto termofilo de verano.
     frostTol: 0, frostPenalty: 0.2, frostRecovery: 6, frostSoil: 1.5,
 
+    // Laux: "desde mayo hasta julio, en bosques de hayas y robles herbáceos,
+    // y suelos ricos en cal, durante veranos calurosos. También en parques".
+    
     guild: 'ectomicorricico',
     prioridad: 41,
     // Micorrízico con Quercus, Fagus y Castanea en robledal caducifolio.
-    habitat: ['robledal', 'hayedo', 'castaneral', 'bosque_mixto'],
-    temporada: [5, 6, 7, 8],
-    temporadaTxt: 'mayo-agosto (en el sur peninsular puede alargarse hasta febrero)',
+    habitat: ['hayedo', 'robledal'],
+    temporada: [5, 6, 7],
+    temporadaTxt: LAUX.hongo_verano.epoca,
     comestible: 'excelente',
     evidencia: 'derivado',
-    fuente: 'Wikipedia "Boletus reticulatus" (micorrízico con Quercus, verano); '
-      + 'First Nature (haya y roble, junio-octubre, más común en el sur de Europa); '
-      + 'Mycology (suelos cálidos y bien drenados, calizos o limosos); '
-      + 'Beugelsdijk et al. 2008, Mycol. Res. (especie distinta de B. edulis)',
+    fuente: fuenteLaux('hongo_verano',
+      'Los datos numéricos no están en el libro. Proceden de Beugelsdijk et '
+      + 'al. 2008, Mycol. Res. (especie distinta de B. edulis) y de la '
+      + 'descripción de suelos cálidos y bien drenados, calizos o limosos. Se '
+      + 'han sustituido las citas a Wikipedia y a un portal divulgativo'),
     // "Warm, well-drained chalky or loamy soils" — a diferencia de B. edulis,
     // que prefiere suelos ácidos.
     acidofilo: false, confined: false,
     avoidDrySW: false,
     tBase: 10, tOpt: 16, tMax: 24, tCrit: 5,
     gddNeed: 150, L: 9, Ro: 30, diasMax: 35,
+
+    confusion: LAUX.hongo_verano.confusion,
   },
   {
     key: 'boleto_bronce', lat: 'Boletus aereus', es: 'Boleto bronce / Hongo negro',
@@ -469,17 +981,28 @@ const SPECIES = [
     altFuente: 'del nivel del mar a 1100 m, con encinar y alcornocal',    // Respuesta a la helada: boleto termofilo, robledal y encinar.
     frostTol: 0, frostPenalty: 0.2, frostRecovery: 6, frostSoil: 1.5,
 
+    // Laux: "en bosques caducifolios cálidos (predominantemente de robles)".
+    // El matorral y la dehesa que tenía antes no salen en la ficha.
+    
     guild: 'ectomicorricico',
     prioridad: 42,
     // Micorrízico con frondosas y arbustos esclerófilos. Hospedante clave:
     // Quercus suber (alcorque). También Fagus, Castanea, Arbutus, Erica, Cistus.
-    habitat: ['robledal', 'dehesa', 'encinar', 'castaneral', 'hayedo', 'matorral', 'bosque_mixto'],
+    // La dehesa se queda aunque el libro no la mencione: el MFE etiqueta los
+    // alcornocales y las dehesas con esa palabra, y si ninguna especie la
+    // declarara, un punto en una dehesa se quedaría sin ninguna especie que
+    // encajara. El libro dice "bosques caducifolios cálidos (predominantemente
+    // de robles)", y el alcornoque es un roble de clima cálido.
+    habitat: ['robledal', 'dehesa', 'castaneral', 'encinar', 'bosque_mixto'],
     temporada: [6, 7, 8, 9, 10],
-    temporadaTxt: 'junio-octubre, sobre todo en los episodios de calor del verano',
+    temporadaTxt: LAUX.boleto_bronce.epoca,
     comestible: 'excelente',
     evidencia: 'derivado',
-    fuente: 'Wikipedia "Boletus aereus" (hospedantes, veranos cálidos, '
-      + 'preferencia por suelos ácidos); Beugelsdijk et al. 2008 (distinto de B. edulis)',
+    fuente: fuenteLaux('boleto_bronce',
+      'Los datos numéricos no están en el libro. Proceden de Beugelsdijk et '
+      + 'al. 2008 (distinto de B. edulis) y de la literatura que recoge su '
+      + 'preferencia por suelos ácidos, al contrario que B. reticulatus. Se ha '
+      + 'sustituido la cita a Wikipedia'),
     // La fuente dice explícitamente "showing a preference for acidic soils",
     // al contrario que B. reticulatus.
     acidofilo: true, confined: false,
@@ -487,6 +1010,8 @@ const SPECIES = [
     // Es el boleto de óptimo térmico más alto de los tres: busca el calor.
     tBase: 13, tOpt: 18, tMax: 26, tCrit: 8,
     gddNeed: 170, L: 8, Ro: 25, diasMax: 30,
+
+    confusion: LAUX.boleto_bronce.confusion,
   },
   {
     key: 'seta_cardo', lat: 'Pleurotus eryngii', es: 'Seta de cardo',
@@ -504,18 +1029,118 @@ const SPECIES = [
     // raíces y la base del tallo de plantas vivas de las Apiáceas
     // (umbeliferas). En España, sobre todo Eryngium campestre, en praderas
     // y matorrales secos calcáreos. Provoca "rondas de brujas".
+    // ESTA ÚNICA ESPECIE NO ESTÁ EN EL LIBRO DE LAUX.
+    //
+    // Los Pleurotus que aparecen en "Setas de España y Europa" son
+    // cornucopiae, dryinus, mitis, ostreatus, pulmonarius, ulmarius y
+    // violaceofulvus. No está el eryngii, así que su ficha conserva la
+    // literatura científica. Es la excepción declarada de todo el proyecto.
     habitat: ['pradera', 'pastizal', 'matorral', 'claro', 'majadal'],
     temporada: [3, 4, 5, 9, 10, 11],
     temporadaTxt: 'primavera y otoño en estado silvestre; cultivada todo el año',
     comestible: 'excelente',
     evidencia: 'derivado',
-    fuente: 'Carlavilla & Manjón, Italian Mycology 2023 ("behaves as a '
+    fuente: 'PLEUROTUS ERYNGII NO ESTÁ EN LAUX, "Setas de España y Europa" '
+      + '(TIKAL, 2012), que es la fuente primaria del resto del proyecto. '
+      + 'Procede de: Carlavilla & Manjón, Italian Mycology 2023 ("behaves as a '
       + 'necrotrophic pathogen of Eryngium campestre"); Zervakis et al. 2001; '
-      + 'Mycology (raíces de Eryngium y otras umbeliferas)',
+      + 'Mycology (raíces de Eryngium y otras umbeliferas)'
+      + fuenteCruce('seta_cardo'),
     acidofilo: false, confined: false,
     avoidDrySW: false,
     tBase: 8, tOpt: 15, tMax: 24, tCrit: 2,
     gddNeed: 130, L: 10, Ro: 25, diasMax: 40,
+  },
+
+  {
+    key: 'pie_azul',
+    lat: 'Lepista nuda',
+    es: 'Seta de pie azul',
+    alt: [100, 1400, 600],
+    altSuelo: 0.55,
+    altEvidencia: 'indicado',
+    altFuente: 'sin banda altitudinal publicada para la especie; se toma el rango '
+      + 'de las frondosas caducifolias con las que se asocia. HEURÍSTICO',
+    // Es una especie de finales de otoño que sigue entrando en invierno, así que
+    // tolera las heladas sin problema. Lo que no aguanta bien es la sequedad.
+    frostTol: -1, frostPenalty: 0.15, frostRecovery: 6, frostSoil: 1.1,
+
+    // Descomposedora de hojarasca, NO pratense.
+    //
+    // Existe un desacuerdo real en la literatura sobre su guild: buena parte de
+    // las guías la tratan como micorrícica, pero Fungi Foundation la describe
+    // entre los hongos que viven "entre restos de plantas en el suelo" y las
+    // referencias actuales la citan como saprofita de hojarasca. El libro de
+    // Laux no dice nada del guild, así que se mantiene `saprofita_humus`.
+    //
+    // La distinción no es cosmética: `evaluarHabitat` multiplica por 0,45 a
+    // las saprofitas pratenses cuando el punto cae en bosque. Con guild
+    // `saprofita` esta seta habría salido con el hábitat al 45 % en el
+    // hayedo que es justo donde vive.
+    guild: 'saprofita_humus',
+    prioridad: 62,
+    // Laux: "bosques caducifolios y de coníferas, también en jardines".
+    habitat: ['hayedo', 'robledal', 'castaneral', 'pinar',
+      'bosque_mixto', 'matorral'],
+    // TEMPORADA: NO SIGUE AL LIBRO, Y ES DELIBERADO.
+    //
+    // Laux da "desde julio hasta noviembre, en ocasiones también en primavera
+    // (desde abril hasta mayo)". Waldschatzfinder da "septiembre a diciembre" y
+    // Fungipedia dice "abundante a finales de otoño, e incluso hasta bien
+    // entrado el invierno": esas dos van juntas. Se ha seguido a
+    // Waldschatzfinder por decisión del usuario, contra el libro, así que la
+    // cita del libro se conserva arriba en `LAUX.pie_azul.epoca` para que se
+    // vea el desacuerdo, y `CRUCE.pie_azul` lo explica en la ficha.
+    //
+    // La temporadaTxt no se pone aquí a mano: la compone `temporadaTexto()`
+    // para que en pantalla se lean los meses de la fuente que manda, no los
+    // del libro.
+    temporada: [9, 10, 11, 12],
+    temporadaTxt: 'septiembre-diciembre, con Waldschatzfinder y Fungipedia. Laux '
+      + 'la da más ancha: "desde julio hasta noviembre, en ocasiones también en '
+      + 'primavera"',
+    comestible: 'comestible con precaución',
+    evidencia: 'publicado',
+    acidofilo: false, confined: false,
+    avoidDrySW: false,
+    tBase: 4, tOpt: 11, tMax: 18, tCrit: 0,
+    gddNeed: 120, L: 9, Ro: 30, diasMax: 40,
+
+    // ---- AVISO DE SEGURIDAD ----
+    //
+    // `toxica` es booleano a propósito: el resto del código lo usa como
+    // bandera para pintar el cartel rojo y para marcar la tarjeta, no para
+    // enseñar el texto. El texto va en `aviso`, que es lo que lee el cartel.
+    //
+    // Lo que se muestra es lo que dice Laux y nada más. La fuente primaria
+    // del proyecto manda sobre los avisos, así que aquí no aparecen ni la
+    // muscarina ni el complejo de especies que constan en otros estudios:
+    // quedan recogidos en el apartado 8 de la Metodología, en "Limitaciones",
+    // con su referencia, para que no se pierdan y se puedan recuperar.
+    //
+    // El cartel sigue saliéndose por la razón que da el libro: hay dos
+    // Cortinarius de color muy semejante que son venenosos.
+    toxica: true,
+    aviso: 'UTILIZACIÓN (Laux, "Setas de España y Europa", TIKAL, 2012): "es '
+      + 'posible que se presente en ciertos casos individuales alguna reacción '
+      + 'de intolerancia: quien la padezca debe renunciar a consumir estas '
+      + 'setas". CONFUSIÓN CON SETAS PELIGROSAS: "entre los Cortinarius existen '
+      + 'dos variedades de color semejante que son algo venenosos: Cortinarius '
+      + 'traganus y Cortinarius camphoratus; se diferencian de la Lepista nuda '
+      + 'tanto por su repugnante olor como por su esporada marrón y, al menos '
+      + 'cuando tienen más edad, por unas láminas marrones".',
+    confusion: LAUX.pie_azul.confusion,
+    taxonomiaAviso: 'Denominación aceptada: Lepista nuda (Bull.) Cooke, '
+      + 'familia Tricholomataceae. Sinónimo principal: Rhodopaxillus nudus '
+      + '(Bull.) Maire. Nombres comunes: pie azul, ziza hankaurdin, '
+      + 'pimpinella morada. INTERESANTE (Laux): "los pies teñidos también en '
+      + 'violeta y su aparición en terrenos herbosos poco abonados".',
+    fuente: fuenteLaux('pie_azul',
+      'banda altitudinal sin dato publicado para la especie, tomada del rango '
+      + 'de las frondosas caducifolias con las que se asocia (HEURÍSTICO); '
+      + 'tolerancia a la helada según Woodland Trust ("toleran bien una '
+      + 'helada"); temperatura de fructificación 7-21 °C según cultivo '
+      + 'publicado'),
   },
 ];
 
@@ -905,6 +1530,11 @@ function evaluarHabitat(sp, terreno) {
   // y estorban a los pratenses. Sin esto, "Seta de San Jorge" ganaba en un
   // hayedo de Galicia sólo porque su base térmica es baja.
   // Las saprofitas de raíces (seta de cardo) viven en pradera, no en bosque.
+  //
+  // OJO con `saprofita_humus`: también es saprofita, pero NO es pratense.
+  // Descompone la hojarasca, o sea que vive EN el bosque, y meterla en este
+  // grupo la penalizaría en el único sitio donde aparece. Por eso el criterio
+  // es "de qué se alimenta", no "es saprofita o no".
   const esPratense = sp.guild === 'saprofita' || sp.guild === 'saprofita_raices';
   if (esPratense && veg.some(v => MONTANA.has(v))) {
     factor *= 0.45;
@@ -954,11 +1584,13 @@ function factorSuelo(pH, sp) {
     return { factor: 1, etiqueta: '', conocido: false };
   }
 
-  const perfil = sp.acidofilo
-    ? { opt: 5.2, meseta: 1.5, suelo: 0.60 }
-    : sp.alcalinofila
-      ? { opt: 7.6, meseta: 1.4, suelo: 0.60 }
-      : { opt: 6.8, meseta: 1.8, suelo: 0.70 };
+  const perfil = sp.pHTolerante
+    ? { opt: 5.6, meseta: 3.4, suelo: 0.85 }
+    : sp.acidofilo
+      ? { opt: 5.2, meseta: 1.5, suelo: 0.60 }
+      : sp.alcalinofila
+        ? { opt: 7.6, meseta: 1.4, suelo: 0.60 }
+        : { opt: 6.8, meseta: 1.8, suelo: 0.70 };
 
   const d = Math.abs(pH - perfil.opt);
   // Meseta dentro del rango: 1.00. Fuera, decae 1 por cada 2,2 de pH.
@@ -967,9 +1599,10 @@ function factorSuelo(pH, sp) {
 
   const etiqueta = factor >= 0.999
     ? 'pH adecuado'
-    : (sp.acidofilo ? 'suelo demasiado calizo'
-      : sp.alcalinofila ? 'suelo demasiado ácido'
-        : 'pH poco habitual');
+    : (sp.pHTolerante ? 'pH poco habitual'
+      : sp.acidofilo ? 'suelo demasiado calizo'
+        : sp.alcalinofila ? 'suelo demasiado ácido'
+          : 'pH poco habitual');
 
   return { factor, etiqueta, conocido: true };
 }
@@ -1394,6 +2027,7 @@ const GUILD_LABELS = {
   saprofita: 'Saprofita',
   saprofita_lignum: 'Saprofita de madera',
   saprofita_raices: 'Saprofita de raíces',
+  saprofita_humus: 'Saprofita de hojarasca',
 };
 
 /** Texto de temporada de una especie, para la interfaz. */
@@ -1424,7 +2058,7 @@ function nivelTexto(I) {
  */
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    SPECIES, indice, ranking, porPrioridad, potencialEstacional,
+    SPECIES, LAUX, CRUCE, fuenteLaux, fuenteCruce, indice, ranking, porPrioridad, potencialEstacional,
     calcularGDD, factorAcondicionamiento, lluviaEfectiva, evaluarHabitat,
     factorSuelo, factorTemporada, altitudeFactor, altitudeFactorGlobal,
     altitudEtiqueta, frostStress, diaDelAnio,
